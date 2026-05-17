@@ -210,5 +210,45 @@ export function setupMockApi() {
       announcements.push(newAnn);
       return [201, newAnn];
     });
+
+    // ─── ACCOUNT REQUESTS ────────────────────────────────────────────────
+    const accountRequests: Record<string, unknown>[] = [];
+
+    mock.onGet('/api/v1/account-requests').reply(() => [200, accountRequests]);
+
+    mock.onPost('/api/v1/account-requests').reply((config) => {
+      const payload = JSON.parse(config.data);
+      const newRequest = {
+        ...payload,
+        id: generateId('req'),
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      };
+      accountRequests.push(newRequest);
+      return [201, newRequest];
+    });
+
+    mock.onPut(/\/api\/v1\/account-requests\/\w+\/approve/).reply((config) => {
+      const id = config.url?.split('/').filter(Boolean)[3];
+      const { schoolEmail, password } = JSON.parse(config.data);
+      const idx = accountRequests.findIndex((r) => r.id === id);
+      if (idx === -1) return [404, { message: 'Request not found' }];
+      accountRequests[idx] = {
+        ...accountRequests[idx],
+        status: 'approved',
+        schoolEmail,
+        password,
+        approvedAt: new Date().toISOString(),
+      };
+      return [200, accountRequests[idx]];
+    });
+
+    mock.onPut(/\/api\/v1\/account-requests\/\w+\/reject/).reply((config) => {
+      const id = config.url?.split('/').filter(Boolean)[3];
+      const idx = accountRequests.findIndex((r) => r.id === id);
+      if (idx === -1) return [404, { message: 'Request not found' }];
+      accountRequests[idx] = { ...accountRequests[idx], status: 'rejected' };
+      return [200, accountRequests[idx]];
+    });
   });
 }

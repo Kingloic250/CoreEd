@@ -1,9 +1,9 @@
 // Role-aware sidebar with navigation links for all user types
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, GraduationCap, BookOpen, Settings,
-  BarChart3, ClipboardList, FileText, Bell, LogOut, School,
-  Calendar, Trophy
+  LayoutDashboard, Users, GraduationCap, BookOpen,
+  BarChart3, ClipboardList, FileText, Bell, School,
+  Calendar, Trophy, UserCheck
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -20,8 +20,8 @@ const adminNav = [
   { title: 'Students', url: '/admin/students', icon: GraduationCap },
   { title: 'Teachers', url: '/admin/teachers', icon: Users },
   { title: 'Classes', url: '/admin/classes', icon: BookOpen },
+  { title: 'Requests', url: '/admin/requests', icon: UserCheck },
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
-  { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 
 const teacherNav = [
@@ -62,14 +62,8 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ role }: AppSidebarProps) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const navItems = navMap[role] ?? [];
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <Sidebar collapsible="icon">
@@ -137,14 +131,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
             </Badge>
           </div>
         </div>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Logout" onClick={handleLogout}>
-              <LogOut />
-              <span>Logout</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+
       </SidebarFooter>
     </Sidebar>
   );

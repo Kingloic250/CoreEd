@@ -9,12 +9,14 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 
 // Auth
 import { LoginPage } from '@/pages/auth/LoginPage';
+import { ContactAdminPage } from '@/pages/auth/ContactAdminPage';
 
 // Admin pages
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
 import { ManageStudents } from '@/pages/admin/ManageStudents';
 import { ManageTeachers } from '@/pages/admin/ManageTeachers';
 import { ManageClasses } from '@/pages/admin/ManageClasses';
+import { AccountRequests } from '@/pages/admin/AccountRequests';
 import { SystemSettings } from '@/pages/admin/SystemSettings';
 import { Reports } from '@/pages/admin/Reports';
 
@@ -23,6 +25,9 @@ import { TeacherDashboard } from '@/pages/teacher/TeacherDashboard';
 import { MyClasses } from '@/pages/teacher/MyClasses';
 import { AttendanceLog } from '@/pages/teacher/AttendanceLog';
 import { GradeInput } from '@/pages/teacher/GradeInput';
+
+// Shared pages
+import { NotificationsPage } from '@/pages/NotificationsPage';
 
 // Student pages
 import { StudentDashboard } from '@/pages/student/StudentDashboard';
@@ -61,6 +66,8 @@ export function AppRouter() {
           />
         </Route>
 
+        <Route path="/contact-admin" element={<ContactAdminPage />} />
+
         {/* Admin routes */}
         <Route
           path="/admin"
@@ -74,6 +81,8 @@ export function AppRouter() {
           <Route path="students" element={<ManageStudents />} />
           <Route path="teachers" element={<ManageTeachers />} />
           <Route path="classes" element={<ManageClasses />} />
+          <Route path="requests" element={<AccountRequests />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="settings" element={<SystemSettings />} />
           <Route path="reports" element={<Reports />} />
         </Route>
@@ -91,6 +100,7 @@ export function AppRouter() {
           <Route path="classes" element={<MyClasses />} />
           <Route path="attendance" element={<AttendanceLog />} />
           <Route path="grades" element={<GradeInput />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
 
         {/* Student routes */}
@@ -107,6 +117,7 @@ export function AppRouter() {
           <Route path="grades" element={<MyGrades />} />
           <Route path="transcript" element={<Transcript />} />
           <Route path="announcements" element={<Announcements />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
 
         {/* Misc */}

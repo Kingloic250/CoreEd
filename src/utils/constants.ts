@@ -11,13 +11,18 @@ export type Role = typeof ROLES[keyof typeof ROLES];
 export const ROUTES = {
   ROOT: '/',
   LOGIN: '/login',
+  CONTACT_ADMIN: '/contact-admin',
   UNAUTHORIZED: '/unauthorized',
   ADMIN: '/admin',
   ADMIN_STUDENTS: '/admin/students',
   ADMIN_TEACHERS: '/admin/teachers',
   ADMIN_CLASSES: '/admin/classes',
+  ADMIN_NOTIFICATIONS: '/admin/notifications',
+  ADMIN_REQUESTS: '/admin/requests',
   ADMIN_SETTINGS: '/admin/settings',
   ADMIN_REPORTS: '/admin/reports',
+  TEACHER_NOTIFICATIONS: '/teacher/notifications',
+  STUDENT_NOTIFICATIONS: '/student/notifications',
   TEACHER: '/teacher',
   TEACHER_CLASSES: '/teacher/classes',
   TEACHER_ATTENDANCE: '/teacher/attendance',
@@ -38,6 +43,7 @@ export const API_PATHS = {
   ATTENDANCE: '/api/v1/attendance',
   GRADES: '/api/v1/grades',
   ANNOUNCEMENTS: '/api/v1/announcements',
+  ACCOUNT_REQUESTS: '/api/v1/account-requests',
 } as const;
 
 export const QUERY_KEYS = {
@@ -47,6 +53,7 @@ export const QUERY_KEYS = {
   ATTENDANCE: 'attendance',
   GRADES: 'grades',
   ANNOUNCEMENTS: 'announcements',
+  ACCOUNT_REQUESTS: 'account-requests',
 } as const;
 
 export const GRADE_SCALE = [
