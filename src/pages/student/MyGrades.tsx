@@ -114,7 +114,10 @@ export function MyGrades() {
                                 border: '1px solid var(--border)',
                                 borderRadius: '8px',
                                 fontSize: '12px',
+                                color: 'var(--popover-foreground)',
                               }}
+                              itemStyle={{ color: 'var(--popover-foreground)' }}
+                              labelStyle={{ color: 'var(--popover-foreground)' }}
                             />
                           </RadarChart>
                         </ResponsiveContainer>

@@ -77,8 +77,18 @@ export function Reports() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="range" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: 'var(--popover)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }} />
-                  <Bar dataKey="count" name="Students" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--popover)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: 'var(--popover-foreground)',
+                    }}
+                    itemStyle={{ color: 'var(--popover-foreground)' }}
+                    labelStyle={{ color: 'var(--popover-foreground)' }}
+                  />
+                  <Bar dataKey="count" name="Students" fill="var(--primary)" radius={[4, 4, 0, 0]} activeBar={{ fill: 'var(--primary)', fillOpacity: 0.7 }} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

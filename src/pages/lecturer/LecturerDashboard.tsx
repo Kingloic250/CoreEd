@@ -8,6 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useGetGrades } from '@/hooks/useGrades';
+import { useGetCurrentLecturer } from '@/hooks/useLecturers';
+import { useGetActiveSemester } from '@/hooks/useSemesters';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -15,7 +17,13 @@ export function LecturerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const today = DAYS[new Date().getDay()];
-  const { data: courses, isLoading: coursesLoading } = useGetCourses();
+  const { data: currentLecturer } = useGetCurrentLecturer();
+  const { activeSemester } = useGetActiveSemester();
+  const lecturerId = currentLecturer ? (currentLecturer as Record<string, unknown>).id : undefined;
+  const semesterId = activeSemester ? (activeSemester as Record<string, unknown>).id as string : undefined;
+  const { data: courses, isLoading: coursesLoading } = useGetCourses(
+    lecturerId && semesterId ? { lecturerId, semesterId } : undefined
+  );
   const { data: grades, isLoading: gradesLoading } = useGetGrades({ courseId: undefined });
 
   const myCourses = (courses as Record<string, unknown>[]) ?? [];

@@ -23,6 +23,8 @@ export const ROUTES = {
   ADMIN_SEMESTERS: '/admin/semesters',
   ADMIN_ENROLLMENT: '/admin/enrollment',
   ADMIN_AUDIT_LOGS: '/admin/audit-logs',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_TIMETABLE: '/admin/timetable',
   ADMIN_REPORTS: '/admin/reports',
   LECTURER_NOTIFICATIONS: '/lecturer/notifications',
   STUDENT_NOTIFICATIONS: '/student/notifications',
@@ -53,6 +55,7 @@ export const API_PATHS = {
   DEPARTMENTS: '/api/v1/departments',
   SEMESTERS: '/api/v1/semesters',
   AUDIT_LOGS: '/api/v1/audit-logs',
+  USERS: '/api/v1/users',
 } as const;
 
 export const QUERY_KEYS = {
@@ -66,6 +69,7 @@ export const QUERY_KEYS = {
   DEPARTMENTS: 'departments',
   SEMESTERS: 'semesters',
   AUDIT_LOGS: 'audit-logs',
+  USERS: 'users',
 } as const;
 
 export const GRADE_SCALE = [

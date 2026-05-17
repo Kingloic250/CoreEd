@@ -5,6 +5,7 @@
     "year": "Year 1",
     "department": "d001",
     "lecturerId": "l001",
+    "semesterId": "sem002",
     "room": "LT-101",
     "schedule": [
       { "day": "Monday", "startTime": "08:00", "endTime": "09:00" },
@@ -19,6 +20,7 @@
     "year": "Year 2",
     "department": "d001",
     "lecturerId": "l001",
+    "semesterId": "sem002",
     "room": "LT-102",
     "schedule": [
       { "day": "Tuesday", "startTime": "08:00", "endTime": "09:00" },
@@ -27,11 +29,27 @@
     "studentIds": ["s002", "s005", "s011"]
   },
   {
+    "id": "c001-old",
+    "name": "Mathematics 101 (Sem 1)",
+    "year": "Year 1",
+    "department": "d001",
+    "lecturerId": "l001",
+    "semesterId": "sem001",
+    "room": "LT-101",
+    "schedule": [
+      { "day": "Monday", "startTime": "08:00", "endTime": "09:00" },
+      { "day": "Wednesday", "startTime": "10:00", "endTime": "11:00" },
+      { "day": "Friday", "startTime": "08:00", "endTime": "09:00" }
+    ],
+    "studentIds": ["s016"]
+  },
+  {
     "id": "c003",
     "name": "English Composition",
     "year": "Year 1",
     "department": "d002",
     "lecturerId": "l002",
+    "semesterId": "sem002",
     "room": "LH-201",
     "schedule": [
       { "day": "Monday", "startTime": "09:00", "endTime": "10:00" },
@@ -45,6 +63,7 @@
     "year": "Year 3",
     "department": "d002",
     "lecturerId": "l002",
+    "semesterId": "sem002",
     "room": "LH-202",
     "schedule": [
       { "day": "Tuesday", "startTime": "09:00", "endTime": "10:00" },
@@ -58,6 +77,7 @@
     "year": "Year 2",
     "department": "d003",
     "lecturerId": "l003",
+    "semesterId": "sem002",
     "room": "Lab-1",
     "schedule": [
       { "day": "Monday", "startTime": "11:00", "endTime": "12:00" },
@@ -71,6 +91,7 @@
     "year": "Year 1",
     "department": "d004",
     "lecturerId": "l004",
+    "semesterId": "sem002",
     "room": "Lab-2",
     "schedule": [
       { "day": "Wednesday", "startTime": "08:00", "endTime": "09:00" },

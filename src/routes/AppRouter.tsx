@@ -19,6 +19,9 @@ import { ManageEnrollment } from '@/pages/admin/ManageEnrollment';
 import { AccountRequests } from '@/pages/admin/AccountRequests';
 import { SystemSettings } from '@/pages/admin/SystemSettings';
 import { Reports } from '@/pages/admin/Reports';
+import { AuditLogs } from '@/pages/admin/AuditLogs';
+import { ManageUsers } from '@/pages/admin/ManageUsers';
+import { ManageTimetable } from '@/pages/admin/ManageTimetable';
 
 import { LecturerDashboard } from '@/pages/lecturer/LecturerDashboard';
 import { MyCourses } from '@/pages/lecturer/MyCourses';
@@ -85,6 +88,9 @@ export function AppRouter() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SystemSettings />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="audit-logs" element={<AuditLogs />} />
+          <Route path="users" element={<ManageUsers />} />
+          <Route path="timetable" element={<ManageTimetable />} />
         </Route>
 
         <Route

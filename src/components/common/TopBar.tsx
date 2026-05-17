@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,15 +36,11 @@ export function TopBar() {
   const { setTheme } = useTheme();
   const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const { data: announcements } = useGetAnnouncements(user?.role);
   const list = (announcements as Record<string, unknown>[]) ?? [];
   const recent = list.slice(0, 5);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const notifPath = user?.role === 'admin'
     ? '/admin/notifications'
@@ -179,13 +176,22 @@ export function TopBar() {
               </div>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={() => setConfirmLogout(true)} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ConfirmDialog
+        open={confirmLogout}
+        onOpenChange={setConfirmLogout}
+        title="Logout"
+        description="Are you sure you want to log out of your account?"
+        confirmLabel="Logout"
+        onConfirm={() => { logout(); navigate('/login'); }}
+      />
     </header>
   );
 }

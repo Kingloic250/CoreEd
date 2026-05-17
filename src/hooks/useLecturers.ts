@@ -10,6 +10,13 @@ export function useGetLecturers(params?: Record<string, unknown>) {
   });
 }
 
+export function useGetCurrentLecturer() {
+  return useQuery({
+    queryKey: [QUERY_KEYS.LECTURERS, 'current'],
+    queryFn: lecturersApi.getCurrentLecturer,
+  });
+}
+
 export function useCreateLecturer() {
   const qc = useQueryClient();
   return useMutation({

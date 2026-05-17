@@ -5,6 +5,9 @@ const BASE = '/api/v1/lecturers';
 export const getAllLecturers = (params?: Record<string, unknown>) =>
   axiosInstance.get(BASE, { params }) as unknown as Promise<unknown[]>;
 
+export const getCurrentLecturer = () =>
+  axiosInstance.get(`${BASE}/profile`) as unknown as Promise<unknown>;
+
 export const createLecturer = (payload: unknown) =>
   axiosInstance.post(BASE, payload) as unknown as Promise<unknown>;
 

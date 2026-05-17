@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   BarChart3, ClipboardList, FileText, Bell, School,
   Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
-  Library
+  Library, ScrollText, Shield, CalendarRange
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -22,8 +22,11 @@ const adminNav = [
   { title: 'Courses', url: '/admin/courses', icon: BookOpen },
   { title: 'Departments', url: '/admin/departments', icon: Users },
   { title: 'Semesters', url: '/admin/semesters', icon: CalendarDays },
+  { title: 'Timetable', url: '/admin/timetable', icon: CalendarRange },
   { title: 'Enrollment', url: '/admin/enrollment', icon: UserPlus },
   { title: 'Requests', url: '/admin/requests', icon: UserCheck },
+  { title: 'Audit Logs', url: '/admin/audit-logs', icon: ScrollText },
+  { title: 'Users', url: '/admin/users', icon: Shield },
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
 ];
 

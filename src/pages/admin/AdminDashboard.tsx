@@ -1,4 +1,4 @@
-import { Users, GraduationCap, BookOpen, TrendingUp, Plus, Building2, CalendarDays, UserPlus } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, TrendingUp, Plus, Building2, CalendarDays, UserPlus, ScrollText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,10 +65,18 @@ export function AdminDashboard() {
                 <XAxis dataKey="day" tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ background: 'var(--popover)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }}
+                  contentStyle={{
+                    background: 'var(--popover)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    color: 'var(--popover-foreground)',
+                  }}
+                  itemStyle={{ color: 'var(--popover-foreground)' }}
+                  labelStyle={{ color: 'var(--popover-foreground)' }}
                 />
-                <Bar dataKey="present" name="Present" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="absent" name="Absent" fill="var(--muted)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="present" name="Present" fill="var(--primary)" radius={[4, 4, 0, 0]} activeBar={{ fill: 'var(--primary)', fillOpacity: 0.7 }} />
+                <Bar dataKey="absent" name="Absent" fill="var(--destructive)" radius={[4, 4, 0, 0]} activeBar={{ fill: 'var(--destructive)', fillOpacity: 0.7 }} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -120,6 +128,9 @@ export function AdminDashboard() {
           </Button>
           <Button onClick={() => navigate('/admin/enrollment')} variant="outline" className="gap-2">
             <UserPlus className="size-4" /> Manage Enrollment
+          </Button>
+          <Button onClick={() => navigate('/admin/audit-logs')} variant="outline" className="gap-2">
+            <ScrollText className="size-4" /> View Audit Logs
           </Button>
           <Button onClick={() => navigate('/admin/reports')} variant="outline" className="gap-2">
             <TrendingUp className="size-4" /> View Reports

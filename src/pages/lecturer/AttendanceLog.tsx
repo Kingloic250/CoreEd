@@ -15,6 +15,8 @@ import { useGetCourses } from '@/hooks/useCourses';
 import { useGetStudents } from '@/hooks/useStudents';
 import { useMarkAttendance } from '@/hooks/useAttendance';
 import { useAuth } from '@/hooks/useAuth';
+import { useGetCurrentLecturer } from '@/hooks/useLecturers';
+import { useGetActiveSemester } from '@/hooks/useSemesters';
 import { ATTENDANCE_STATUSES } from '@/utils/constants';
 import { attendanceStatusBadge as attendanceStatusBadgeMap } from '@/utils/formatters';
 
@@ -27,7 +29,13 @@ export function AttendanceLog() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
 
-  const { data: courses, isLoading: coursesLoading } = useGetCourses();
+  const { data: currentLecturer } = useGetCurrentLecturer();
+  const { activeSemester } = useGetActiveSemester();
+  const lecturerId = currentLecturer ? (currentLecturer as Record<string, unknown>).id : undefined;
+  const semesterId = activeSemester ? (activeSemester as Record<string, unknown>).id as string : undefined;
+  const { data: courses, isLoading: coursesLoading } = useGetCourses(
+    lecturerId && semesterId ? { lecturerId, semesterId } : undefined
+  );
   const { data: students, isLoading: studentsLoading } = useGetStudents({});
   const markMutation = useMarkAttendance();
 

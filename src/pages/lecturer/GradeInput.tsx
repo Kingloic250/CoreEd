@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,27 +13,78 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useGetStudents } from '@/hooks/useStudents';
 import { useCreateGrade } from '@/hooks/useGrades';
-import { SEMESTERS, DEPARTMENTS } from '@/utils/constants';
+import { useGetCurrentLecturer } from '@/hooks/useLecturers';
+import { useGetActiveSemester, useGetSemesters } from '@/hooks/useSemesters';
+import { useGetDepartments } from '@/hooks/useDepartments';
+import { SEMESTERS } from '@/utils/constants';
 import { getLetterGrade, getGradeColor } from '@/utils/formatters';
 
 export function GradeInput() {
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
   const [scores, setScores] = useState<Record<string, string>>({});
 
-  const { data: courses, isLoading: coursesLoading } = useGetCourses();
+  const { data: currentLecturer } = useGetCurrentLecturer();
+  const { activeSemester } = useGetActiveSemester();
+  const { data: allSemesters } = useGetSemesters();
+  const { data: departments } = useGetDepartments();
+  const lecturerId = currentLecturer ? (currentLecturer as Record<string, unknown>).id : undefined;
+
+  const semList = (allSemesters as Record<string, unknown>[]) ?? [];
+  const deptList = (departments as Record<string, unknown>[]) ?? [];
+
+  const academicYears = useMemo(() => {
+    return [...new Set(semList.map((s) => String(s.year)))].sort();
+  }, [semList]);
+
+  // Semester IDs belonging to the selected academic year
+  const semesterIdsForYear = useMemo(() => {
+    if (!selectedAcademicYear) return undefined;
+    return semList
+      .filter((s) => String(s.year) === selectedAcademicYear)
+      .map((s) => String(s.id));
+  }, [selectedAcademicYear, semList]);
+
+  // Pre-select the active semester's academic year, and its semester name
+  useEffect(() => {
+    if (activeSemester && !selectedAcademicYear) {
+      setSelectedAcademicYear((activeSemester as Record<string, unknown>).year as string);
+    }
+    if (activeSemester && !selectedSemester) {
+      setSelectedSemester((activeSemester as Record<string, unknown>).name as string);
+    }
+  }, [activeSemester]);
+
+  // Reset course when academic year changes
+  useEffect(() => {
+    setSelectedCourse('');
+  }, [selectedAcademicYear]);
+
+  const { data: courses, isLoading: coursesLoading } = useGetCourses(
+    lecturerId ? { lecturerId } : undefined
+  );
   const { data: students, isLoading: studentsLoading } = useGetStudents({});
   const createGrade = useCreateGrade();
 
   const courseList = (courses as Record<string, unknown>[]) ?? [];
   const allStudents = (students as Record<string, unknown>[]) ?? [];
 
-  const selectedCourseData = courseList.find((c) => String(c.id) === selectedCourse);
+  // Filter courses to those in the selected academic year's semesters
+  const filteredCourses = semesterIdsForYear
+    ? courseList.filter((c) => semesterIdsForYear.includes(String(c.semesterId)))
+    : [];
+
+  const selectedCourseData = filteredCourses.find((c) => String(c.id) === selectedCourse);
   const courseStudentIds = (selectedCourseData?.studentIds as string[]) ?? [];
   const courseStudents = allStudents.filter((s) => courseStudentIds.includes(String(s.id)));
 
-  const canShow = selectedCourse && selectedSemester && selectedSubject;
+  // Derive the subject (department name) from the selected course
+  const derivedSubject = selectedCourseData
+    ? (deptList.find((d) => String(d.id) === String(selectedCourseData.department))?.name as string) ?? ''
+    : '';
+
+  const canShow = selectedAcademicYear && selectedCourse && selectedSemester;
 
   const handleScoreChange = (studentId: string, value: string) => {
     if (value === '' || (/^\d{0,3}$/.test(value) && Number(value) <= 100)) {
@@ -52,7 +103,7 @@ export function GradeInput() {
           return createGrade.mutateAsync({
             studentId: String(s.id),
             courseId: selectedCourse,
-            subject: selectedSubject,
+            subject: derivedSubject,
             semester: selectedSemester,
             score,
             maxScore: 100,
@@ -70,22 +121,33 @@ export function GradeInput() {
 
   return (
     <div>
-      <PageHeader title="Grade Input" description="Enter student scores by course and semester" />
+      <PageHeader title="Grade Input" description="Enter student scores by academic year and course" />
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Select Course, Semester & Subject</CardTitle>
+            <CardTitle className="text-base">Select Academic Year, Course & Semester</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
+                <Label>Academic Year</Label>
+                <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
+                  <SelectTrigger aria-label="Select academic year"><SelectValue placeholder="Select academic year" /></SelectTrigger>
+                  <SelectContent>
+                    {academicYears.map((y) => (
+                      <SelectItem key={y} value={y}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
                 <Label>Course</Label>
                 {coursesLoading ? <Skeleton className="h-9" /> : (
-                  <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                    <SelectTrigger aria-label="Select course"><SelectValue placeholder="Select course" /></SelectTrigger>
+                  <Select value={selectedCourse} onValueChange={setSelectedCourse} disabled={!selectedAcademicYear}>
+                    <SelectTrigger aria-label="Select course"><SelectValue placeholder={selectedAcademicYear ? 'Select course' : 'Select year first'} /></SelectTrigger>
                     <SelectContent>
-                      {courseList.map((c) => (
+                      {filteredCourses.map((c) => (
                         <SelectItem key={String(c.id)} value={String(c.id)}>{String(c.name)}</SelectItem>
                       ))}
                     </SelectContent>
@@ -101,15 +163,6 @@ export function GradeInput() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>Subject</Label>
-                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                  <SelectTrigger aria-label="Select subject"><SelectValue placeholder="Select subject" /></SelectTrigger>
-                  <SelectContent>
-                    {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -118,7 +171,7 @@ export function GradeInput() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                {String(selectedCourseData?.name)} — {selectedSubject} — {selectedSemester}
+                {String(selectedCourseData?.name)} — {selectedSemester} ({selectedAcademicYear})
               </CardTitle>
             </CardHeader>
             <CardContent>

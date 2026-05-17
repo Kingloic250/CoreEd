@@ -4,11 +4,19 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCourses } from '@/hooks/useCourses';
+import { useGetCurrentLecturer } from '@/hooks/useLecturers';
+import { useGetActiveSemester } from '@/hooks/useSemesters';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 export function MyCourses() {
-  const { data: courses, isLoading } = useGetCourses();
+  const { data: currentLecturer } = useGetCurrentLecturer();
+  const { activeSemester } = useGetActiveSemester();
+  const lecturerId = currentLecturer ? (currentLecturer as Record<string, unknown>).id : undefined;
+  const semesterId = activeSemester ? (activeSemester as Record<string, unknown>).id as string : undefined;
+  const { data: courses, isLoading } = useGetCourses(
+    lecturerId && semesterId ? { lecturerId, semesterId } : undefined
+  );
   const myCourses = (courses as Record<string, unknown>[]) ?? [];
 
   return (

@@ -56,6 +56,14 @@ export function useDeleteSemester() {
   });
 }
 
+export function useGetActiveSemester() {
+  const { data: semesters } = useGetSemesters();
+  const active = (semesters as Record<string, unknown>[] | undefined)?.find(
+    (s) => s.isActive === true
+  );
+  return { activeSemester: active ?? null };
+}
+
 export function useSetActiveSemester() {
   const qc = useQueryClient();
   return useMutation({

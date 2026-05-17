@@ -21,6 +21,7 @@ let announcements = [...announcementsData] as Record<string, unknown>[];
 let departments = [...departmentsData] as Record<string, unknown>[];
 let semesters = [...semestersData] as Record<string, unknown>[];
 let auditLogs = [...auditLogsData] as Record<string, unknown>[];
+let userAccounts = [...users] as Record<string, unknown>[];
 
 const generateId = (prefix: string) => `${prefix}${Date.now()}`;
 
@@ -33,7 +34,7 @@ export function setupMockApi() {
     // ─── AUTH ─────────────────────────────────────────────────────────────
     mock.onPost('/api/v1/auth/login').reply((config) => {
       const { email, password } = JSON.parse(config.data);
-      const user = (users as unknown as Record<string, string>[]).find(
+      const user = (userAccounts as unknown as Record<string, string>[]).find(
         (u) => u.email === email && u.password === password
       );
       if (!user) {
@@ -48,7 +49,7 @@ export function setupMockApi() {
     mock.onPost('/api/v1/auth/change-password').reply((config) => {
       const { currentPassword, newPassword } = JSON.parse(config.data);
       const token = getToken();
-      const user = (users as unknown as Record<string, string>[]).find(
+      const user = (userAccounts as unknown as Record<string, string>[]).find(
         (u) => `mock.jwt.token_${u.role}` === token
       );
       if (!user || user.password !== currentPassword) {
@@ -61,7 +62,7 @@ export function setupMockApi() {
     // ─── PROFILE ─────────────────────────────────────────────────────────
     mock.onGet('/api/v1/profile').reply(() => {
       const token = getToken();
-      const user = (users as unknown as Record<string, string>[]).find(
+      const user = (userAccounts as unknown as Record<string, string>[]).find(
         (u) => `mock.jwt.token_${u.role}` === token
       );
       if (!user) return [401, { message: 'Unauthorized' }];
@@ -71,7 +72,7 @@ export function setupMockApi() {
     mock.onPut('/api/v1/profile').reply((config) => {
       const { name, email } = JSON.parse(config.data);
       const token = getToken();
-      const user = (users as unknown as Record<string, string>[]).find(
+      const user = (userAccounts as unknown as Record<string, string>[]).find(
         (u) => `mock.jwt.token_${u.role}` === token
       );
       if (!user) return [401, { message: 'Unauthorized' }];
@@ -102,6 +103,7 @@ export function setupMockApi() {
       const payload = JSON.parse(config.data);
       const newStudent = { ...payload, id: generateId('s') };
       students.push(newStudent);
+      logAudit('create_student', 'student', newStudent.id, `Created student ${payload.firstName} ${payload.lastName} (${payload.year})`);
       return [201, newStudent];
     });
 
@@ -111,22 +113,39 @@ export function setupMockApi() {
       const idx = students.findIndex((s) => s.id === id);
       if (idx === -1) return [404, { message: 'Student not found' }];
       students[idx] = { ...students[idx], ...payload };
+      logAudit('update_student', 'student', id, `Updated student ${payload.firstName ?? students[idx].firstName} ${payload.lastName ?? students[idx].lastName}`);
       return [200, students[idx]];
     });
 
     mock.onDelete(/\/api\/v1\/students\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
+      const student = students.find((s) => s.id === id);
       students = students.filter((s) => s.id !== id);
+      if (student) logAudit('delete_student', 'student', id, `Deleted student ${student.firstName} ${student.lastName}`);
       return [204];
     });
 
     // ─── LECTURERS ─────────────────────────────────────────────────────────
     mock.onGet('/api/v1/lecturers').reply(() => [200, lecturers]);
 
+    mock.onGet(/\/api\/v1\/lecturers\/profile/).reply(() => {
+      const token = getToken();
+      const user = (userAccounts as unknown as Record<string, string>[]).find(
+        (u) => `mock.jwt.token_${u.role}` === token
+      );
+      if (!user) return [401, { message: 'Unauthorized' }];
+      const lecturerProfile = (lecturers as Record<string, string>[]).find(
+        (l) => l.email === user.email
+      );
+      if (!lecturerProfile) return [404, { message: 'Lecturer profile not found' }];
+      return [200, lecturerProfile];
+    });
+
     mock.onPost('/api/v1/lecturers').reply((config) => {
       const payload = JSON.parse(config.data);
       const newLecturer = { ...payload, id: generateId('l') };
       lecturers.push(newLecturer);
+      logAudit('create_lecturer', 'lecturer', newLecturer.id, `Created lecturer ${payload.firstName} ${payload.lastName} (${payload.department})`);
       return [201, newLecturer];
     });
 
@@ -136,23 +155,30 @@ export function setupMockApi() {
       const idx = lecturers.findIndex((t) => t.id === id);
       if (idx === -1) return [404, { message: 'Lecturer not found' }];
       lecturers[idx] = { ...lecturers[idx], ...payload };
+      logAudit('update_lecturer', 'lecturer', id, `Updated lecturer ${payload.firstName ?? lecturers[idx].firstName} ${payload.lastName ?? lecturers[idx].lastName}`);
       return [200, lecturers[idx]];
     });
 
     mock.onDelete(/\/api\/v1\/lecturers\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
+      const lecturer = lecturers.find((t) => t.id === id);
       lecturers = lecturers.filter((t) => t.id !== id);
+      if (lecturer) logAudit('delete_lecturer', 'lecturer', id, `Deleted lecturer ${lecturer.firstName} ${lecturer.lastName}`);
       return [204];
     });
 
     // ─── COURSES ──────────────────────────────────────────────────────────
-    mock.onGet('/api/v1/courses').reply(() => [200, courses]);
-
-    mock.onPost('/api/v1/courses').reply((config) => {
-      const payload = JSON.parse(config.data);
-      const newCourse = { ...payload, id: generateId('c'), studentIds: [] };
-      courses.push(newCourse);
-      return [201, newCourse];
+    mock.onGet('/api/v1/courses').reply((config) => {
+      const semesterId = config.params?.semesterId;
+      const lecturerId = config.params?.lecturerId;
+      let result = [...(courses as Record<string, string>[])];
+      if (semesterId) {
+        result = result.filter((c) => c.semesterId === String(semesterId));
+      }
+      if (lecturerId) {
+        result = result.filter((c) => c.lecturerId === String(lecturerId));
+      }
+      return [200, result];
     });
 
     mock.onPut(/\/api\/v1\/courses\/\w+\/enroll/).reply((config) => {
@@ -160,7 +186,9 @@ export function setupMockApi() {
       const { studentIds } = JSON.parse(config.data);
       const idx = courses.findIndex((c) => c.id === id);
       if (idx === -1) return [404, { message: 'Course not found' }];
+      const prevCount = (courses[idx].studentIds as string[])?.length ?? 0;
       courses[idx] = { ...courses[idx], studentIds };
+      logAudit('bulk_enroll', 'course', id, `Bulk enrolled ${studentIds.length} students in ${courses[idx].name} (was ${prevCount})`);
       return [200, courses[idx]];
     });
 
@@ -191,12 +219,15 @@ export function setupMockApi() {
       const idx = courses.findIndex((c) => c.id === id);
       if (idx === -1) return [404, { message: 'Course not found' }];
       courses[idx] = { ...courses[idx], ...payload };
+      logAudit('update_course', 'course', id, `Updated course ${payload.name ?? courses[idx].name}`);
       return [200, courses[idx]];
     });
 
     mock.onDelete(/\/api\/v1\/courses\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
+      const course = courses.find((c) => c.id === id);
       courses = courses.filter((c) => c.id !== id);
+      if (course) logAudit('delete_course', 'course', id, `Deleted course ${course.name}`);
       return [204];
     });
 
@@ -288,6 +319,7 @@ export function setupMockApi() {
       const payload = JSON.parse(config.data);
       const newDept = { ...payload, id: generateId('d') };
       departments.push(newDept);
+      logAudit('create_department', 'department', newDept.id, `Created department ${payload.name} (${payload.code})`);
       return [201, newDept];
     });
 
@@ -297,12 +329,15 @@ export function setupMockApi() {
       const idx = departments.findIndex((d) => d.id === id);
       if (idx === -1) return [404, { message: 'Department not found' }];
       departments[idx] = { ...departments[idx], ...payload };
+      logAudit('update_department', 'department', id, `Updated department ${payload.name ?? departments[idx].name}`);
       return [200, departments[idx]];
     });
 
     mock.onDelete(/\/api\/v1\/departments\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
+      const dept = departments.find((d) => d.id === id);
       departments = departments.filter((d) => d.id !== id);
+      if (dept) logAudit('delete_department', 'department', id, `Deleted department ${dept.name}`);
       return [204];
     });
 
@@ -313,6 +348,7 @@ export function setupMockApi() {
       const payload = JSON.parse(config.data);
       const newSem = { ...payload, id: generateId('sem') };
       semesters.push(newSem);
+      logAudit('create_semester', 'semester', newSem.id, `Created semester ${payload.name} (${payload.year})`);
       return [201, newSem];
     });
 
@@ -321,6 +357,7 @@ export function setupMockApi() {
       const idx = semesters.findIndex((s) => s.id === id);
       if (idx === -1) return [404, { message: 'Semester not found' }];
       semesters = semesters.map((s) => ({ ...s, isActive: s.id === id }));
+      logAudit('set_active_semester', 'semester', id, `Set ${semesters[idx].name} (${semesters[idx].year}) as active semester`);
       return [200, semesters[idx]];
     });
 
@@ -330,12 +367,72 @@ export function setupMockApi() {
       const idx = semesters.findIndex((s) => s.id === id);
       if (idx === -1) return [404, { message: 'Semester not found' }];
       semesters[idx] = { ...semesters[idx], ...payload };
+      logAudit('update_semester', 'semester', id, `Updated semester ${payload.name ?? semesters[idx].name}`);
       return [200, semesters[idx]];
     });
 
     mock.onDelete(/\/api\/v1\/semesters\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
+      const sem = semesters.find((s) => s.id === id);
       semesters = semesters.filter((s) => s.id !== id);
+      if (sem) logAudit('delete_semester', 'semester', id, `Deleted semester ${sem.name} (${sem.year})`);
+      return [204];
+    });
+
+    // ─── AUDIT LOGS ─────────────────────────────────────────────────────
+    function logAudit(action: string, targetType: string, targetId: string, details: string) {
+      const token = getToken();
+      const user = (userAccounts as unknown as Record<string, string>[]).find(
+        (u) => `mock.jwt.token_${u.role}` === token
+      );
+      auditLogs.push({
+        id: generateId('al'),
+        action,
+        performedBy: user?.name ?? 'Unknown',
+        performedById: user?.id ?? '',
+        targetType,
+        targetId,
+        details,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    mock.onGet('/api/v1/audit-logs').reply(() => [200, auditLogs]);
+
+    // ─── USERS (Admin Management) ──────────────────────────────────────
+    mock.onGet('/api/v1/users').reply(() => {
+      const safe = userAccounts.map((u) => {
+        const { password, ...rest } = u;
+        return rest;
+      });
+      return [200, safe];
+    });
+
+    mock.onPut(/\/api\/v1\/users\/\w+\/reset-password/).reply((config) => {
+      const id = config.url?.split('/').filter(Boolean)[3];
+      const { newPassword } = JSON.parse(config.data);
+      const idx = userAccounts.findIndex((u) => u.id === id);
+      if (idx === -1) return [404, { message: 'User not found' }];
+      userAccounts[idx] = { ...userAccounts[idx], password: newPassword };
+      logAudit('reset_password', 'user', id, `Reset password for ${userAccounts[idx].name}`);
+      return [200, { message: 'Password reset successfully' }];
+    });
+
+    mock.onPut(/\/api\/v1\/users\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const payload = JSON.parse(config.data);
+      const idx = userAccounts.findIndex((u) => u.id === id);
+      if (idx === -1) return [404, { message: 'User not found' }];
+      userAccounts[idx] = { ...userAccounts[idx], ...payload };
+      logAudit('update_user', 'user', id, `Updated user ${payload.name ?? userAccounts[idx].name}`);
+      return [200, { ...userAccounts[idx], password: undefined }];
+    });
+
+    mock.onDelete(/\/api\/v1\/users\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const u = userAccounts.find((u) => u.id === id);
+      userAccounts = userAccounts.filter((u) => u.id !== id);
+      if (u) logAudit('delete_user', 'user', id, `Deleted user ${u.name} (${u.role})`);
       return [204];
     });
 
@@ -368,6 +465,7 @@ export function setupMockApi() {
         password,
         approvedAt: new Date().toISOString(),
       };
+      logAudit('approve_request', 'account_request', id, `Approved account request for ${accountRequests[idx].name} (${schoolEmail})`);
       return [200, accountRequests[idx]];
     });
 
@@ -376,6 +474,7 @@ export function setupMockApi() {
       const idx = accountRequests.findIndex((r) => r.id === id);
       if (idx === -1) return [404, { message: 'Request not found' }];
       accountRequests[idx] = { ...accountRequests[idx], status: 'rejected' };
+      logAudit('reject_request', 'account_request', id, `Rejected account request from ${accountRequests[idx].name}`);
       return [200, accountRequests[idx]];
     });
   });

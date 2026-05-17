@@ -35,7 +35,7 @@ export function ConfirmDialog({
           <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-destructive text-white hover:bg-destructive/90"
+            className="bg-red-600 text-white hover:bg-red-700"
             disabled={isLoading}
           >
             {isLoading ? 'Deleting...' : confirmLabel}

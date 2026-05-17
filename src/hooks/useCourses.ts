@@ -3,10 +3,10 @@ import * as coursesApi from '@/api/coursesApi';
 import { QUERY_KEYS } from '@/utils/constants';
 import { toast } from 'sonner';
 
-export function useGetCourses() {
+export function useGetCourses(params?: Record<string, unknown>) {
   return useQuery({
-    queryKey: [QUERY_KEYS.COURSES],
-    queryFn: coursesApi.getAllCourses,
+    queryKey: [QUERY_KEYS.COURSES, params],
+    queryFn: () => coursesApi.getAllCourses(params),
   });
 }
 
