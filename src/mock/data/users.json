@@ -1,0 +1,26 @@
+[
+  {
+    "id": "u001",
+    "name": "Alice Nkunda",
+    "email": "admin@school.rw",
+    "password": "Admin@1234",
+    "role": "admin",
+    "avatar": null
+  },
+  {
+    "id": "u002",
+    "name": "Jean Pierre Habimana",
+    "email": "teacher@school.rw",
+    "password": "Teacher@1234",
+    "role": "teacher",
+    "avatar": null
+  },
+  {
+    "id": "u003",
+    "name": "Marie Claire Uwimana",
+    "email": "student@school.rw",
+    "password": "Student@1234",
+    "role": "student",
+    "avatar": null
+  }
+]

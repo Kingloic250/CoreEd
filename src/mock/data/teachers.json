@@ -1,0 +1,8 @@
+[
+  { "id": "t001", "firstName": "Jean Pierre", "lastName": "Habimana", "email": "teacher@school.rw", "subject": "Mathematics", "assignedClasses": ["c001", "c002"], "qualification": "B.Sc. Mathematics", "joinDate": "2018-09-01" },
+  { "id": "t002", "firstName": "Agathe", "lastName": "Uwimana", "email": "a.uwimana@school.rw", "subject": "English", "assignedClasses": ["c003", "c004"], "qualification": "B.A. English Literature", "joinDate": "2019-01-15" },
+  { "id": "t003", "firstName": "Sylvestre", "lastName": "Niyonzima", "email": "s.niyonzima@school.rw", "subject": "Physics", "assignedClasses": ["c005"], "qualification": "M.Sc. Physics", "joinDate": "2017-09-01" },
+  { "id": "t004", "firstName": "Chantal", "lastName": "Mukamana", "email": "c.mukamana@school.rw", "subject": "Biology", "assignedClasses": ["c006"], "qualification": "B.Sc. Biology", "joinDate": "2020-09-01" },
+  { "id": "t005", "firstName": "Olivier", "lastName": "Bizimana", "email": "o.bizimana@school.rw", "subject": "History", "assignedClasses": ["c001", "c003"], "qualification": "B.A. History", "joinDate": "2016-09-01" },
+  { "id": "t006", "firstName": "Esperance", "lastName": "Nzabonimana", "email": "e.nzabonimana@school.rw", "subject": "Chemistry", "assignedClasses": ["c002", "c005"], "qualification": "M.Sc. Chemistry", "joinDate": "2021-01-10" }
+]

@@ -1,0 +1,75 @@
+[
+  {
+    "id": "c001",
+    "name": "S4A Mathematics",
+    "gradeLevel": "S4",
+    "teacherId": "t001",
+    "room": "101",
+    "schedule": [
+      { "day": "Monday", "startTime": "08:00", "endTime": "09:00" },
+      { "day": "Wednesday", "startTime": "10:00", "endTime": "11:00" },
+      { "day": "Friday", "startTime": "08:00", "endTime": "09:00" }
+    ],
+    "studentIds": ["s001", "s004", "s009", "s013"]
+  },
+  {
+    "id": "c002",
+    "name": "S5A Mathematics",
+    "gradeLevel": "S5",
+    "teacherId": "t001",
+    "room": "102",
+    "schedule": [
+      { "day": "Tuesday", "startTime": "08:00", "endTime": "09:00" },
+      { "day": "Thursday", "startTime": "10:00", "endTime": "11:00" }
+    ],
+    "studentIds": ["s002", "s005", "s011"]
+  },
+  {
+    "id": "c003",
+    "name": "S3A English",
+    "gradeLevel": "S3",
+    "teacherId": "t002",
+    "room": "201",
+    "schedule": [
+      { "day": "Monday", "startTime": "09:00", "endTime": "10:00" },
+      { "day": "Wednesday", "startTime": "11:00", "endTime": "12:00" }
+    ],
+    "studentIds": ["s003", "s007", "s012"]
+  },
+  {
+    "id": "c004",
+    "name": "S6A English",
+    "gradeLevel": "S6",
+    "teacherId": "t002",
+    "room": "202",
+    "schedule": [
+      { "day": "Tuesday", "startTime": "09:00", "endTime": "10:00" },
+      { "day": "Thursday", "startTime": "11:00", "endTime": "12:00" }
+    ],
+    "studentIds": ["s008", "s014"]
+  },
+  {
+    "id": "c005",
+    "name": "S5B Physics",
+    "gradeLevel": "S5",
+    "teacherId": "t003",
+    "room": "Lab1",
+    "schedule": [
+      { "day": "Monday", "startTime": "11:00", "endTime": "12:00" },
+      { "day": "Friday", "startTime": "09:00", "endTime": "10:00" }
+    ],
+    "studentIds": ["s002", "s005", "s011"]
+  },
+  {
+    "id": "c006",
+    "name": "S2A Biology",
+    "gradeLevel": "S2",
+    "teacherId": "t004",
+    "room": "Lab2",
+    "schedule": [
+      { "day": "Wednesday", "startTime": "08:00", "endTime": "09:00" },
+      { "day": "Friday", "startTime": "11:00", "endTime": "12:00" }
+    ],
+    "studentIds": ["s006", "s015", "s010"]
+  }
+]
