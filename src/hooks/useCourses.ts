@@ -10,6 +10,14 @@ export function useGetCourses(params?: Record<string, unknown>) {
   });
 }
 
+export function useGetCourse(id: string | undefined) {
+  return useQuery({
+    queryKey: [QUERY_KEYS.COURSES, id],
+    queryFn: () => coursesApi.getCourseById(id!),
+    enabled: !!id,
+  });
+}
+
 export function useCreateCourse() {
   const qc = useQueryClient();
   return useMutation({

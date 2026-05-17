@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   BarChart3, ClipboardList, FileText, Bell, School,
-  Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
+  ClipboardCheck, Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
   Library, ScrollText, Shield, CalendarRange
 } from 'lucide-react';
 import {
@@ -33,8 +33,11 @@ const adminNav = [
 const lecturerNav = [
   { title: 'Dashboard', url: '/lecturer', icon: LayoutDashboard },
   { title: 'My Courses', url: '/lecturer/courses', icon: BookOpen },
-  { title: 'Attendance', url: '/lecturer/attendance', icon: ClipboardList },
-  { title: 'Grades', url: '/lecturer/grades', icon: Trophy },
+  { title: 'Timetable', url: '/lecturer/timetable', icon: Calendar },
+  { title: 'Mark Attendance', url: '/lecturer/attendance', icon: ClipboardList },
+  { title: 'Attendance History', url: '/lecturer/attendance/history', icon: ClipboardCheck },
+  { title: 'Enter Grades', url: '/lecturer/grades', icon: Trophy },
+  { title: 'Grade Book', url: '/lecturer/grades/book', icon: ScrollText },
 ];
 
 const studentNav = [

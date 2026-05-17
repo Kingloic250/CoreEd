@@ -168,6 +168,13 @@ export function setupMockApi() {
     });
 
     // ─── COURSES ──────────────────────────────────────────────────────────
+    mock.onGet(/\/api\/v1\/courses\/[^/]+$/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const course = (courses as Record<string, string>[]).find((c) => c.id === id);
+      if (!course) return [404, { message: 'Course not found' }];
+      return [200, course];
+    });
+
     mock.onGet('/api/v1/courses').reply((config) => {
       const semesterId = config.params?.semesterId;
       const lecturerId = config.params?.lecturerId;
@@ -233,10 +240,11 @@ export function setupMockApi() {
 
     // ─── ATTENDANCE ───────────────────────────────────────────────────────
     mock.onGet('/api/v1/attendance').reply((config) => {
-      const { courseId, date } = config.params ?? {};
+      const { courseId, date, markedBy } = config.params ?? {};
       const filtered = attendance.filter((a) => {
         if (courseId && a.courseId !== courseId) return false;
         if (date && a.date !== date) return false;
+        if (markedBy && a.markedBy !== markedBy) return false;
         return true;
       });
       return [200, filtered];

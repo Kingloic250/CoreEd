@@ -12,7 +12,14 @@
       { "day": "Wednesday", "startTime": "10:00", "endTime": "11:00" },
       { "day": "Friday", "startTime": "08:00", "endTime": "09:00" }
     ],
-    "studentIds": ["s001", "s004", "s009", "s013"]
+    "studentIds": ["s001", "s004", "s009", "s013"],
+    "gradingComponents": [
+      { "name": "Quiz 1", "maxScore": 20, "weight": 10 },
+      { "name": "Quiz 2", "maxScore": 20, "weight": 10 },
+      { "name": "Midterm Exam", "maxScore": 100, "weight": 30 },
+      { "name": "Project", "maxScore": 100, "weight": 20 },
+      { "name": "Final Exam", "maxScore": 100, "weight": 30 }
+    ]
   },
   {
     "id": "c002",
@@ -26,7 +33,14 @@
       { "day": "Tuesday", "startTime": "08:00", "endTime": "09:00" },
       { "day": "Thursday", "startTime": "10:00", "endTime": "11:00" }
     ],
-    "studentIds": ["s002", "s005", "s011"]
+    "studentIds": ["s002", "s005", "s011"],
+    "gradingComponents": [
+      { "name": "Assignment", "maxScore": 20, "weight": 10 },
+      { "name": "Quiz", "maxScore": 20, "weight": 10 },
+      { "name": "Midterm Exam", "maxScore": 100, "weight": 30 },
+      { "name": "Project", "maxScore": 100, "weight": 20 },
+      { "name": "Final Exam", "maxScore": 100, "weight": 30 }
+    ]
   },
   {
     "id": "c001-old",
@@ -41,7 +55,14 @@
       { "day": "Wednesday", "startTime": "10:00", "endTime": "11:00" },
       { "day": "Friday", "startTime": "08:00", "endTime": "09:00" }
     ],
-    "studentIds": ["s016"]
+    "studentIds": ["s016"],
+    "gradingComponents": [
+      { "name": "Quiz 1", "maxScore": 20, "weight": 10 },
+      { "name": "Quiz 2", "maxScore": 20, "weight": 10 },
+      { "name": "Midterm Exam", "maxScore": 100, "weight": 30 },
+      { "name": "Project", "maxScore": 100, "weight": 20 },
+      { "name": "Final Exam", "maxScore": 100, "weight": 30 }
+    ]
   },
   {
     "id": "c003",
@@ -55,7 +76,13 @@
       { "day": "Monday", "startTime": "09:00", "endTime": "10:00" },
       { "day": "Wednesday", "startTime": "11:00", "endTime": "12:00" }
     ],
-    "studentIds": ["s003", "s007", "s012"]
+    "studentIds": ["s003", "s007", "s012"],
+    "gradingComponents": [
+      { "name": "Essay", "maxScore": 30, "weight": 15 },
+      { "name": "Presentation", "maxScore": 30, "weight": 15 },
+      { "name": "Midterm Exam", "maxScore": 100, "weight": 30 },
+      { "name": "Final Exam", "maxScore": 100, "weight": 40 }
+    ]
   },
   {
     "id": "c004",
@@ -69,7 +96,13 @@
       { "day": "Tuesday", "startTime": "09:00", "endTime": "10:00" },
       { "day": "Thursday", "startTime": "11:00", "endTime": "12:00" }
     ],
-    "studentIds": ["s008", "s014"]
+    "studentIds": ["s008", "s014"],
+    "gradingComponents": [
+      { "name": "Essay", "maxScore": 30, "weight": 15 },
+      { "name": "Research Paper", "maxScore": 50, "weight": 25 },
+      { "name": "Midterm Exam", "maxScore": 100, "weight": 25 },
+      { "name": "Final Exam", "maxScore": 100, "weight": 35 }
+    ]
   },
   {
     "id": "c005",
@@ -83,7 +116,14 @@
       { "day": "Monday", "startTime": "11:00", "endTime": "12:00" },
       { "day": "Friday", "startTime": "09:00", "endTime": "10:00" }
     ],
-    "studentIds": ["s002", "s005", "s011"]
+    "studentIds": ["s002", "s005", "s011"],
+    "gradingComponents": [
+      { "name": "Lab Report", "maxScore": 30, "weight": 15 },
+      { "name": "Quiz", "maxScore": 20, "weight": 10 },
+      { "name": "Midterm Exam", "maxScore": 100, "weight": 30 },
+      { "name": "Project", "maxScore": 50, "weight": 15 },
+      { "name": "Final Exam", "maxScore": 100, "weight": 30 }
+    ]
   },
   {
     "id": "c006",
@@ -97,6 +137,12 @@
       { "day": "Wednesday", "startTime": "08:00", "endTime": "09:00" },
       { "day": "Friday", "startTime": "11:00", "endTime": "12:00" }
     ],
-    "studentIds": ["s006", "s015", "s010"]
+    "studentIds": ["s006", "s015", "s010"],
+    "gradingComponents": [
+      { "name": "Lab Report", "maxScore": 30, "weight": 20 },
+      { "name": "Quiz", "maxScore": 20, "weight": 10 },
+      { "name": "Midterm Exam", "maxScore": 100, "weight": 30 },
+      { "name": "Final Exam", "maxScore": 100, "weight": 40 }
+    ]
   }
 ]

@@ -5,6 +5,9 @@ const BASE = '/api/v1/courses';
 export const getAllCourses = (params?: Record<string, unknown>) =>
   axiosInstance.get(BASE, { params }) as unknown as Promise<unknown[]>;
 
+export const getCourseById = (id: string) =>
+  axiosInstance.get(`${BASE}/${id}`) as unknown as Promise<unknown>;
+
 export const createCourse = (payload: unknown) =>
   axiosInstance.post(BASE, payload) as unknown as Promise<unknown>;
 

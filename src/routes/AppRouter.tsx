@@ -25,8 +25,13 @@ import { ManageTimetable } from '@/pages/admin/ManageTimetable';
 
 import { LecturerDashboard } from '@/pages/lecturer/LecturerDashboard';
 import { MyCourses } from '@/pages/lecturer/MyCourses';
+import { CourseDetail } from '@/pages/lecturer/CourseDetail';
+import { MyTimetable } from '@/pages/lecturer/MyTimetable';
 import { AttendanceLog } from '@/pages/lecturer/AttendanceLog';
+import { AttendanceHistory } from '@/pages/lecturer/AttendanceHistory';
 import { GradeInput } from '@/pages/lecturer/GradeInput';
+import { GradeBook } from '@/pages/lecturer/GradeBook';
+import { LecturerProfile } from '@/pages/lecturer/LecturerProfile';
 
 import { NotificationsPage } from '@/pages/NotificationsPage';
 
@@ -103,8 +108,13 @@ export function AppRouter() {
         >
           <Route index element={<LecturerDashboard />} />
           <Route path="courses" element={<MyCourses />} />
+          <Route path="courses/:id" element={<CourseDetail />} />
+          <Route path="timetable" element={<MyTimetable />} />
           <Route path="attendance" element={<AttendanceLog />} />
+          <Route path="attendance/history" element={<AttendanceHistory />} />
           <Route path="grades" element={<GradeInput />} />
+          <Route path="grades/book" element={<GradeBook />} />
+          <Route path="profile" element={<LecturerProfile />} />
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
 

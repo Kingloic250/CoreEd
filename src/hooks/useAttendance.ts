@@ -3,11 +3,11 @@ import * as attendanceApi from '@/api/attendanceApi';
 import { QUERY_KEYS } from '@/utils/constants';
 import { toast } from 'sonner';
 
-export function useGetAttendance(params: { courseId?: string; date?: string; studentId?: string }) {
+export function useGetAttendance(params: { courseId?: string; date?: string; studentId?: string; markedBy?: string }) {
   return useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, params],
     queryFn: () => attendanceApi.getAttendance(params),
-    enabled: !!(params.courseId || params.date || params.studentId),
+    enabled: !!(params.courseId || params.date || params.studentId || params.markedBy),
   });
 }
 

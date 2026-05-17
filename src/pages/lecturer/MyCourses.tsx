@@ -1,7 +1,9 @@
-import { BookOpen, MapPin, Users, Clock } from 'lucide-react';
+import { BookOpen, MapPin, Users, Clock, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
@@ -10,6 +12,7 @@ import { useGetActiveSemester } from '@/hooks/useSemesters';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 export function MyCourses() {
+  const navigate = useNavigate();
   const { data: currentLecturer } = useGetCurrentLecturer();
   const { activeSemester } = useGetActiveSemester();
   const lecturerId = currentLecturer ? (currentLecturer as Record<string, unknown>).id : undefined;
@@ -32,7 +35,7 @@ export function MyCourses() {
           {myCourses.map((c) => {
             const schedule = (c.schedule as Record<string, string>[]) ?? [];
             return (
-              <Card key={String(c.id)}>
+              <Card key={String(c.id)} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/lecturer/courses/${String(c.id)}`)}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base">{String(c.name)}</CardTitle>
@@ -72,6 +75,10 @@ export function MyCourses() {
                       </div>
                     </div>
                   )}
+
+                  <Button variant="ghost" size="sm" className="w-full mt-1 text-muted-foreground">
+                    View Details <ChevronRight className="size-3.5 ml-1" />
+                  </Button>
                 </CardContent>
               </Card>
             );

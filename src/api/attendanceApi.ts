@@ -2,7 +2,7 @@ import axiosInstance from './axiosInstance';
 
 const BASE = '/api/v1/attendance';
 
-export const getAttendance = (params: { courseId?: string; date?: string; studentId?: string }) =>
+export const getAttendance = (params: { courseId?: string; date?: string; studentId?: string; markedBy?: string }) =>
   axiosInstance.get(BASE, { params }) as unknown as Promise<unknown[]>;
 
 export const logAttendance = (payload: unknown) =>
