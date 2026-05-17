@@ -93,6 +93,19 @@ export function setupMockApi() {
       return [200, filtered];
     });
 
+    mock.onGet('/api/v1/students/profile').reply(() => {
+      const token = getToken();
+      const user = (userAccounts as unknown as Record<string, string>[]).find(
+        (u) => `mock.jwt.token_${u.role}` === token
+      );
+      if (!user) return [401, { message: 'Unauthorized' }];
+      const studentProfile = (students as Record<string, string>[]).find(
+        (s) => s.email === user.email
+      );
+      if (!studentProfile) return [404, { message: 'Student profile not found' }];
+      return [200, studentProfile];
+    });
+
     mock.onGet(/\/api\/v1\/students\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
       const student = students.find((s) => s.id === id);
@@ -143,8 +156,20 @@ export function setupMockApi() {
 
     mock.onPost('/api/v1/lecturers').reply((config) => {
       const payload = JSON.parse(config.data);
-      const newLecturer = { ...payload, id: generateId('l') };
+      const { password, ...lecturerData } = payload;
+      const newLecturer = { ...lecturerData, id: generateId('l') };
       lecturers.push(newLecturer);
+
+      const newUser = {
+        id: generateId('u'),
+        name: `${payload.firstName} ${payload.lastName}`,
+        email: payload.email,
+        password: password ?? 'Lecturer@1234',
+        role: 'lecturer',
+        avatar: null,
+      };
+      (userAccounts as Record<string, unknown>[]).push(newUser);
+
       logAudit('create_lecturer', 'lecturer', newLecturer.id, `Created lecturer ${payload.firstName} ${payload.lastName} (${payload.department})`);
       return [201, newLecturer];
     });
@@ -178,12 +203,18 @@ export function setupMockApi() {
     mock.onGet('/api/v1/courses').reply((config) => {
       const semesterId = config.params?.semesterId;
       const lecturerId = config.params?.lecturerId;
+      const studentId = config.params?.studentId;
       let result = [...(courses as Record<string, string>[])];
       if (semesterId) {
         result = result.filter((c) => c.semesterId === String(semesterId));
       }
       if (lecturerId) {
         result = result.filter((c) => c.lecturerId === String(lecturerId));
+      }
+      if (studentId) {
+        result = result.filter(
+          (c) => (c.studentIds as string[])?.includes(String(studentId))
+        );
       }
       return [200, result];
     });
@@ -473,6 +504,35 @@ export function setupMockApi() {
         password,
         approvedAt: new Date().toISOString(),
       };
+
+      const requestName = String(accountRequests[idx].name ?? '');
+      const nameParts = requestName.split(' ');
+      const firstName = nameParts[0] || requestName;
+      const lastName = nameParts.slice(1).join(' ') || 'Student';
+
+      const newUser = {
+        id: generateId('u'),
+        name: requestName,
+        email: schoolEmail,
+        password,
+        role: 'student',
+        avatar: null,
+      };
+      (userAccounts as Record<string, unknown>[]).push(newUser);
+
+      const newStudent = {
+        id: generateId('s'),
+        firstName,
+        lastName,
+        email: schoolEmail,
+        dateOfBirth: '',
+        gender: 'male',
+        year: 'Year 1',
+        enrollmentDate: new Date().toISOString().split('T')[0],
+        status: 'active',
+      };
+      (students as Record<string, unknown>[]).push(newStudent);
+
       logAudit('approve_request', 'account_request', id, `Approved account request for ${accountRequests[idx].name} (${schoolEmail})`);
       return [200, accountRequests[idx]];
     });

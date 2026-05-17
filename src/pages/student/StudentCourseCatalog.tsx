@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { BookOpen, Check, X, Loader2, GraduationCap, User, Building2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, Check, X, Loader2, GraduationCap, User, Building2, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ type Lecturer = Record<string, unknown>;
 type Department = { id: string; name: string };
 
 export function StudentCourseCatalog() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: courses, isLoading: coursesLoading } = useGetCourses();
   const { data: lecturers } = useGetLecturers();
@@ -79,9 +81,9 @@ export function StudentCourseCatalog() {
           const pending = isPending(String(course.id));
           return (
             <Card key={String(course.id)} className="flex flex-col">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 cursor-pointer" onClick={() => navigate(`/student/courses/${String(course.id)}`)}>
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{String(course.name)}</CardTitle>
+                  <CardTitle className="text-base hover:text-primary transition-colors">{String(course.name)}</CardTitle>
                   {enrolled && (
                     <Badge variant="outline" className="shrink-0 bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800">
                       <Check className="size-3 mr-0.5" /> Enrolled
@@ -106,11 +108,20 @@ export function StudentCourseCatalog() {
               <CardContent className="pb-3 text-xs text-muted-foreground">
                 {String(course.room)} · {(course.studentIds as string[])?.length ?? 0} students
               </CardContent>
-              <CardFooter className="mt-auto pt-0">
+              <CardFooter className="mt-auto pt-0 flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1"
+                  onClick={() => navigate(`/student/courses/${String(course.id)}`)}
+                >
+                  Details <ChevronRight className="size-3" />
+                </Button>
                 {enrolled ? (
                   <Button
                     variant="outline"
-                    className="w-full gap-1.5"
+                    size="sm"
+                    className="ml-auto gap-1.5"
                     onClick={() => unenrollMutation.mutate({ courseId: String(course.id), studentId })}
                     disabled={pending}
                   >
@@ -119,7 +130,8 @@ export function StudentCourseCatalog() {
                   </Button>
                 ) : (
                   <Button
-                    className="w-full gap-1.5"
+                    size="sm"
+                    className="ml-auto gap-1.5"
                     onClick={() => enrollMutation.mutate({ courseId: String(course.id), studentId })}
                     disabled={pending}
                   >

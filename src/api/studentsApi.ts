@@ -9,6 +9,9 @@ export const getAllStudents = (params?: { page?: number; limit?: number; search?
 export const getStudentById = (id: string) =>
   axiosInstance.get(`${BASE}/${id}`) as unknown as Promise<unknown>;
 
+export const getCurrentStudent = () =>
+  axiosInstance.get(`${BASE}/profile`) as unknown as Promise<unknown>;
+
 export const createStudent = (payload: unknown) =>
   axiosInstance.post(BASE, payload) as unknown as Promise<unknown>;
 

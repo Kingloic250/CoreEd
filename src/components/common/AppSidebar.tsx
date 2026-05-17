@@ -45,6 +45,7 @@ const studentNav = [
   { title: 'My Attendance', url: '/student/attendance', icon: Calendar },
   { title: 'My Grades', url: '/student/grades', icon: Trophy },
   { title: 'Course Catalog', url: '/student/courses', icon: Library },
+  { title: 'My Timetable', url: '/student/timetable', icon: CalendarDays },
   { title: 'Transcript', url: '/student/transcript', icon: FileText },
   { title: 'Announcements', url: '/student/announcements', icon: Bell },
 ];

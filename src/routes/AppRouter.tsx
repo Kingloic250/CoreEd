@@ -41,6 +41,9 @@ import { MyGrades } from '@/pages/student/MyGrades';
 import { Transcript } from '@/pages/student/Transcript';
 import { Announcements } from '@/pages/student/Announcements';
 import { StudentCourseCatalog } from '@/pages/student/StudentCourseCatalog';
+import { StudentCourseDetail } from '@/pages/student/StudentCourseDetail';
+import { StudentProfile } from '@/pages/student/StudentProfile';
+import { StudentTimetable } from '@/pages/student/StudentTimetable';
 
 function RootRedirect() {
   const { isAuthenticated, getDashboardPath } = useAuth();
@@ -130,6 +133,9 @@ export function AppRouter() {
           <Route path="attendance" element={<MyAttendance />} />
           <Route path="grades" element={<MyGrades />} />
           <Route path="courses" element={<StudentCourseCatalog />} />
+          <Route path="courses/:id" element={<StudentCourseDetail />} />
+          <Route path="timetable" element={<StudentTimetable />} />
+          <Route path="profile" element={<StudentProfile />} />
           <Route path="transcript" element={<Transcript />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="notifications" element={<NotificationsPage />} />

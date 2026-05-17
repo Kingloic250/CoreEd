@@ -19,6 +19,13 @@ export function useGetStudentById(id: string) {
   });
 }
 
+export function useGetCurrentStudent() {
+  return useQuery({
+    queryKey: [QUERY_KEYS.STUDENTS, 'current'],
+    queryFn: studentsApi.getCurrentStudent,
+  });
+}
+
 export function useCreateStudent() {
   const qc = useQueryClient();
   return useMutation({
