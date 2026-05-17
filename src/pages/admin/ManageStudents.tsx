@@ -4,7 +4,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/common/DataTable';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -62,7 +62,7 @@ export function ManageStudents() {
         </div>
       ),
     },
-    { accessorKey: 'class', header: 'Class' },
+    { accessorKey: 'year', header: 'Year' },
     {
       accessorKey: 'gender',
       header: 'Gender',
@@ -127,21 +127,19 @@ export function ManageStudents() {
         onGlobalFilterChange={setSearch}
       />
 
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{editing ? 'Edit Student' : 'Add New Student'}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <StudentForm
-              defaultValues={editing as (StudentFormData & { id: string }) | undefined}
-              onSubmit={handleSubmit}
-              isLoading={createMutation.isPending || updateMutation.isPending}
-              onCancel={() => setOpen(false)}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Edit Student' : 'Add New Student'}</DialogTitle>
+          </DialogHeader>
+          <StudentForm
+            defaultValues={editing as (StudentFormData & { id: string }) | undefined}
+            onSubmit={handleSubmit}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+            onCancel={() => setOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={!!deleteId}

@@ -1,4 +1,3 @@
-// Add/edit student form with React Hook Form + Zod validation
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { studentSchema, type StudentFormData } from '@/utils/validators';
-import { GRADE_LEVELS } from '@/utils/constants';
+import { YEARS } from '@/utils/constants';
 
 interface StudentFormProps {
   defaultValues?: Partial<StudentFormData & { id: string }>;
@@ -65,28 +64,23 @@ export function StudentForm({ defaultValues, onSubmit, isLoading, onCancel }: St
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="class" aria-label="Class">Class</Label>
-        <Select onValueChange={(v) => setValue('class', v)} defaultValue={defaultValues?.class}>
-          <SelectTrigger id="class" aria-invalid={!!errors.class} aria-label="Select class">
-            <SelectValue placeholder="Select class" />
+        <Label htmlFor="year" aria-label="Year">Year</Label>
+        <Select onValueChange={(v) => setValue('year', v)} defaultValue={defaultValues?.year}>
+          <SelectTrigger id="year" aria-invalid={!!errors.year} aria-label="Select year">
+            <SelectValue placeholder="Select year" />
           </SelectTrigger>
           <SelectContent>
-            {GRADE_LEVELS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+            {YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
           </SelectContent>
         </Select>
-        {errors.class && <p className="text-xs text-destructive">{errors.class.message}</p>}
+        {errors.year && <p className="text-xs text-destructive">{errors.year.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="guardianName" aria-label="Guardian name">Guardian Name</Label>
-          <Input id="guardianName" aria-invalid={!!errors.guardianName} {...register('guardianName')} />
-          {errors.guardianName && <p className="text-xs text-destructive">{errors.guardianName.message}</p>}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="guardianPhone" aria-label="Guardian phone">Guardian Phone</Label>
-          <Input id="guardianPhone" aria-invalid={!!errors.guardianPhone} {...register('guardianPhone')} />
-          {errors.guardianPhone && <p className="text-xs text-destructive">{errors.guardianPhone.message}</p>}
+          <Label htmlFor="enrollmentDate" aria-label="Enrollment date">Enrollment Date</Label>
+          <Input id="enrollmentDate" type="date" aria-invalid={!!errors.enrollmentDate} {...register('enrollmentDate')} />
+          {errors.enrollmentDate && <p className="text-xs text-destructive">{errors.enrollmentDate.message}</p>}
         </div>
       </div>
 

@@ -1,11 +1,10 @@
-// Admin reports: attendance summary and grade distribution
-import { toast } from 'sonner';
 import { Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
-import { useGetClasses } from '@/hooks/useClasses';
+import { useGetCourses } from '@/hooks/useCourses';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { downloadCsv } from '@/utils/csv';
 
 const gradeDistribution = [
   { range: '90-100', count: 12, fill: 'var(--chart-1)' },
@@ -15,11 +14,24 @@ const gradeDistribution = [
   { range: '0-49', count: 3, fill: 'var(--chart-5)' },
 ];
 
-const handleExport = () => toast.info('Export functionality coming soon');
-
 export function Reports() {
-  const { data: classes } = useGetClasses();
-  const classList = (classes as Record<string, unknown>[]) ?? [];
+  const { data: courses } = useGetCourses();
+  const courseList = (courses as Record<string, unknown>[]) ?? [];
+
+  const attendanceData = courseList.map((c) => ({
+    name: String(c.name),
+    rate: Math.floor(75 + Math.random() * 20),
+  }));
+
+  const handleExportCsv = () => {
+    const headers = ['Course Name', 'Attendance Rate (%)'];
+    const rows = attendanceData.map((d) => [d.name, String(d.rate)]);
+    downloadCsv('attendance-summary.csv', headers, rows);
+  };
+
+  const handleExportPdf = () => {
+    window.print();
+  };
 
   return (
     <div>
@@ -27,39 +39,34 @@ export function Reports() {
 
       <div className="space-y-6">
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
+          <Button variant="outline" onClick={handleExportCsv}>
             <Download className="size-4" /> Export CSV
           </Button>
-          <Button variant="outline" onClick={handleExport}>
+          <Button variant="outline" onClick={handleExportPdf}>
             <Download className="size-4" /> Export PDF
           </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Attendance by class */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Attendance Summary by Class</CardTitle>
+              <CardTitle className="text-base">Attendance Summary by Course</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {classList.map((cls) => {
-                  const pct = Math.floor(75 + Math.random() * 20);
-                  return (
-                    <div key={String(cls.id)} className="flex items-center gap-3">
-                      <span className="text-sm text-foreground w-32 truncate">{String(cls.name)}</span>
-                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="text-xs text-muted-foreground w-10 text-right">{pct}%</span>
+                {attendanceData.map((d) => (
+                  <div key={d.name} className="flex items-center gap-3">
+                    <span className="text-sm text-foreground w-32 truncate">{d.name}</span>
+                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${d.rate}%` }} />
                     </div>
-                  );
-                })}
+                    <span className="text-xs text-muted-foreground w-10 text-right">{d.rate}%</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Grade distribution */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Grade Distribution</CardTitle>

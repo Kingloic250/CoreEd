@@ -47,8 +47,8 @@ export function TopBar() {
 
   const notifPath = user?.role === 'admin'
     ? '/admin/notifications'
-    : user?.role === 'teacher'
-      ? '/teacher/notifications'
+    : user?.role === 'lecturer'
+      ? '/lecturer/notifications'
       : '/student/notifications';
 
   return (
@@ -138,7 +138,7 @@ export function TopBar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(`/${user?.role}/profile`)}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>

@@ -1,14 +1,13 @@
-// React Query hooks for attendance data
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as attendanceApi from '@/api/attendanceApi';
 import { QUERY_KEYS } from '@/utils/constants';
 import { toast } from 'sonner';
 
-export function useGetAttendance(params: { classId?: string; date?: string; studentId?: string }) {
+export function useGetAttendance(params: { courseId?: string; date?: string; studentId?: string }) {
   return useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, params],
     queryFn: () => attendanceApi.getAttendance(params),
-    enabled: !!(params.classId || params.date || params.studentId),
+    enabled: !!(params.courseId || params.date || params.studentId),
   });
 }
 

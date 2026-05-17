@@ -1,4 +1,3 @@
-// Student: print-ready official transcript
 import { useRef } from 'react';
 import { format } from 'date-fns';
 import { Printer } from 'lucide-react';
@@ -12,7 +11,7 @@ import { useGetGrades } from '@/hooks/useGrades';
 import { useGetAttendance } from '@/hooks/useAttendance';
 import { useAuth } from '@/hooks/useAuth';
 import { getGradeColor } from '@/utils/formatters';
-import { TERMS } from '@/utils/constants';
+import { SEMESTERS } from '@/utils/constants';
 
 export function Transcript() {
   const { user } = useAuth();
@@ -29,8 +28,8 @@ export function Transcript() {
     ? Math.round(allGrades.reduce((s, g) => s + Number(g.score), 0) / allGrades.length)
     : 0;
 
-  const gradesByTerm = TERMS.reduce<Record<string, Record<string, unknown>[]>>((acc, term) => {
-    acc[term] = allGrades.filter((g) => g.term === term);
+  const gradesBySemester = SEMESTERS.reduce<Record<string, Record<string, unknown>[]>>((acc, sem) => {
+    acc[sem] = allGrades.filter((g) => g.semester === sem);
     return acc;
   }, {});
 
@@ -48,7 +47,6 @@ export function Transcript() {
         </Button>
       </div>
 
-      {/* Print area */}
       <div ref={printRef} className="print:p-8">
         <style>{`
           @media print {
@@ -66,7 +64,6 @@ export function Transcript() {
               </div>
             ) : (
               <>
-                {/* Header */}
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-bold tracking-tight">
                     {import.meta.env.VITE_APP_NAME ?? 'Greenfield Academy'}
@@ -75,7 +72,6 @@ export function Transcript() {
                   <Separator className="mt-4" />
                 </div>
 
-                {/* Student info */}
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 text-sm">
                   <div>
                     <span className="text-muted-foreground">Student Name: </span>
@@ -99,16 +95,15 @@ export function Transcript() {
 
                 <Separator className="mb-6" />
 
-                {/* Grades by term */}
-                {TERMS.map((term) => {
-                  const termGrades = gradesByTerm[term] ?? [];
-                  if (termGrades.length === 0) return null;
-                  const termAvg = Math.round(termGrades.reduce((s, g) => s + Number(g.score), 0) / termGrades.length);
+                {SEMESTERS.map((sem) => {
+                  const semGrades = gradesBySemester[sem] ?? [];
+                  if (semGrades.length === 0) return null;
+                  const semAvg = Math.round(semGrades.reduce((s, g) => s + Number(g.score), 0) / semGrades.length);
                   return (
-                    <div key={term} className="mb-6">
+                    <div key={sem} className="mb-6">
                       <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{term}</h2>
-                        <span className="text-xs text-muted-foreground">Average: <strong className="text-foreground">{termAvg}%</strong></span>
+                        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{sem}</h2>
+                        <span className="text-xs text-muted-foreground">Average: <strong className="text-foreground">{semAvg}%</strong></span>
                       </div>
                       <div className="rounded-lg border overflow-hidden">
                         <table className="w-full text-sm">
@@ -122,7 +117,7 @@ export function Transcript() {
                             </tr>
                           </thead>
                           <tbody>
-                            {termGrades.map((g) => {
+                            {semGrades.map((g) => {
                               const pct = Math.round((Number(g.score) / Number(g.maxScore)) * 100);
                               return (
                                 <tr key={String(g.id)} className="border-t hover:bg-muted/20">
@@ -147,7 +142,6 @@ export function Transcript() {
 
                 <Separator className="my-6" />
 
-                {/* Overall summary */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-semibold">Overall Average</span>
                   <span className="text-lg font-bold">{overallAvg}%</span>

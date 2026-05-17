@@ -107,7 +107,7 @@ export function ContactAdminPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@school.rw"
+                    placeholder="you@greenfield.edu"
                     className="pl-10"
                     value={formData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
@@ -117,12 +117,12 @@ export function ContactAdminPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="classLevel">Class / Grade</Label>
+                <Label htmlFor="classLevel">Year / Programme</Label>
                 <div className="relative">
                   <BookOpen className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="classLevel"
-                    placeholder="e.g. S3"
+                    placeholder="e.g. Year 1, Computer Science"
                     className="pl-10"
                     value={formData.classOrSubject}
                     onChange={(e) => handleChange('classOrSubject', e.target.value)}

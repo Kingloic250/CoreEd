@@ -1,19 +1,18 @@
-// Auth helper hook: login, logout, role checking
 import { useAuthStore } from '@/store/authStore';
 import { ROLES, type Role } from '@/utils/constants';
 
 export function useAuth() {
-  const { user, isAuthenticated, isLoading, error, login, logout, clearError } = useAuthStore();
+  const { user, isAuthenticated, isLoading, error, login, logout, setUser, clearError } = useAuthStore();
 
   const hasRole = (role: Role): boolean => user?.role === role;
 
   const isAdmin = hasRole(ROLES.ADMIN);
-  const isTeacher = hasRole(ROLES.TEACHER);
+  const isLecturer = hasRole(ROLES.LECTURER);
   const isStudent = hasRole(ROLES.STUDENT);
 
   const getDashboardPath = (): string => {
     if (isAdmin) return '/admin';
-    if (isTeacher) return '/teacher';
+    if (isLecturer) return '/lecturer';
     if (isStudent) return '/student';
     return '/login';
   };
@@ -25,10 +24,11 @@ export function useAuth() {
     error,
     login,
     logout,
+    setUser,
     clearError,
     hasRole,
     isAdmin,
-    isTeacher,
+    isLecturer,
     isStudent,
     getDashboardPath,
   };

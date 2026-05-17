@@ -1,4 +1,3 @@
-// Add/edit class form with schedule builder
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
@@ -8,22 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import { classSchema, type ClassFormData } from '@/utils/validators';
-import { GRADE_LEVELS } from '@/utils/constants';
+import { courseSchema, type CourseFormData } from '@/utils/validators';
+import { YEARS } from '@/utils/constants';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-interface ClassFormProps {
-  defaultValues?: Partial<ClassFormData & { id: string }>;
-  teachers: Record<string, unknown>[];
-  onSubmit: (data: ClassFormData) => void;
+interface CourseFormProps {
+  defaultValues?: Partial<CourseFormData & { id: string }>;
+  lecturers: Record<string, unknown>[];
+  departments: { id: string; name: string }[];
+  onSubmit: (data: CourseFormData) => void;
   isLoading?: boolean;
   onCancel: () => void;
 }
 
-export function ClassForm({ defaultValues, teachers, onSubmit, isLoading, onCancel }: ClassFormProps) {
-  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<ClassFormData>({
-    resolver: zodResolver(classSchema),
+export function CourseForm({ defaultValues, lecturers, departments, onSubmit, isLoading, onCancel }: CourseFormProps) {
+  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<CourseFormData>({
+    resolver: zodResolver(courseSchema),
     defaultValues: defaultValues ?? { schedule: [{ day: '', startTime: '', endTime: '' }] },
   });
 
@@ -32,23 +32,23 @@ export function ClassForm({ defaultValues, teachers, onSubmit, isLoading, onCanc
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <div className="space-y-1.5">
-        <Label htmlFor="cf-name" aria-label="Class name">Class Name</Label>
+        <Label htmlFor="cf-name" aria-label="Course name">Course Name</Label>
         <Input id="cf-name" aria-invalid={!!errors.name} {...register('name')} />
         {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="cf-grade" aria-label="Grade level">Grade Level</Label>
-          <Select onValueChange={(v) => setValue('gradeLevel', v)} defaultValue={defaultValues?.gradeLevel}>
-            <SelectTrigger id="cf-grade" aria-label="Select grade">
-              <SelectValue placeholder="Select grade" />
+          <Label htmlFor="cf-year" aria-label="Year">Year</Label>
+          <Select onValueChange={(v) => setValue('year', v)} defaultValue={defaultValues?.year}>
+            <SelectTrigger id="cf-year" aria-label="Select year">
+              <SelectValue placeholder="Select year" />
             </SelectTrigger>
             <SelectContent>
-              {GRADE_LEVELS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+              {YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
-          {errors.gradeLevel && <p className="text-xs text-destructive">{errors.gradeLevel.message}</p>}
+          {errors.year && <p className="text-xs text-destructive">{errors.year.message}</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="cf-room" aria-label="Room">Room</Label>
@@ -57,21 +57,35 @@ export function ClassForm({ defaultValues, teachers, onSubmit, isLoading, onCanc
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="cf-teacher" aria-label="Teacher">Teacher</Label>
-        <Select onValueChange={(v) => setValue('teacherId', v)} defaultValue={defaultValues?.teacherId}>
-          <SelectTrigger id="cf-teacher" aria-label="Select teacher">
-            <SelectValue placeholder="Select teacher" />
-          </SelectTrigger>
-          <SelectContent>
-            {teachers.map((t) => (
-              <SelectItem key={String(t.id)} value={String(t.id)}>
-                {String(t.firstName)} {String(t.lastName)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.teacherId && <p className="text-xs text-destructive">{errors.teacherId.message}</p>}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="cf-department" aria-label="Department">Department</Label>
+          <Select onValueChange={(v) => setValue('department', v)} defaultValue={defaultValues?.department}>
+            <SelectTrigger id="cf-department" aria-label="Select department">
+              <SelectValue placeholder="Select department" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {errors.department && <p className="text-xs text-destructive">{errors.department.message}</p>}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="cf-lecturer" aria-label="Lecturer">Lecturer</Label>
+          <Select onValueChange={(v) => setValue('lecturerId', v)} defaultValue={defaultValues?.lecturerId}>
+            <SelectTrigger id="cf-lecturer" aria-label="Select lecturer">
+              <SelectValue placeholder="Select lecturer" />
+            </SelectTrigger>
+            <SelectContent>
+              {lecturers.map((t) => (
+                <SelectItem key={String(t.id)} value={String(t.id)}>
+                  {String(t.firstName)} {String(t.lastName)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.lecturerId && <p className="text-xs text-destructive">{errors.lecturerId.message}</p>}
+        </div>
       </div>
 
       <Separator />
@@ -119,7 +133,7 @@ export function ClassForm({ defaultValues, teachers, onSubmit, isLoading, onCanc
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Spinner className="size-4" />}
-          {defaultValues?.id ? 'Update Class' : 'Add Class'}
+          {defaultValues?.id ? 'Update Course' : 'Add Course'}
         </Button>
       </div>
     </form>

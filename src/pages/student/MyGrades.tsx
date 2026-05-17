@@ -1,4 +1,3 @@
-// Student: grades by term with subject cards and radar chart
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,63 +7,61 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { useGetGrades } from '@/hooks/useGrades';
 import { useAuth } from '@/hooks/useAuth';
 import { getGradeColor } from '@/utils/formatters';
-import { TERMS } from '@/utils/constants';
+import { SEMESTERS } from '@/utils/constants';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip,
 } from 'recharts';
 
 export function MyGrades() {
   const { user } = useAuth();
-  const [activeTerm, setActiveTerm] = useState<string>(TERMS[0]);
+  const [activeSemester, setActiveSemester] = useState<string>(SEMESTERS[0]);
   const { data: grades, isLoading } = useGetGrades({ studentId: user?.id });
 
   const allGrades = (grades as Record<string, unknown>[]) ?? [];
-  const termGrades = allGrades.filter((g) => g.term === activeTerm);
+  const semGrades = allGrades.filter((g) => g.semester === activeSemester);
 
-  const avgScore = termGrades.length > 0
-    ? Math.round(termGrades.reduce((s, g) => s + Number(g.score), 0) / termGrades.length)
+  const avgScore = semGrades.length > 0
+    ? Math.round(semGrades.reduce((s, g) => s + Number(g.score), 0) / semGrades.length)
     : 0;
 
-  const radarData = termGrades.map((g) => ({
-    subject: String(g.subject).length > 8 ? String(g.subject).slice(0, 8) + '…' : String(g.subject),
+  const radarData = semGrades.map((g) => ({
+    subject: String(g.subject).length > 8 ? String(g.subject).slice(0, 8) + '\u2026' : String(g.subject),
     score: Number(g.score),
   }));
 
   return (
     <div>
-      <PageHeader title="My Grades" description="Academic performance by term" />
+      <PageHeader title="My Grades" description="Academic performance by semester" />
 
-      <Tabs value={activeTerm} onValueChange={setActiveTerm}>
+      <Tabs value={activeSemester} onValueChange={setActiveSemester}>
         <TabsList className="mb-6">
-          {TERMS.map((t) => (
-            <TabsTrigger key={t} value={t}>{t}</TabsTrigger>
+          {SEMESTERS.map((s) => (
+            <TabsTrigger key={s} value={s}>{s}</TabsTrigger>
           ))}
         </TabsList>
 
-        {TERMS.map((term) => (
-          <TabsContent key={term} value={term}>
+        {SEMESTERS.map((sem) => (
+          <TabsContent key={sem} value={sem}>
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32" />)}
               </div>
-            ) : termGrades.length === 0 ? (
+            ) : semGrades.length === 0 ? (
               <Card>
                 <CardContent className="py-10 text-center text-muted-foreground text-sm">
-                  No grades recorded for {term}.
+                  No grades recorded for {sem}.
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-6">
-                {/* Summary */}
                 <div className="flex items-center gap-4 text-sm">
-                  <span className="text-muted-foreground">{termGrades.length} subjects</span>
+                  <span className="text-muted-foreground">{semGrades.length} subjects</span>
                   <span className="text-muted-foreground">Average: <span className="font-semibold text-foreground">{avgScore}%</span></span>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Grade cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {termGrades.map((g) => {
+                    {semGrades.map((g) => {
                       const pct = Math.round((Number(g.score) / Number(g.maxScore)) * 100);
                       return (
                         <Card key={String(g.id)}>
@@ -91,7 +88,6 @@ export function MyGrades() {
                     })}
                   </div>
 
-                  {/* Radar chart */}
                   {radarData.length >= 3 && (
                     <Card>
                       <CardHeader>

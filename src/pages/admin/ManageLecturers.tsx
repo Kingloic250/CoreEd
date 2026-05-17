@@ -1,33 +1,35 @@
-// Admin: manage teachers with full CRUD, DataTable, and Sheet form
 import { useState } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/common/DataTable';
 import { PageHeader } from '@/components/common/PageHeader';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { TeacherForm } from '@/components/forms/TeacherForm';
-import { useGetTeachers, useCreateTeacher, useUpdateTeacher, useDeleteTeacher } from '@/hooks/useTeachers';
+import { LecturerForm } from '@/components/forms/LecturerForm';
+import { useGetLecturers, useCreateLecturer, useUpdateLecturer, useDeleteLecturer } from '@/hooks/useLecturers';
+import { useGetDepartments } from '@/hooks/useDepartments';
 import { formatDate } from '@/utils/formatters';
-import type { TeacherFormData } from '@/utils/validators';
+import type { LecturerFormData } from '@/utils/validators';
 
-type Teacher = Record<string, unknown>;
+type Lecturer = Record<string, unknown>;
 
-export function ManageTeachers() {
+export function ManageLecturers() {
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Teacher | null>(null);
+  const [editing, setEditing] = useState<Lecturer | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data, isLoading } = useGetTeachers();
-  const createMutation = useCreateTeacher();
-  const updateMutation = useUpdateTeacher();
-  const deleteMutation = useDeleteTeacher();
+  const { data, isLoading } = useGetLecturers();
+  const { data: deptData } = useGetDepartments();
+  const createMutation = useCreateLecturer();
+  const updateMutation = useUpdateLecturer();
+  const deleteMutation = useDeleteLecturer();
 
-  const teachers = (data as Teacher[]) ?? [];
+  const lecturers = (data as Lecturer[]) ?? [];
+  const departments = ((deptData as { id: string; name: string }[]) ?? []).map((d) => ({ id: d.id, name: d.name }));
 
-  const handleSubmit = async (formData: TeacherFormData) => {
+  const handleSubmit = async (formData: LecturerFormData) => {
     if (editing?.id) {
       await updateMutation.mutateAsync({ id: String(editing.id), payload: formData });
     } else {
@@ -37,7 +39,7 @@ export function ManageTeachers() {
     setEditing(null);
   };
 
-  const columns: ColumnDef<Teacher>[] = [
+  const columns: ColumnDef<Lecturer>[] = [
     {
       accessorFn: (row) => `${row.firstName} ${row.lastName}`,
       id: 'name',
@@ -49,7 +51,7 @@ export function ManageTeachers() {
         </div>
       ),
     },
-    { accessorKey: 'subject', header: 'Subject' },
+    { accessorKey: 'department', header: 'Department' },
     { accessorKey: 'qualification', header: 'Qualification' },
     {
       accessorKey: 'joinDate',
@@ -57,11 +59,11 @@ export function ManageTeachers() {
       cell: ({ row }) => formatDate(String(row.original.joinDate)),
     },
     {
-      accessorKey: 'assignedClasses',
-      header: 'Classes',
+      accessorKey: 'assignedCourses',
+      header: 'Courses',
       cell: ({ row }) => {
-        const cls = row.original.assignedClasses as string[];
-        return <span className="text-sm text-muted-foreground">{cls?.length ?? 0} classes</span>;
+        const courses = row.original.assignedCourses as string[];
+        return <span className="text-sm text-muted-foreground">{courses?.length ?? 0} courses</span>;
       },
     },
     {
@@ -93,36 +95,35 @@ export function ManageTeachers() {
   return (
     <div>
       <PageHeader
-        title="Manage Teachers"
-        description={`${teachers.length} teachers on staff`}
-        actionLabel="Add Teacher"
+        title="Manage Lecturers"
+        description={`${lecturers.length} lecturers on staff`}
+        actionLabel="Add Lecturer"
         actionIcon={Plus}
         onAction={() => { setEditing(null); setOpen(true); }}
       />
 
-      <DataTable columns={columns} data={teachers} isLoading={isLoading} searchPlaceholder="Search teachers..." />
+      <DataTable columns={columns} data={lecturers} isLoading={isLoading} searchPlaceholder="Search lecturers..." />
 
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{editing ? 'Edit Teacher' : 'Add New Teacher'}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <TeacherForm
-              defaultValues={editing as (TeacherFormData & { id: string }) | undefined}
-              onSubmit={handleSubmit}
-              isLoading={createMutation.isPending || updateMutation.isPending}
-              onCancel={() => setOpen(false)}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Edit Lecturer' : 'Add New Lecturer'}</DialogTitle>
+          </DialogHeader>
+          <LecturerForm
+            defaultValues={editing as (LecturerFormData & { id: string }) | undefined}
+            onSubmit={handleSubmit}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+            onCancel={() => setOpen(false)}
+            departments={departments}
+          />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(v) => !v && setDeleteId(null)}
-        title="Delete Teacher"
-        description="Are you sure you want to remove this teacher?"
+        title="Delete Lecturer"
+        description="Are you sure you want to remove this lecturer?"
         onConfirm={async () => { if (deleteId) { await deleteMutation.mutateAsync(deleteId); setDeleteId(null); } }}
         isLoading={deleteMutation.isPending}
       />

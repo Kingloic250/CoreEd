@@ -108,7 +108,7 @@ export function StudentDashboard() {
                   <div key={String(g.id)} className="flex items-center justify-between py-1.5">
                     <div>
                       <p className="text-sm font-medium">{String(g.subject)}</p>
-                      <p className="text-xs text-muted-foreground">{String(g.term)}</p>
+                      <p className="text-xs text-muted-foreground">{String(g.semester)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{String(g.score)}/{String(g.maxScore)}</span>

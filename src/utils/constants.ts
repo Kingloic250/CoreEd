@@ -1,8 +1,6 @@
-// App-wide constants: roles, route paths, API base paths
-
 export const ROLES = {
   ADMIN: 'admin',
-  TEACHER: 'teacher',
+  LECTURER: 'lecturer',
   STUDENT: 'student',
 } as const;
 
@@ -15,45 +13,59 @@ export const ROUTES = {
   UNAUTHORIZED: '/unauthorized',
   ADMIN: '/admin',
   ADMIN_STUDENTS: '/admin/students',
-  ADMIN_TEACHERS: '/admin/teachers',
-  ADMIN_CLASSES: '/admin/classes',
+  ADMIN_LECTURERS: '/admin/lecturers',
+  ADMIN_COURSES: '/admin/courses',
   ADMIN_NOTIFICATIONS: '/admin/notifications',
+  ADMIN_PROFILE: '/admin/profile',
   ADMIN_REQUESTS: '/admin/requests',
   ADMIN_SETTINGS: '/admin/settings',
+  ADMIN_DEPARTMENTS: '/admin/departments',
+  ADMIN_SEMESTERS: '/admin/semesters',
+  ADMIN_ENROLLMENT: '/admin/enrollment',
+  ADMIN_AUDIT_LOGS: '/admin/audit-logs',
   ADMIN_REPORTS: '/admin/reports',
-  TEACHER_NOTIFICATIONS: '/teacher/notifications',
+  LECTURER_NOTIFICATIONS: '/lecturer/notifications',
   STUDENT_NOTIFICATIONS: '/student/notifications',
-  TEACHER: '/teacher',
-  TEACHER_CLASSES: '/teacher/classes',
-  TEACHER_ATTENDANCE: '/teacher/attendance',
-  TEACHER_GRADES: '/teacher/grades',
+  LECTURER: '/lecturer',
+  LECTURER_COURSES: '/lecturer/courses',
+  LECTURER_ATTENDANCE: '/lecturer/attendance',
+  LECTURER_GRADES: '/lecturer/grades',
   STUDENT: '/student',
   STUDENT_ATTENDANCE: '/student/attendance',
   STUDENT_GRADES: '/student/grades',
   STUDENT_TRANSCRIPT: '/student/transcript',
   STUDENT_ANNOUNCEMENTS: '/student/announcements',
+  STUDENT_COURSES: '/student/courses',
 } as const;
 
 export const API_PATHS = {
   LOGIN: '/api/v1/auth/login',
   LOGOUT: '/api/v1/auth/logout',
   STUDENTS: '/api/v1/students',
-  TEACHERS: '/api/v1/teachers',
-  CLASSES: '/api/v1/classes',
+  LECTURERS: '/api/v1/lecturers',
+  COURSES: '/api/v1/courses',
   ATTENDANCE: '/api/v1/attendance',
   GRADES: '/api/v1/grades',
   ANNOUNCEMENTS: '/api/v1/announcements',
   ACCOUNT_REQUESTS: '/api/v1/account-requests',
+  PROFILE: '/api/v1/profile',
+  CHANGE_PASSWORD: '/api/v1/auth/change-password',
+  DEPARTMENTS: '/api/v1/departments',
+  SEMESTERS: '/api/v1/semesters',
+  AUDIT_LOGS: '/api/v1/audit-logs',
 } as const;
 
 export const QUERY_KEYS = {
   STUDENTS: 'students',
-  TEACHERS: 'teachers',
-  CLASSES: 'classes',
+  LECTURERS: 'lecturers',
+  COURSES: 'courses',
   ATTENDANCE: 'attendance',
   GRADES: 'grades',
   ANNOUNCEMENTS: 'announcements',
   ACCOUNT_REQUESTS: 'account-requests',
+  DEPARTMENTS: 'departments',
+  SEMESTERS: 'semesters',
+  AUDIT_LOGS: 'audit-logs',
 } as const;
 
 export const GRADE_SCALE = [
@@ -67,12 +79,12 @@ export const GRADE_SCALE = [
 export const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'] as const;
 export type AttendanceStatus = typeof ATTENDANCE_STATUSES[number];
 
-export const TERMS = ['Term 1', 'Term 2', 'Term 3'] as const;
-export type Term = typeof TERMS[number];
+export const SEMESTERS = ['Semester 1', 'Semester 2', 'Summer'] as const;
+export type Semester = typeof SEMESTERS[number];
 
-export const GRADE_LEVELS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'] as const;
+export const YEARS = ['Year 1', 'Year 2', 'Year 3', 'Year 4'] as const;
 
-export const SUBJECTS = [
+export const DEPARTMENTS = [
   'Mathematics',
   'English',
   'Physics',
@@ -81,6 +93,5 @@ export const SUBJECTS = [
   'History',
   'Geography',
   'Computer Science',
-  'Kinyarwanda',
   'French',
 ] as const;

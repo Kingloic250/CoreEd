@@ -1,5 +1,4 @@
-// Admin dashboard: stat cards, activity feed, attendance chart
-import { Users, GraduationCap, BookOpen, TrendingUp, Plus } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, TrendingUp, Plus, Building2, CalendarDays, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/common/StatCard';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useGetStudents } from '@/hooks/useStudents';
-import { useGetTeachers } from '@/hooks/useTeachers';
-import { useGetClasses } from '@/hooks/useClasses';
+import { useGetLecturers } from '@/hooks/useLecturers';
+import { useGetCourses } from '@/hooks/useCourses';
 import { useGetAnnouncements } from '@/hooks/useAnnouncements';
 import { formatDate } from '@/utils/formatters';
 import {
@@ -26,13 +25,13 @@ const weeklyAttendance = [
 export function AdminDashboard() {
   const navigate = useNavigate();
   const { data: students, isLoading: studentsLoading } = useGetStudents();
-  const { data: teachers, isLoading: teachersLoading } = useGetTeachers();
-  const { data: classes, isLoading: classesLoading } = useGetClasses();
+  const { data: lecturers, isLoading: lecturersLoading } = useGetLecturers();
+  const { data: courses, isLoading: coursesLoading } = useGetCourses();
   const { data: announcements } = useGetAnnouncements();
 
   const totalStudents = (students as unknown[])?.length ?? 0;
-  const totalTeachers = (teachers as unknown[])?.length ?? 0;
-  const totalClasses = (classes as unknown[])?.length ?? 0;
+  const totalLecturers = (lecturers as unknown[])?.length ?? 0;
+  const totalCourses = (courses as unknown[])?.length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -41,22 +40,20 @@ export function AdminDashboard() {
         <p className="text-sm text-muted-foreground mt-1">Welcome back, here is what is happening today.</p>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {studentsLoading ? <LoadingSpinner /> : (
           <StatCard title="Total Students" value={totalStudents} icon={GraduationCap} trend="up" trendValue="+3 this month" />
         )}
-        {teachersLoading ? <LoadingSpinner /> : (
-          <StatCard title="Total Teachers" value={totalTeachers} icon={Users} trend="neutral" trendValue="No change" />
+        {lecturersLoading ? <LoadingSpinner /> : (
+          <StatCard title="Total Lecturers" value={totalLecturers} icon={Users} trend="neutral" trendValue="No change" />
         )}
-        {classesLoading ? <LoadingSpinner /> : (
-          <StatCard title="Total Classes" value={totalClasses} icon={BookOpen} trend="neutral" trendValue="No change" />
+        {coursesLoading ? <LoadingSpinner /> : (
+          <StatCard title="Total Courses" value={totalCourses} icon={BookOpen} trend="neutral" trendValue="No change" />
         )}
         <StatCard title="Attendance Rate" value={87} icon={TrendingUp} trend="up" trendValue="+2% vs last week" suffix="%" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Attendance chart */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Weekly Attendance Overview</CardTitle>
@@ -77,7 +74,6 @@ export function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent announcements */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Announcements</CardTitle>
@@ -102,7 +98,6 @@ export function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Quick actions */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Quick Actions</CardTitle>
@@ -111,11 +106,20 @@ export function AdminDashboard() {
           <Button onClick={() => navigate('/admin/students')} variant="outline" className="gap-2">
             <Plus className="size-4" /> Add Student
           </Button>
-          <Button onClick={() => navigate('/admin/teachers')} variant="outline" className="gap-2">
-            <Plus className="size-4" /> Add Teacher
+          <Button onClick={() => navigate('/admin/lecturers')} variant="outline" className="gap-2">
+            <Plus className="size-4" /> Add Lecturer
           </Button>
-          <Button onClick={() => navigate('/admin/classes')} variant="outline" className="gap-2">
-            <Plus className="size-4" /> Add Class
+          <Button onClick={() => navigate('/admin/courses')} variant="outline" className="gap-2">
+            <Plus className="size-4" /> Add Course
+          </Button>
+          <Button onClick={() => navigate('/admin/departments')} variant="outline" className="gap-2">
+            <Building2 className="size-4" /> Manage Departments
+          </Button>
+          <Button onClick={() => navigate('/admin/semesters')} variant="outline" className="gap-2">
+            <CalendarDays className="size-4" /> Manage Semesters
+          </Button>
+          <Button onClick={() => navigate('/admin/enrollment')} variant="outline" className="gap-2">
+            <UserPlus className="size-4" /> Manage Enrollment
           </Button>
           <Button onClick={() => navigate('/admin/reports')} variant="outline" className="gap-2">
             <TrendingUp className="size-4" /> View Reports

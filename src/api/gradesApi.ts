@@ -1,9 +1,8 @@
-// Grades/transcript endpoints
 import axiosInstance from './axiosInstance';
 
 const BASE = '/api/v1/grades';
 
-export const getGrades = (params: { classId?: string; studentId?: string; term?: string }) =>
+export const getGrades = (params: { courseId?: string; studentId?: string; semester?: string }) =>
   axiosInstance.get(BASE, { params }) as unknown as Promise<unknown[]>;
 
 export const submitGrades = (payload: unknown) =>

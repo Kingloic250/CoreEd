@@ -2,7 +2,7 @@
   {
     "id": "u001",
     "name": "Alice Nkunda",
-    "email": "admin@school.rw",
+    "email": "admin@greenfield.edu",
     "password": "Admin@1234",
     "role": "admin",
     "avatar": null
@@ -10,15 +10,15 @@
   {
     "id": "u002",
     "name": "Jean Pierre Habimana",
-    "email": "teacher@school.rw",
-    "password": "Teacher@1234",
-    "role": "teacher",
+    "email": "lecturer@greenfield.edu",
+    "password": "Lecturer@1234",
+    "role": "lecturer",
     "avatar": null
   },
   {
     "id": "u003",
     "name": "Marie Claire Uwimana",
-    "email": "student@school.rw",
+    "email": "student@greenfield.edu",
     "password": "Student@1234",
     "role": "student",
     "avatar": null

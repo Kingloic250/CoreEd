@@ -1,27 +1,32 @@
-// Central mock API handler using axios-mock-adapter. Activated when VITE_MOCK_API=true.
 import axiosInstance from '@/api/axiosInstance';
 import users from './data/users.json';
 import studentsData from './data/students.json';
-import teachersData from './data/teachers.json';
-import classesData from './data/classes.json';
+import lecturersData from './data/lecturers.json';
+import coursesData from './data/courses.json';
 import attendanceData from './data/attendance.json';
 import gradesData from './data/grades.json';
 import announcementsData from './data/announcements.json';
+import departmentsData from './data/departments.json';
+import semestersData from './data/semesters.json';
+import accountRequestsData from './data/account_requests.json';
+import auditLogsData from './data/audit_logs.json';
+import { getToken } from '@/utils/tokenManager';
 
-// In-memory mutable stores for CRUD operations
 let students = [...studentsData] as Record<string, unknown>[];
-let teachers = [...teachersData] as Record<string, unknown>[];
-let classes = [...classesData] as Record<string, unknown>[];
+let lecturers = [...lecturersData] as Record<string, unknown>[];
+let courses = [...coursesData] as Record<string, unknown>[];
 let attendance = [...attendanceData] as Record<string, unknown>[];
 let grades = [...gradesData] as Record<string, unknown>[];
 let announcements = [...announcementsData] as Record<string, unknown>[];
+let departments = [...departmentsData] as Record<string, unknown>[];
+let semesters = [...semestersData] as Record<string, unknown>[];
+let auditLogs = [...auditLogsData] as Record<string, unknown>[];
 
 const generateId = (prefix: string) => `${prefix}${Date.now()}`;
 
 export function setupMockApi() {
   if (import.meta.env.VITE_MOCK_API !== 'true') return;
 
-  // Dynamic import to keep mock adapter out of production bundle
   import('axios-mock-adapter').then(({ default: MockAdapter }) => {
     const mock = new MockAdapter(axiosInstance, { delayResponse: 400, onNoMatch: 'passthrough' });
 
@@ -40,13 +45,48 @@ export function setupMockApi() {
 
     mock.onPost('/api/v1/auth/logout').reply(200, { message: 'Logged out' });
 
+    mock.onPost('/api/v1/auth/change-password').reply((config) => {
+      const { currentPassword, newPassword } = JSON.parse(config.data);
+      const token = getToken();
+      const user = (users as unknown as Record<string, string>[]).find(
+        (u) => `mock.jwt.token_${u.role}` === token
+      );
+      if (!user || user.password !== currentPassword) {
+        return [400, { message: 'Current password is incorrect' }];
+      }
+      user.password = newPassword;
+      return [200, { message: 'Password changed successfully' }];
+    });
+
+    // ─── PROFILE ─────────────────────────────────────────────────────────
+    mock.onGet('/api/v1/profile').reply(() => {
+      const token = getToken();
+      const user = (users as unknown as Record<string, string>[]).find(
+        (u) => `mock.jwt.token_${u.role}` === token
+      );
+      if (!user) return [401, { message: 'Unauthorized' }];
+      return [200, { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar }];
+    });
+
+    mock.onPut('/api/v1/profile').reply((config) => {
+      const { name, email } = JSON.parse(config.data);
+      const token = getToken();
+      const user = (users as unknown as Record<string, string>[]).find(
+        (u) => `mock.jwt.token_${u.role}` === token
+      );
+      if (!user) return [401, { message: 'Unauthorized' }];
+      if (name) user.name = name;
+      if (email) user.email = email;
+      return [200, { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar }];
+    });
+
     // ─── STUDENTS ─────────────────────────────────────────────────────────
     mock.onGet('/api/v1/students').reply((config) => {
       const search = (config.params?.search ?? '').toLowerCase();
       const filtered = search
         ? students.filter((s) =>
             `${s.firstName} ${s.lastName}`.toLowerCase().includes(search) ||
-            (s.class as string).toLowerCase().includes(search)
+            (s.year as string).toLowerCase().includes(search)
           )
         : students;
       return [200, filtered];
@@ -80,61 +120,91 @@ export function setupMockApi() {
       return [204];
     });
 
-    // ─── TEACHERS ─────────────────────────────────────────────────────────
-    mock.onGet('/api/v1/teachers').reply(() => [200, teachers]);
+    // ─── LECTURERS ─────────────────────────────────────────────────────────
+    mock.onGet('/api/v1/lecturers').reply(() => [200, lecturers]);
 
-    mock.onPost('/api/v1/teachers').reply((config) => {
+    mock.onPost('/api/v1/lecturers').reply((config) => {
       const payload = JSON.parse(config.data);
-      const newTeacher = { ...payload, id: generateId('t') };
-      teachers.push(newTeacher);
-      return [201, newTeacher];
+      const newLecturer = { ...payload, id: generateId('l') };
+      lecturers.push(newLecturer);
+      return [201, newLecturer];
     });
 
-    mock.onPut(/\/api\/v1\/teachers\/\w+/).reply((config) => {
+    mock.onPut(/\/api\/v1\/lecturers\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
       const payload = JSON.parse(config.data);
-      const idx = teachers.findIndex((t) => t.id === id);
-      if (idx === -1) return [404, { message: 'Teacher not found' }];
-      teachers[idx] = { ...teachers[idx], ...payload };
-      return [200, teachers[idx]];
+      const idx = lecturers.findIndex((t) => t.id === id);
+      if (idx === -1) return [404, { message: 'Lecturer not found' }];
+      lecturers[idx] = { ...lecturers[idx], ...payload };
+      return [200, lecturers[idx]];
     });
 
-    mock.onDelete(/\/api\/v1\/teachers\/\w+/).reply((config) => {
+    mock.onDelete(/\/api\/v1\/lecturers\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
-      teachers = teachers.filter((t) => t.id !== id);
+      lecturers = lecturers.filter((t) => t.id !== id);
       return [204];
     });
 
-    // ─── CLASSES ──────────────────────────────────────────────────────────
-    mock.onGet('/api/v1/classes').reply(() => [200, classes]);
+    // ─── COURSES ──────────────────────────────────────────────────────────
+    mock.onGet('/api/v1/courses').reply(() => [200, courses]);
 
-    mock.onPost('/api/v1/classes').reply((config) => {
+    mock.onPost('/api/v1/courses').reply((config) => {
       const payload = JSON.parse(config.data);
-      const newClass = { ...payload, id: generateId('c'), studentIds: [] };
-      classes.push(newClass);
-      return [201, newClass];
+      const newCourse = { ...payload, id: generateId('c'), studentIds: [] };
+      courses.push(newCourse);
+      return [201, newCourse];
     });
 
-    mock.onPut(/\/api\/v1\/classes\/\w+/).reply((config) => {
-      const id = config.url?.split('/').pop();
-      const payload = JSON.parse(config.data);
-      const idx = classes.findIndex((c) => c.id === id);
-      if (idx === -1) return [404, { message: 'Class not found' }];
-      classes[idx] = { ...classes[idx], ...payload };
-      return [200, classes[idx]];
+    mock.onPut(/\/api\/v1\/courses\/\w+\/enroll/).reply((config) => {
+      const id = config.url?.split('/').filter(Boolean)[3];
+      const { studentIds } = JSON.parse(config.data);
+      const idx = courses.findIndex((c) => c.id === id);
+      if (idx === -1) return [404, { message: 'Course not found' }];
+      courses[idx] = { ...courses[idx], studentIds };
+      return [200, courses[idx]];
     });
 
-    mock.onDelete(/\/api\/v1\/classes\/\w+/).reply((config) => {
+    mock.onPost(/\/api\/v1\/courses\/\w+\/self-enroll/).reply((config) => {
+      const id = config.url?.split('/').filter(Boolean)[3];
+      const { studentId } = JSON.parse(config.data);
+      const idx = courses.findIndex((c) => c.id === id);
+      if (idx === -1) return [404, { message: 'Course not found' }];
+      const current = (courses[idx].studentIds as string[]) ?? [];
+      if (current.includes(studentId)) return [400, { message: 'Already enrolled' }];
+      courses[idx] = { ...courses[idx], studentIds: [...current, studentId] };
+      return [200, courses[idx]];
+    });
+
+    mock.onPost(/\/api\/v1\/courses\/\w+\/self-unenroll/).reply((config) => {
+      const id = config.url?.split('/').filter(Boolean)[3];
+      const { studentId } = JSON.parse(config.data);
+      const idx = courses.findIndex((c) => c.id === id);
+      if (idx === -1) return [404, { message: 'Course not found' }];
+      const current = (courses[idx].studentIds as string[]) ?? [];
+      courses[idx] = { ...courses[idx], studentIds: current.filter((s) => s !== studentId) };
+      return [200, courses[idx]];
+    });
+
+    mock.onPut(/\/api\/v1\/courses\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
-      classes = classes.filter((c) => c.id !== id);
+      const payload = JSON.parse(config.data);
+      const idx = courses.findIndex((c) => c.id === id);
+      if (idx === -1) return [404, { message: 'Course not found' }];
+      courses[idx] = { ...courses[idx], ...payload };
+      return [200, courses[idx]];
+    });
+
+    mock.onDelete(/\/api\/v1\/courses\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      courses = courses.filter((c) => c.id !== id);
       return [204];
     });
 
     // ─── ATTENDANCE ───────────────────────────────────────────────────────
     mock.onGet('/api/v1/attendance').reply((config) => {
-      const { classId, date } = config.params ?? {};
+      const { courseId, date } = config.params ?? {};
       const filtered = attendance.filter((a) => {
-        if (classId && a.classId !== classId) return false;
+        if (courseId && a.courseId !== courseId) return false;
         if (date && a.date !== date) return false;
         return true;
       });
@@ -158,11 +228,11 @@ export function setupMockApi() {
 
     // ─── GRADES ───────────────────────────────────────────────────────────
     mock.onGet('/api/v1/grades').reply((config) => {
-      const { classId, studentId, term } = config.params ?? {};
+      const { courseId, studentId, semester } = config.params ?? {};
       const filtered = grades.filter((g) => {
-        if (classId && g.classId !== classId) return false;
+        if (courseId && g.courseId !== courseId) return false;
         if (studentId && g.studentId !== studentId) return false;
-        if (term && g.term !== term) return false;
+        if (semester && g.semester !== semester) return false;
         return true;
       });
       return [200, filtered];
@@ -174,7 +244,7 @@ export function setupMockApi() {
       const created: Record<string, unknown>[] = [];
       entries.forEach((e: Record<string, unknown>) => {
         const existing = grades.findIndex(
-          (g) => g.studentId === e.studentId && g.classId === e.classId && g.term === e.term
+          (g) => g.studentId === e.studentId && g.courseId === e.courseId && g.semester === e.semester
         );
         if (existing !== -1) {
           grades[existing] = { ...grades[existing], ...e };
@@ -211,8 +281,66 @@ export function setupMockApi() {
       return [201, newAnn];
     });
 
+    // ─── DEPARTMENTS ─────────────────────────────────────────────────────
+    mock.onGet('/api/v1/departments').reply(() => [200, departments]);
+
+    mock.onPost('/api/v1/departments').reply((config) => {
+      const payload = JSON.parse(config.data);
+      const newDept = { ...payload, id: generateId('d') };
+      departments.push(newDept);
+      return [201, newDept];
+    });
+
+    mock.onPut(/\/api\/v1\/departments\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const payload = JSON.parse(config.data);
+      const idx = departments.findIndex((d) => d.id === id);
+      if (idx === -1) return [404, { message: 'Department not found' }];
+      departments[idx] = { ...departments[idx], ...payload };
+      return [200, departments[idx]];
+    });
+
+    mock.onDelete(/\/api\/v1\/departments\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      departments = departments.filter((d) => d.id !== id);
+      return [204];
+    });
+
+    // ─── SEMESTERS ───────────────────────────────────────────────────────
+    mock.onGet('/api/v1/semesters').reply(() => [200, semesters]);
+
+    mock.onPost('/api/v1/semesters').reply((config) => {
+      const payload = JSON.parse(config.data);
+      const newSem = { ...payload, id: generateId('sem') };
+      semesters.push(newSem);
+      return [201, newSem];
+    });
+
+    mock.onPut(/\/api\/v1\/semesters\/\w+\/activate/).reply((config) => {
+      const id = config.url?.split('/').filter(Boolean)[3];
+      const idx = semesters.findIndex((s) => s.id === id);
+      if (idx === -1) return [404, { message: 'Semester not found' }];
+      semesters = semesters.map((s) => ({ ...s, isActive: s.id === id }));
+      return [200, semesters[idx]];
+    });
+
+    mock.onPut(/\/api\/v1\/semesters\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const payload = JSON.parse(config.data);
+      const idx = semesters.findIndex((s) => s.id === id);
+      if (idx === -1) return [404, { message: 'Semester not found' }];
+      semesters[idx] = { ...semesters[idx], ...payload };
+      return [200, semesters[idx]];
+    });
+
+    mock.onDelete(/\/api\/v1\/semesters\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      semesters = semesters.filter((s) => s.id !== id);
+      return [204];
+    });
+
     // ─── ACCOUNT REQUESTS ────────────────────────────────────────────────
-    const accountRequests: Record<string, unknown>[] = [];
+    const accountRequests: Record<string, unknown>[] = [...accountRequestsData];
 
     mock.onGet('/api/v1/account-requests').reply(() => [200, accountRequests]);
 

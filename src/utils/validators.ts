@@ -1,4 +1,3 @@
-// Shared Zod validation schemas used across all form components
 import { z } from 'zod';
 
 export const loginSchema = z.object({
@@ -16,31 +15,29 @@ export const studentSchema = z.object({
       const date = new Date(val);
       const now = new Date();
       const age = now.getFullYear() - date.getFullYear();
-      return date < now && age >= 5 && age <= 25;
-    }, 'Date of birth must be valid (age 5–25)'),
+      return date < now && age >= 17 && age <= 60;
+    }, 'Date of birth must be valid (age 17–60)'),
   gender: z.enum(['male', 'female'] as const, { error: 'Gender is required' }),
-  class: z.string().min(1, 'Class is required'),
-  guardianName: z.string().min(2, 'Guardian name is required'),
-  guardianPhone: z
-    .string()
-    .regex(/^\+?[0-9]{10,15}$/, 'Please enter a valid phone number'),
+  year: z.string().min(1, 'Year is required'),
+  enrollmentDate: z.string().min(1, 'Enrollment date is required'),
   status: z.enum(['active', 'inactive']).default('active'),
 });
 
-export const teacherSchema = z.object({
+export const lecturerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  subject: z.string().min(1, 'Subject is required'),
-  assignedClasses: z.array(z.string()).default([]),
+  department: z.string().min(1, 'Department is required'),
+  assignedCourses: z.array(z.string()).default([]),
   qualification: z.string().min(2, 'Qualification is required'),
   joinDate: z.string().min(1, 'Join date is required'),
 });
 
-export const classSchema = z.object({
-  name: z.string().min(2, 'Class name must be at least 2 characters'),
-  gradeLevel: z.string().min(1, 'Grade level is required'),
-  teacherId: z.string().min(1, 'Teacher is required'),
+export const courseSchema = z.object({
+  name: z.string().min(2, 'Course name must be at least 2 characters'),
+  year: z.string().min(1, 'Year is required'),
+  department: z.string().min(1, 'Department is required'),
+  lecturerId: z.string().min(1, 'Lecturer is required'),
   room: z.string().min(1, 'Room is required'),
   schedule: z
     .array(
@@ -69,6 +66,6 @@ export const attendanceEntrySchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type StudentFormData = z.infer<typeof studentSchema>;
-export type TeacherFormData = z.infer<typeof teacherSchema>;
-export type ClassFormData = z.infer<typeof classSchema>;
+export type LecturerFormData = z.infer<typeof lecturerSchema>;
+export type CourseFormData = z.infer<typeof courseSchema>;
 export type GradeFormData = z.infer<typeof gradeSchema>;

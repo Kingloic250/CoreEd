@@ -1,4 +1,3 @@
-// Teacher: enter grades for students in a class by term
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Save } from 'lucide-react';
@@ -11,30 +10,30 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { PageHeader } from '@/components/common/PageHeader';
-import { useGetClasses } from '@/hooks/useClasses';
+import { useGetCourses } from '@/hooks/useCourses';
 import { useGetStudents } from '@/hooks/useStudents';
 import { useCreateGrade } from '@/hooks/useGrades';
-import { TERMS, SUBJECTS } from '@/utils/constants';
+import { SEMESTERS, DEPARTMENTS } from '@/utils/constants';
 import { getLetterGrade, getGradeColor } from '@/utils/formatters';
 
 export function GradeInput() {
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedTerm, setSelectedTerm] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [scores, setScores] = useState<Record<string, string>>({});
 
-  const { data: classes, isLoading: classesLoading } = useGetClasses();
+  const { data: courses, isLoading: coursesLoading } = useGetCourses();
   const { data: students, isLoading: studentsLoading } = useGetStudents({});
   const createGrade = useCreateGrade();
 
-  const classList = (classes as Record<string, unknown>[]) ?? [];
+  const courseList = (courses as Record<string, unknown>[]) ?? [];
   const allStudents = (students as Record<string, unknown>[]) ?? [];
 
-  const selectedClassData = classList.find((c) => String(c.id) === selectedClass);
-  const classStudentIds = (selectedClassData?.studentIds as string[]) ?? [];
-  const classStudents = allStudents.filter((s) => classStudentIds.includes(String(s.id)));
+  const selectedCourseData = courseList.find((c) => String(c.id) === selectedCourse);
+  const courseStudentIds = (selectedCourseData?.studentIds as string[]) ?? [];
+  const courseStudents = allStudents.filter((s) => courseStudentIds.includes(String(s.id)));
 
-  const canShow = selectedClass && selectedTerm && selectedSubject;
+  const canShow = selectedCourse && selectedSemester && selectedSubject;
 
   const handleScoreChange = (studentId: string, value: string) => {
     if (value === '' || (/^\d{0,3}$/.test(value) && Number(value) <= 100)) {
@@ -43,7 +42,7 @@ export function GradeInput() {
   };
 
   const handleSubmit = async () => {
-    const toSave = classStudents.filter((s) => scores[String(s.id)] !== undefined && scores[String(s.id)] !== '');
+    const toSave = courseStudents.filter((s) => scores[String(s.id)] !== undefined && scores[String(s.id)] !== '');
     if (toSave.length === 0) { toast.error('Enter at least one score'); return; }
 
     try {
@@ -52,9 +51,9 @@ export function GradeInput() {
           const score = Number(scores[String(s.id)]);
           return createGrade.mutateAsync({
             studentId: String(s.id),
-            classId: selectedClass,
+            courseId: selectedCourse,
             subject: selectedSubject,
-            term: selectedTerm,
+            semester: selectedSemester,
             score,
             maxScore: 100,
             grade: getLetterGrade(Number(score)),
@@ -71,34 +70,34 @@ export function GradeInput() {
 
   return (
     <div>
-      <PageHeader title="Grade Input" description="Enter student scores by class and term" />
+      <PageHeader title="Grade Input" description="Enter student scores by course and semester" />
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Select Class, Term & Subject</CardTitle>
+            <CardTitle className="text-base">Select Course, Semester & Subject</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <Label>Class</Label>
-                {classesLoading ? <Skeleton className="h-9" /> : (
-                  <Select value={selectedClass} onValueChange={setSelectedClass}>
-                    <SelectTrigger aria-label="Select class"><SelectValue placeholder="Select class" /></SelectTrigger>
+                <Label>Course</Label>
+                {coursesLoading ? <Skeleton className="h-9" /> : (
+                  <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                    <SelectTrigger aria-label="Select course"><SelectValue placeholder="Select course" /></SelectTrigger>
                     <SelectContent>
-                      {classList.map((cls) => (
-                        <SelectItem key={String(cls.id)} value={String(cls.id)}>{String(cls.name)}</SelectItem>
+                      {courseList.map((c) => (
+                        <SelectItem key={String(c.id)} value={String(c.id)}>{String(c.name)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label>Term</Label>
-                <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-                  <SelectTrigger aria-label="Select term"><SelectValue placeholder="Select term" /></SelectTrigger>
+                <Label>Semester</Label>
+                <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+                  <SelectTrigger aria-label="Select semester"><SelectValue placeholder="Select semester" /></SelectTrigger>
                   <SelectContent>
-                    {TERMS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    {SEMESTERS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -107,7 +106,7 @@ export function GradeInput() {
                 <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                   <SelectTrigger aria-label="Select subject"><SelectValue placeholder="Select subject" /></SelectTrigger>
                   <SelectContent>
-                    {SUBJECTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {DEPARTMENTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -119,7 +118,7 @@ export function GradeInput() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                {String(selectedClassData?.name)} — {selectedSubject} — {selectedTerm}
+                {String(selectedCourseData?.name)} — {selectedSubject} — {selectedSemester}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -127,12 +126,12 @@ export function GradeInput() {
                 <div className="space-y-2">
                   {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}
                 </div>
-              ) : classStudents.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">No students in this class.</p>
+              ) : courseStudents.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">No students in this course.</p>
               ) : (
                 <>
                   <div className="space-y-2">
-                    {classStudents.map((student, idx) => {
+                    {courseStudents.map((student, idx) => {
                       const sid = String(student.id);
                       const scoreVal = scores[sid] ?? '';
                       const numScore = scoreVal !== '' ? Number(scoreVal) : null;

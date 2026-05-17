@@ -20,7 +20,7 @@ const priorityConfig: Record<string, { icon: typeof Megaphone; label: string; co
 
 const targetLabels: Record<string, string> = {
   student: 'Students',
-  teacher: 'Teachers',
+  lecturer: 'Lecturers',
   admin: 'Admin',
 };
 
@@ -30,7 +30,7 @@ export function NotificationsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'high' | 'normal'>('all');
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', body: '', targetRoles: ['student', 'teacher'], priority: 'normal' });
+  const [form, setForm] = useState({ title: '', body: '', targetRoles: ['student', 'lecturer'], priority: 'normal' });
 
   const { data: announcements, isLoading } = useGetAnnouncements(user?.role);
   const createMutation = useCreateAnnouncement();
@@ -67,14 +67,14 @@ export function NotificationsPage() {
       createdBy: user?.id,
     });
     setCreateOpen(false);
-    setForm({ title: '', body: '', targetRoles: ['student', 'teacher'], priority: 'normal' });
+    setForm({ title: '', body: '', targetRoles: ['student', 'lecturer'], priority: 'normal' });
   };
 
   return (
     <div>
       <PageHeader
         title="Notifications"
-        description="Stay updated with school announcements and alerts"
+        description="Stay updated with university announcements and alerts"
         actionLabel={user?.role === 'admin' ? 'Create' : undefined}
         actionIcon={Plus}
         onAction={user?.role === 'admin' ? () => setCreateOpen(true) : undefined}
@@ -211,7 +211,7 @@ export function NotificationsPage() {
             <div className="space-y-2">
               <Label>Target audience</Label>
               <div className="flex gap-2">
-                {['student', 'teacher'].map((role) => (
+                {['student', 'lecturer'].map((role) => (
                   <Button
                     key={role}
                     type="button"
@@ -221,7 +221,7 @@ export function NotificationsPage() {
                     className="gap-1"
                   >
                     {role === 'student' ? <GraduationCap className="size-3" /> : <Users className="size-3" />}
-                    {role === 'student' ? 'Students' : 'Teachers'}
+                    {role === 'student' ? 'Students' : 'Lecturers'}
                   </Button>
                 ))}
               </div>

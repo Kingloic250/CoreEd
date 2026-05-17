@@ -17,23 +17,23 @@ import { loginSchema, type LoginFormData } from '@/utils/validators';
 const demoCredentials = [
   {
     role: 'Admin',
-    email: 'admin@school.rw',
+    email: 'admin@greenfield.edu',
     password: 'Admin@1234',
     icon: ShieldCheck,
     color: 'text-primary',
     bg: 'bg-primary/5 hover:bg-primary/10 border-primary/20',
   },
   {
-    role: 'Teacher',
-    email: 'teacher@school.rw',
-    password: 'Teacher@1234',
+    role: 'Lecturer',
+    email: 'lecturer@greenfield.edu',
+    password: 'Lecturer@1234',
     icon: Users,
     color: 'text-blue-600',
     bg: 'bg-blue-50 hover:bg-blue-100 border-blue-200 dark:bg-blue-950/30 dark:hover:bg-blue-950/50 dark:border-blue-800',
   },
   {
     role: 'Student',
-    email: 'student@school.rw',
+    email: 'student@greenfield.edu',
     password: 'Student@1234',
     icon: GraduationCap,
     color: 'text-emerald-600',
@@ -61,7 +61,7 @@ export function LoginPage() {
       await login(data);
       const { useAuthStore } = await import('@/store/authStore');
       const role = useAuthStore.getState().user?.role;
-      const dashMap: Record<string, string> = { admin: '/admin', teacher: '/teacher', student: '/student' };
+      const dashMap: Record<string, string> = { admin: '/admin', lecturer: '/lecturer', student: '/student' };
       navigate(dashMap[role ?? ''] ?? '/login', { replace: true });
     } catch {
       toast.error('Invalid email or password. Please try again.');
@@ -88,7 +88,7 @@ export function LoginPage() {
               <CardTitle className="text-2xl font-semibold tracking-tight">
                 {import.meta.env.VITE_APP_NAME ?? 'Greenfield Academy'}
               </CardTitle>
-              <CardDescription>Sign in to your school management account</CardDescription>
+              <CardDescription>Sign in to your university account</CardDescription>
             </div>
           </CardHeader>
 
@@ -102,7 +102,7 @@ export function LoginPage() {
                     id="email"
                     type="email"
                     autoComplete="email"
-                    placeholder="you@school.rw"
+                    placeholder="you@greenfield.edu"
                     className="pl-10"
                     aria-describedby={errors.email ? 'email-error' : undefined}
                     aria-invalid={!!errors.email}

@@ -136,13 +136,13 @@ export function AccountRequests() {
 
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="schoolEmail">School Email</Label>
+              <Label htmlFor="schoolEmail">University Email</Label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="schoolEmail"
                   className="pl-10"
-                  placeholder="e.g. student@school.rw"
+                  placeholder="e.g. student@greenfield.edu"
                   value={schoolEmail}
                   onChange={(e) => setSchoolEmail(e.target.value)}
                 />

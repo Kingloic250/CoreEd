@@ -1,27 +1,27 @@
 [
   {
     "id": "an001",
-    "title": "End of Term Examinations Schedule",
-    "body": "The end of term examinations will begin on June 2, 2026. All students are reminded to review the timetable posted on the notice board. Students must arrive 15 minutes early on examination days. No mobile phones allowed in the examination hall.",
-    "targetRoles": ["student", "teacher", "admin"],
+    "title": "End of Semester Examinations Schedule",
+    "body": "The end of semester examinations will begin on June 2, 2026. All students are reminded to review the timetable posted on the notice board. Students must arrive 15 minutes early on examination days. No mobile phones allowed in the examination hall.",
+    "targetRoles": ["student", "lecturer", "admin"],
     "createdBy": "u001",
     "createdAt": "2026-05-10T09:00:00Z",
     "priority": "high"
   },
   {
     "id": "an002",
-    "title": "Parent-Teacher Conference",
-    "body": "We are pleased to announce the annual Parent-Teacher Conference scheduled for May 25, 2026. All parents are encouraged to attend. Appointment slots can be booked through the school office. This is an important opportunity to discuss student progress.",
-    "targetRoles": ["teacher", "admin"],
+    "title": "Lecturer-Student Conference",
+    "body": "We are pleased to announce the annual Lecturer-Student Conference scheduled for May 25, 2026. All students are encouraged to attend. Appointment slots can be booked through the administration office.",
+    "targetRoles": ["lecturer", "admin"],
     "createdBy": "u001",
     "createdAt": "2026-05-08T10:30:00Z",
     "priority": "normal"
   },
   {
     "id": "an003",
-    "title": "School Sports Day",
-    "body": "The annual Sports Day will be held on May 30, 2026 at the school grounds. All students are expected to participate. Events include track and field, football, volleyball, and basketball. Students should come in their house colours. Parents are welcome to attend.",
-    "targetRoles": ["student", "teacher", "admin"],
+    "title": "University Sports Day",
+    "body": "The annual Sports Day will be held on May 30, 2026 at the university grounds. All students are expected to participate. Events include track and field, football, volleyball, and basketball. Students should come in their house colours.",
+    "targetRoles": ["student", "lecturer", "admin"],
     "createdBy": "u001",
     "createdAt": "2026-05-07T14:00:00Z",
     "priority": "normal"
@@ -29,7 +29,7 @@
   {
     "id": "an004",
     "title": "Library Books Return Deadline",
-    "body": "All students who have borrowed books from the school library are reminded to return them by May 20, 2026. Late returns will incur a fine of 500 RWF per day. Students with outstanding books will not receive their term reports.",
+    "body": "All students who have borrowed books from the university library are reminded to return them by May 20, 2026. Late returns will incur a fine. Students with outstanding books will not receive their semester reports.",
     "targetRoles": ["student"],
     "createdBy": "u001",
     "createdAt": "2026-05-06T08:00:00Z",
@@ -38,8 +38,8 @@
   {
     "id": "an005",
     "title": "New Teaching Resources Available",
-    "body": "The school has acquired new teaching resources including updated textbooks for Mathematics and Sciences. These resources are available in the teachers' lounge. Teachers are encouraged to review them before the next term.",
-    "targetRoles": ["teacher", "admin"],
+    "body": "The university has acquired new teaching resources including updated textbooks for Mathematics and Sciences. These resources are available in the lecturers' lounge. Lecturers are encouraged to review them before the next semester.",
+    "targetRoles": ["lecturer", "admin"],
     "createdBy": "u001",
     "createdAt": "2026-05-05T11:00:00Z",
     "priority": "normal"
@@ -47,8 +47,8 @@
   {
     "id": "an006",
     "title": "Holiday Notice: National Heroes Day",
-    "body": "Please be informed that the school will be closed on February 1, 2026 in observance of National Heroes Day. Normal classes will resume on February 2, 2026. We encourage all students and staff to participate in community activities on this day.",
-    "targetRoles": ["student", "teacher", "admin"],
+    "body": "Please be informed that the university will be closed on February 1, 2026 in observance of National Heroes Day. Normal lectures will resume on February 2, 2026.",
+    "targetRoles": ["student", "lecturer", "admin"],
     "createdBy": "u001",
     "createdAt": "2026-01-28T09:00:00Z",
     "priority": "normal"
@@ -56,7 +56,7 @@
   {
     "id": "an007",
     "title": "Scholarship Applications Open",
-    "body": "Applications for the Greenfield Academy Excellence Scholarship are now open. Students in S5 and S6 with an average score above 80% are eligible to apply. Application forms are available at the administration office. Deadline: May 31, 2026.",
+    "body": "Applications for the Greenfield Academy Excellence Scholarship are now open. Students in Year 3 and Year 4 with a GPA above 3.0 are eligible to apply. Application forms are available at the administration office. Deadline: May 31, 2026.",
     "targetRoles": ["student", "admin"],
     "createdBy": "u001",
     "createdAt": "2026-05-04T10:00:00Z",
@@ -65,8 +65,8 @@
   {
     "id": "an008",
     "title": "Mandatory Staff Meeting",
-    "body": "All teaching staff are required to attend a mandatory meeting on May 20, 2026 at 3:00 PM in the conference room. Agenda: Review of academic calendar, grading policy updates, and preparation for end-of-term assessments. Attendance is compulsory.",
-    "targetRoles": ["teacher", "admin"],
+    "body": "All academic staff are required to attend a mandatory meeting on May 20, 2026 at 3:00 PM in the conference room. Agenda: Review of academic calendar, grading policy updates, and preparation for end-of-semester assessments. Attendance is compulsory.",
+    "targetRoles": ["lecturer", "admin"],
     "createdBy": "u001",
     "createdAt": "2026-05-03T14:00:00Z",
     "priority": "high"

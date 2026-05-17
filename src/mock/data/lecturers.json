@@ -1,0 +1,8 @@
+[
+  { "id": "l001", "firstName": "Jean Pierre", "lastName": "Habimana", "email": "lecturer@greenfield.edu", "department": "Mathematics", "assignedCourses": ["c001", "c002"], "qualification": "M.Sc. Mathematics", "joinDate": "2018-09-01" },
+  { "id": "l002", "firstName": "Agathe", "lastName": "Uwimana", "email": "a.uwimana@greenfield.edu", "department": "English", "assignedCourses": ["c003", "c004"], "qualification": "M.A. English Literature", "joinDate": "2019-01-15" },
+  { "id": "l003", "firstName": "Sylvestre", "lastName": "Niyonzima", "email": "s.niyonzima@greenfield.edu", "department": "Physics", "assignedCourses": ["c005"], "qualification": "Ph.D. Physics", "joinDate": "2017-09-01" },
+  { "id": "l004", "firstName": "Chantal", "lastName": "Mukamana", "email": "c.mukamana@greenfield.edu", "department": "Biology", "assignedCourses": ["c006"], "qualification": "M.Sc. Biology", "joinDate": "2020-09-01" },
+  { "id": "l005", "firstName": "Olivier", "lastName": "Bizimana", "email": "o.bizimana@greenfield.edu", "department": "History", "assignedCourses": ["c001", "c003"], "qualification": "M.A. History", "joinDate": "2016-09-01" },
+  { "id": "l006", "firstName": "Esperance", "lastName": "Nzabonimana", "email": "e.nzabonimana@greenfield.edu", "department": "Chemistry", "assignedCourses": ["c002", "c005"], "qualification": "Ph.D. Chemistry", "joinDate": "2021-01-10" }
+]

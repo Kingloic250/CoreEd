@@ -1,20 +1,19 @@
-// Teacher: view all assigned classes with schedule details
 import { BookOpen, MapPin, Users, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
-import { useGetClasses } from '@/hooks/useClasses';
+import { useGetCourses } from '@/hooks/useCourses';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-export function MyClasses() {
-  const { data: classes, isLoading } = useGetClasses();
-  const myClasses = (classes as Record<string, unknown>[]) ?? [];
+export function MyCourses() {
+  const { data: courses, isLoading } = useGetCourses();
+  const myCourses = (courses as Record<string, unknown>[]) ?? [];
 
   return (
     <div>
-      <PageHeader title="My Classes" description={`${myClasses.length} classes assigned`} />
+      <PageHeader title="My Courses" description={`${myCourses.length} courses assigned`} />
 
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -22,28 +21,28 @@ export function MyClasses() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {myClasses.map((cls) => {
-            const schedule = (cls.schedule as Record<string, string>[]) ?? [];
+          {myCourses.map((c) => {
+            const schedule = (c.schedule as Record<string, string>[]) ?? [];
             return (
-              <Card key={String(cls.id)}>
+              <Card key={String(c.id)}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base">{String(cls.name)}</CardTitle>
-                    <Badge variant="secondary">{String(cls.gradeLevel)}</Badge>
+                    <CardTitle className="text-base">{String(c.name)}</CardTitle>
+                    <Badge variant="secondary">{String(c.year)}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="size-3.5 shrink-0" />
-                    <span>Room {String(cls.room)}</span>
+                    <span>Room {String(c.room)}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="size-3.5 shrink-0" />
-                    <span>{(cls.studentIds as string[])?.length ?? 0} students</span>
+                    <span>{(c.studentIds as string[])?.length ?? 0} students</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BookOpen className="size-3.5 shrink-0" />
-                    <span>{String(cls.gradeLevel)}</span>
+                    <span>{String(c.year)}</span>
                   </div>
 
                   {schedule.length > 0 && (

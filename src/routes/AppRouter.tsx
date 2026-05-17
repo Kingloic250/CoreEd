@@ -1,40 +1,38 @@
-// Root router configuration for all application routes
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ProtectedRoute } from './ProtectedRoute';
 
-// Layouts
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 
-// Auth
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { ContactAdminPage } from '@/pages/auth/ContactAdminPage';
+import { ProfilePage } from '@/pages/admin/ProfilePage';
 
-// Admin pages
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
 import { ManageStudents } from '@/pages/admin/ManageStudents';
-import { ManageTeachers } from '@/pages/admin/ManageTeachers';
-import { ManageClasses } from '@/pages/admin/ManageClasses';
+import { ManageLecturers } from '@/pages/admin/ManageLecturers';
+import { ManageCourses } from '@/pages/admin/ManageCourses';
+import { ManageDepartments } from '@/pages/admin/ManageDepartments';
+import { ManageSemesters } from '@/pages/admin/ManageSemesters';
+import { ManageEnrollment } from '@/pages/admin/ManageEnrollment';
 import { AccountRequests } from '@/pages/admin/AccountRequests';
 import { SystemSettings } from '@/pages/admin/SystemSettings';
 import { Reports } from '@/pages/admin/Reports';
 
-// Teacher pages
-import { TeacherDashboard } from '@/pages/teacher/TeacherDashboard';
-import { MyClasses } from '@/pages/teacher/MyClasses';
-import { AttendanceLog } from '@/pages/teacher/AttendanceLog';
-import { GradeInput } from '@/pages/teacher/GradeInput';
+import { LecturerDashboard } from '@/pages/lecturer/LecturerDashboard';
+import { MyCourses } from '@/pages/lecturer/MyCourses';
+import { AttendanceLog } from '@/pages/lecturer/AttendanceLog';
+import { GradeInput } from '@/pages/lecturer/GradeInput';
 
-// Shared pages
 import { NotificationsPage } from '@/pages/NotificationsPage';
 
-// Student pages
 import { StudentDashboard } from '@/pages/student/StudentDashboard';
 import { MyAttendance } from '@/pages/student/MyAttendance';
 import { MyGrades } from '@/pages/student/MyGrades';
 import { Transcript } from '@/pages/student/Transcript';
 import { Announcements } from '@/pages/student/Announcements';
+import { StudentCourseCatalog } from '@/pages/student/StudentCourseCatalog';
 
 function RootRedirect() {
   const { isAuthenticated, getDashboardPath } = useAuth();
@@ -54,7 +52,6 @@ export function AppRouter() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
 
-        {/* Auth routes */}
         <Route element={<AuthLayout />}>
           <Route
             path="/login"
@@ -68,7 +65,6 @@ export function AppRouter() {
 
         <Route path="/contact-admin" element={<ContactAdminPage />} />
 
-        {/* Admin routes */}
         <Route
           path="/admin"
           element={
@@ -79,31 +75,33 @@ export function AppRouter() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="students" element={<ManageStudents />} />
-          <Route path="teachers" element={<ManageTeachers />} />
-          <Route path="classes" element={<ManageClasses />} />
+          <Route path="lecturers" element={<ManageLecturers />} />
+          <Route path="courses" element={<ManageCourses />} />
+          <Route path="departments" element={<ManageDepartments />} />
+          <Route path="semesters" element={<ManageSemesters />} />
+          <Route path="enrollment" element={<ManageEnrollment />} />
           <Route path="requests" element={<AccountRequests />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SystemSettings />} />
           <Route path="reports" element={<Reports />} />
         </Route>
 
-        {/* Teacher routes */}
         <Route
-          path="/teacher"
+          path="/lecturer"
           element={
-            <ProtectedRoute role="teacher">
-              <DashboardLayout role="teacher" />
+            <ProtectedRoute role="lecturer">
+              <DashboardLayout role="lecturer" />
             </ProtectedRoute>
           }
         >
-          <Route index element={<TeacherDashboard />} />
-          <Route path="classes" element={<MyClasses />} />
+          <Route index element={<LecturerDashboard />} />
+          <Route path="courses" element={<MyCourses />} />
           <Route path="attendance" element={<AttendanceLog />} />
           <Route path="grades" element={<GradeInput />} />
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
 
-        {/* Student routes */}
         <Route
           path="/student"
           element={
@@ -115,12 +113,12 @@ export function AppRouter() {
           <Route index element={<StudentDashboard />} />
           <Route path="attendance" element={<MyAttendance />} />
           <Route path="grades" element={<MyGrades />} />
+          <Route path="courses" element={<StudentCourseCatalog />} />
           <Route path="transcript" element={<Transcript />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
 
-        {/* Misc */}
         <Route
           path="/unauthorized"
           element={

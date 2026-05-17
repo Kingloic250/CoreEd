@@ -1,4 +1,3 @@
-// Add/edit teacher form with React Hook Form + Zod validation
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -6,19 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import { teacherSchema, type TeacherFormData } from '@/utils/validators';
-import { SUBJECTS } from '@/utils/constants';
+import { lecturerSchema, type LecturerFormData } from '@/utils/validators';
 
-interface TeacherFormProps {
-  defaultValues?: Partial<TeacherFormData & { id: string }>;
-  onSubmit: (data: TeacherFormData) => void;
+interface LecturerFormProps {
+  defaultValues?: Partial<LecturerFormData & { id: string }>;
+  onSubmit: (data: LecturerFormData) => void;
   isLoading?: boolean;
   onCancel: () => void;
+  departments: { id: string; name: string }[];
 }
 
-export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: TeacherFormProps) {
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<TeacherFormData>({
-    resolver: zodResolver(teacherSchema) as never,
+export function LecturerForm({ defaultValues, onSubmit, isLoading, onCancel, departments }: LecturerFormProps) {
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<LecturerFormData>({
+    resolver: zodResolver(lecturerSchema) as never,
     defaultValues: defaultValues ?? {},
   });
 
@@ -44,16 +43,16 @@ export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: Te
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="tf-subject" aria-label="Subject">Subject</Label>
-        <Select onValueChange={(v) => setValue('subject', v)} defaultValue={defaultValues?.subject}>
-          <SelectTrigger id="tf-subject" aria-label="Select subject" aria-invalid={!!errors.subject}>
-            <SelectValue placeholder="Select subject" />
+        <Label htmlFor="tf-department" aria-label="Department">Department</Label>
+        <Select onValueChange={(v) => setValue('department', v)} defaultValue={defaultValues?.department}>
+          <SelectTrigger id="tf-department" aria-label="Select department" aria-invalid={!!errors.department}>
+            <SelectValue placeholder="Select department" />
           </SelectTrigger>
           <SelectContent>
-            {SUBJECTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {departments.map((d) => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
           </SelectContent>
         </Select>
-        {errors.subject && <p className="text-xs text-destructive">{errors.subject.message}</p>}
+        {errors.department && <p className="text-xs text-destructive">{errors.department.message}</p>}
       </div>
 
       <div className="space-y-1.5">
@@ -72,7 +71,7 @@ export function TeacherForm({ defaultValues, onSubmit, isLoading, onCancel }: Te
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Spinner className="size-4" />}
-          {defaultValues?.id ? 'Update Teacher' : 'Add Teacher'}
+          {defaultValues?.id ? 'Update Lecturer' : 'Add Lecturer'}
         </Button>
       </div>
     </form>

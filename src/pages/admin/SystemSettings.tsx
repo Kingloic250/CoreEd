@@ -14,7 +14,7 @@ export function SystemSettings() {
   const [settings, setSettings] = useState({
     schoolName: import.meta.env.VITE_APP_NAME ?? 'Greenfield Academy',
     academicYear: '2025/2026',
-    currentTerm: 'Term 2',
+    currentSemester: 'Semester 2',
     emailNotifications: true,
     selfRegistration: false,
   });
@@ -25,16 +25,16 @@ export function SystemSettings() {
 
   return (
     <div>
-      <PageHeader title="System Settings" description="Configure school-wide settings" />
+      <PageHeader title="System Settings" description="Configure university-wide settings" />
       <div className="space-y-6 max-w-2xl">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">School Information</CardTitle>
-            <CardDescription>Basic information about your school</CardDescription>
+            <CardDescription>Basic information about the university</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="schoolName">School Name</Label>
+              <Label htmlFor="schoolName">University Name</Label>
               <Input
                 id="schoolName"
                 value={settings.schoolName}
@@ -51,18 +51,18 @@ export function SystemSettings() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Current Term</Label>
+                <Label>Current Semester</Label>
                 <Select
-                  value={settings.currentTerm}
-                  onValueChange={(v) => setSettings({ ...settings, currentTerm: v })}
+                  value={settings.currentSemester}
+                  onValueChange={(v) => setSettings({ ...settings, currentSemester: v })}
                 >
-                  <SelectTrigger aria-label="Select term">
+                  <SelectTrigger aria-label="Select semester">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Term 1">Term 1</SelectItem>
-                    <SelectItem value="Term 2">Term 2</SelectItem>
-                    <SelectItem value="Term 3">Term 3</SelectItem>
+                    <SelectItem value="Semester 1">Semester 1</SelectItem>
+                    <SelectItem value="Semester 2">Semester 2</SelectItem>
+                    <SelectItem value="Summer">Summer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
