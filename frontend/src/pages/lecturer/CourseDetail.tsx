@@ -104,7 +104,7 @@ export function CourseDetail() {
                     <p className="text-sm text-muted-foreground text-center py-6">No students enrolled.</p>
                   ) : (
                     <div className="divide-y">
-                      {enrolledStudents.map((s, idx) => (
+                        {enrolledStudents.map((s, idx) => (
                         <div key={String(s.id)} className="flex items-center gap-3 py-3">
                           <span className="text-xs text-muted-foreground w-6 text-right shrink-0">{idx + 1}.</span>
                           <Avatar className="size-8 shrink-0">
@@ -120,6 +120,11 @@ export function CourseDetail() {
                               <Mail className="size-3" /> {String(s.email)}
                             </p>
                           </div>
+                          {(s.studentNumber as string) && (
+                            <Badge variant="outline" className="shrink-0 font-mono text-xs">
+                              {String(s.studentNumber)}
+                            </Badge>
+                          )}
                           <Badge variant="outline" className="shrink-0">{String(s.year)}</Badge>
                         </div>
                       ))}

@@ -155,6 +155,9 @@ export function AttendanceLog() {
                       >
                         <div className="flex items-center gap-3">
                           <span className="text-xs text-muted-foreground w-6 text-right">{idx + 1}.</span>
+                          {(student.studentNumber as string) && (
+                            <span className="text-xs font-mono text-muted-foreground shrink-0">{String(student.studentNumber)}</span>
+                          )}
                           <div>
                             <p className="text-sm font-medium">{String(student.firstName)} {String(student.lastName)}</p>
                             <p className="text-xs text-muted-foreground">{String(student.email)}</p>

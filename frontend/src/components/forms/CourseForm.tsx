@@ -51,9 +51,9 @@ export function CourseForm({ defaultValues, lecturers, departments, onSubmit, is
           {errors.year && <p className="text-xs text-destructive">{errors.year.message}</p>}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="cf-room" aria-label="Room">Room</Label>
-          <Input id="cf-room" aria-invalid={!!errors.room} {...register('room')} />
-          {errors.room && <p className="text-xs text-destructive">{errors.room.message}</p>}
+          <Label htmlFor="cf-credits" aria-label="Credits">Credits</Label>
+          <Input id="cf-credits" type="number" min={1} max={20} aria-invalid={!!errors.credits} {...register('credits', { valueAsNumber: true })} placeholder="e.g. 3" />
+          {errors.credits && <p className="text-xs text-destructive">{errors.credits.message}</p>}
         </div>
       </div>
 

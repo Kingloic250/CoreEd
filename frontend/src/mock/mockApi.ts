@@ -25,6 +25,17 @@ let userAccounts = [...users] as Record<string, unknown>[];
 
 const generateId = (prefix: string) => `${prefix}${Date.now()}`;
 
+function generateStudentNumber(enrollmentDate: string, existingStudents: Record<string, string>[]): string {
+  const yearSuffix = enrollmentDate ? String(enrollmentDate).slice(2, 4) : new Date().getFullYear().toString().slice(2);
+  const existing = new Set(existingStudents.map((s) => s.studentNumber));
+  let candidate: string;
+  do {
+    const random = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+    candidate = `${yearSuffix}${random}`;
+  } while (existing.has(candidate));
+  return candidate;
+}
+
 export function setupMockApi() {
   if (import.meta.env.VITE_MOCK_API !== 'true') return;
 
@@ -39,6 +50,9 @@ export function setupMockApi() {
       );
       if (!user) {
         return [401, { message: 'Invalid email or password' }];
+      }
+      if (user.frozen === 'true' || user.frozen === true) {
+        return [403, { message: 'Your account has been frozen. Contact the administrator.' }];
       }
       const token = `mock.jwt.token_${user.role}`;
       return [200, { token, user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } }];
@@ -115,6 +129,7 @@ export function setupMockApi() {
     mock.onPost('/api/v1/students').reply((config) => {
       const payload = JSON.parse(config.data);
       const newStudent = { ...payload, id: generateId('s') };
+      newStudent.studentNumber = generateStudentNumber(payload.enrollmentDate, students as Record<string, string>[]);
       students.push(newStudent);
       logAudit('create_student', 'student', newStudent.id, `Created student ${payload.firstName} ${payload.lastName} (${payload.year})`);
       return [201, newStudent];
@@ -125,7 +140,24 @@ export function setupMockApi() {
       const payload = JSON.parse(config.data);
       const idx = students.findIndex((s) => s.id === id);
       if (idx === -1) return [404, { message: 'Student not found' }];
+      const prevStatus = String(students[idx].status ?? '');
+      const newStatus = String(payload.status ?? prevStatus);
       students[idx] = { ...students[idx], ...payload };
+      if (['graduated', 'expelled'].includes(newStatus) && !['graduated', 'expelled'].includes(prevStatus)) {
+        const studentEmail = String(students[idx].email ?? '');
+        const userIdx = userAccounts.findIndex((u) => u.email === studentEmail);
+        if (userIdx !== -1) {
+          userAccounts[userIdx] = { ...userAccounts[userIdx], frozen: true };
+          logAudit('freeze_account', 'user', String(userAccounts[userIdx].id), `Froze account for ${studentEmail} — student ${newStatus}`);
+        }
+      } else if (!['graduated', 'expelled'].includes(newStatus) && ['graduated', 'expelled'].includes(prevStatus)) {
+        const studentEmail = String(students[idx].email ?? '');
+        const userIdx = userAccounts.findIndex((u) => u.email === studentEmail);
+        if (userIdx !== -1) {
+          userAccounts[userIdx] = { ...userAccounts[userIdx], frozen: false };
+          logAudit('unfreeze_account', 'user', String(userAccounts[userIdx].id), `Unfroze account for ${studentEmail} — student reactivated`);
+        }
+      }
       logAudit('update_student', 'student', id, `Updated student ${payload.firstName ?? students[idx].firstName} ${payload.lastName ?? students[idx].lastName}`);
       return [200, students[idx]];
     });
@@ -261,6 +293,20 @@ export function setupMockApi() {
       return [200, courses[idx]];
     });
 
+    mock.onPost('/api/v1/courses').reply((config) => {
+      const payload = JSON.parse(config.data);
+      const newCourse = {
+        id: generateId('c'),
+        ...payload,
+        studentIds: [],
+        gradingComponents: payload.gradingComponents ?? [],
+        schedule: payload.schedule ?? [],
+      };
+      (courses as Record<string, unknown>[]).push(newCourse);
+      logAudit('create_course', 'course', newCourse.id, `Created course ${payload.name}`);
+      return [201, newCourse];
+    });
+
     mock.onDelete(/\/api\/v1\/courses\/\w+/).reply((config) => {
       const id = config.url?.split('/').pop();
       const course = courses.find((c) => c.id === id);
@@ -287,6 +333,16 @@ export function setupMockApi() {
       const created = entries.map((e: Record<string, unknown>) => ({ ...e, id: generateId('att') }));
       attendance.push(...created);
       return [201, created];
+    });
+
+    mock.onPut(/\/api\/v1\/attendance\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const payload = JSON.parse(config.data);
+      const idx = attendance.findIndex((a) => a.id === id);
+      if (idx === -1) return [404, { message: 'Attendance record not found' }];
+      attendance[idx] = { ...attendance[idx], ...payload };
+      logAudit('update_attendance', 'attendance', id, `Updated attendance record`);
+      return [200, attendance[idx]];
     });
 
     mock.onGet(/\/api\/v1\/attendance\/student\/\w+/).reply((config) => {
@@ -530,6 +586,10 @@ export function setupMockApi() {
         year: 'Year 1',
         enrollmentDate: new Date().toISOString().split('T')[0],
         status: 'active',
+        studentNumber: generateStudentNumber(
+          new Date().toISOString().split('T')[0],
+          students as Record<string, string>[]
+        ),
       };
       (students as Record<string, unknown>[]).push(newStudent);
 

@@ -1,11 +1,12 @@
 // Admin: manage students with full CRUD, DataTable, and Sheet form
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataTable } from '@/components/common/DataTable';
 import { PageHeader } from '@/components/common/PageHeader';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -29,6 +30,22 @@ export function ManageStudents() {
 
   const students = (data as Student[]) ?? [];
 
+  const [statusTab, setStatusTab] = useState('all');
+
+  const filteredStudents = useMemo(() => {
+    if (statusTab === 'all') return students;
+    return students.filter((s) => String(s.status) === statusTab);
+  }, [students, statusTab]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: students.length };
+    for (const s of students) {
+      const st = String(s.status);
+      c[st] = (c[st] ?? 0) + 1;
+    }
+    return c;
+  }, [students]);
+
   const handleSubmit = async (formData: StudentFormData) => {
     if (editing?.id) {
       await updateMutation.mutateAsync({ id: String(editing.id), payload: formData });
@@ -51,6 +68,7 @@ export function ManageStudents() {
   };
 
   const columns: ColumnDef<Student>[] = [
+    { accessorKey: 'studentNumber', header: 'Student #' },
     {
       accessorFn: (row) => `${row.firstName} ${row.lastName}`,
       id: 'name',
@@ -76,11 +94,54 @@ export function ManageStudents() {
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }) => (
-        <Badge variant={row.original.status === 'active' ? 'default' : 'secondary'}>
-          {String(row.original.status)}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const student = row.original;
+        return (
+          <Select
+            value={String(student.status)}
+            onValueChange={(v) =>
+              updateMutation.mutate({ id: String(student.id), payload: { status: v } })
+            }
+          >
+            <SelectTrigger
+              className={`h-7 w-[120px] text-xs gap-1 ${
+                student.status === 'active'
+                  ? 'text-green-700 dark:text-green-400'
+                  : student.status === 'graduated'
+                  ? 'text-blue-700 dark:text-blue-400'
+                  : student.status === 'expelled'
+                  ? 'text-red-700 dark:text-red-400'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              <span className={`size-1.5 rounded-full shrink-0 ${
+                student.status === 'active'
+                  ? 'bg-green-500'
+                  : student.status === 'graduated'
+                  ? 'bg-blue-500'
+                  : student.status === 'expelled'
+                  ? 'bg-red-500'
+                  : 'bg-gray-400'
+              }`} />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">
+                <span className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-green-500" /> Active</span>
+              </SelectItem>
+              <SelectItem value="inactive">
+                <span className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-gray-400" /> Inactive</span>
+              </SelectItem>
+              <SelectItem value="graduated">
+                <span className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-blue-500" /> Graduated</span>
+              </SelectItem>
+              <SelectItem value="expelled">
+                <span className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-red-500" /> Expelled</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        );
+      },
     },
     {
       id: 'actions',
@@ -112,20 +173,34 @@ export function ManageStudents() {
     <div>
       <PageHeader
         title="Manage Students"
-        description={`${students.length} students enrolled`}
+        description={`${filteredStudents.length} student${filteredStudents.length !== 1 ? 's' : ''}${statusTab !== 'all' ? ` (${statusTab})` : ''}`}
         actionLabel="Add Student"
         actionIcon={Plus}
         onAction={() => { setEditing(null); setOpen(true); }}
       />
 
-      <DataTable
-        columns={columns}
-        data={students}
-        isLoading={isLoading}
-        searchPlaceholder="Search students..."
-        globalFilter={search}
-        onGlobalFilterChange={setSearch}
-      />
+      <Tabs value={statusTab} onValueChange={setStatusTab} className="space-y-4">
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="w-max min-w-full sm:w-auto">
+            <TabsTrigger value="all">All ({counts.all ?? 0})</TabsTrigger>
+            <TabsTrigger value="active" className="text-green-700 dark:text-green-400">Active ({counts.active ?? 0})</TabsTrigger>
+            <TabsTrigger value="inactive" className="text-muted-foreground">Inactive ({counts.inactive ?? 0})</TabsTrigger>
+            <TabsTrigger value="graduated" className="text-blue-700 dark:text-blue-400">Graduated ({counts.graduated ?? 0})</TabsTrigger>
+            <TabsTrigger value="expelled" className="text-red-700 dark:text-red-400">Expelled ({counts.expelled ?? 0})</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value={statusTab}>
+          <DataTable
+            columns={columns}
+            data={filteredStudents}
+            isLoading={isLoading}
+            searchPlaceholder="Search students..."
+            globalFilter={search}
+            onGlobalFilterChange={setSearch}
+          />
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">

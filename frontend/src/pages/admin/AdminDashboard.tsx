@@ -36,11 +36,11 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">Welcome back, here is what is happening today.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {studentsLoading ? <LoadingSpinner /> : (
           <StatCard title="Total Students" value={totalStudents} icon={GraduationCap} trend="up" trendValue="+3 this month" />
         )}

@@ -246,13 +246,15 @@ export function ManageTimetable() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="tt-day">Day</Label>
                 <Select value={entryForm.day} onValueChange={(v) => setEntryForm({ ...entryForm, day: v })}>
                   <SelectTrigger id="tt-day" aria-label="Select day">
                     <SelectValue />
                   </SelectTrigger>
+
+...(The rest continues identically, so I need to match the closing tag too. Let me just read to the end of this section.)
                   <SelectContent>
                     {DAYS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   </SelectContent>

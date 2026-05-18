@@ -69,7 +69,7 @@ export function TopBar() {
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-80" align="end" sideOffset={8}>
+          <DropdownMenuContent className="w-[90vw] sm:w-80" align="end" sideOffset={8}>
             <DropdownMenuLabel className="font-normal flex items-center justify-between">
               <span className="text-sm font-medium">Notifications</span>
               {recent.length > 0 && (
@@ -126,7 +126,7 @@ export function TopBar() {
               </Avatar>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" sideOffset={8}>
+          <DropdownMenuContent className="w-[90vw] sm:w-56" align="end" sideOffset={8}>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{user?.name}</p>

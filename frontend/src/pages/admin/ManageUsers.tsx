@@ -150,8 +150,9 @@ export function ManageUsers() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-4">
-          {tabs.map((t) => {
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="mb-4 w-max min-w-full sm:w-auto">
+            {tabs.map((t) => {
             const Icon = t.icon;
             return (
               <TabsTrigger key={t.value} value={t.value} className="gap-1.5">
@@ -163,7 +164,8 @@ export function ManageUsers() {
               </TabsTrigger>
             );
           })}
-        </TabsList>
+            </TabsList>
+          </div>
 
         {tabs.map((t) => (
           <TabsContent key={t.value} value={t.value}>

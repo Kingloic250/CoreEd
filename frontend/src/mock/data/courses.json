@@ -6,6 +6,7 @@
     "department": "d001",
     "lecturerId": "l001",
     "semesterId": "sem002",
+    "credits": 4,
     "room": "LT-101",
     "schedule": [
       { "day": "Monday", "startTime": "08:00", "endTime": "09:00" },
@@ -28,6 +29,7 @@
     "department": "d001",
     "lecturerId": "l001",
     "semesterId": "sem002",
+    "credits": 4,
     "room": "LT-102",
     "schedule": [
       { "day": "Tuesday", "startTime": "08:00", "endTime": "09:00" },
@@ -49,6 +51,7 @@
     "department": "d001",
     "lecturerId": "l001",
     "semesterId": "sem001",
+    "credits": 4,
     "room": "LT-101",
     "schedule": [
       { "day": "Monday", "startTime": "08:00", "endTime": "09:00" },
@@ -71,6 +74,7 @@
     "department": "d002",
     "lecturerId": "l002",
     "semesterId": "sem002",
+    "credits": 3,
     "room": "LH-201",
     "schedule": [
       { "day": "Monday", "startTime": "09:00", "endTime": "10:00" },
@@ -91,6 +95,7 @@
     "department": "d002",
     "lecturerId": "l002",
     "semesterId": "sem002",
+    "credits": 3,
     "room": "LH-202",
     "schedule": [
       { "day": "Tuesday", "startTime": "09:00", "endTime": "10:00" },
@@ -111,6 +116,7 @@
     "department": "d003",
     "lecturerId": "l003",
     "semesterId": "sem002",
+    "credits": 4,
     "room": "Lab-1",
     "schedule": [
       { "day": "Monday", "startTime": "11:00", "endTime": "12:00" },
@@ -132,6 +138,7 @@
     "department": "d004",
     "lecturerId": "l004",
     "semesterId": "sem002",
+    "credits": 3,
     "room": "Lab-2",
     "schedule": [
       { "day": "Wednesday", "startTime": "08:00", "endTime": "09:00" },

@@ -41,7 +41,7 @@ export function SystemSettings() {
                 onChange={(e) => setSettings({ ...settings, schoolName: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="academicYear">Academic Year</Label>
                 <Input

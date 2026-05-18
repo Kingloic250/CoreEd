@@ -82,6 +82,21 @@ export function StudentForm({ defaultValues, onSubmit, isLoading, onCancel }: St
           <Input id="enrollmentDate" type="date" aria-invalid={!!errors.enrollmentDate} {...register('enrollmentDate')} />
           {errors.enrollmentDate && <p className="text-xs text-destructive">{errors.enrollmentDate.message}</p>}
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="status">Status</Label>
+          <Select onValueChange={(v) => setValue('status', v as 'active' | 'inactive')} defaultValue={defaultValues?.status ?? 'active'}>
+            <SelectTrigger id="status" aria-invalid={!!errors.status}>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="graduated">Graduated</SelectItem>
+              <SelectItem value="expelled">Expelled</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
+        </div>
       </div>
 
       <div className="flex gap-2 pt-2 justify-end">

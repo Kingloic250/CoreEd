@@ -46,7 +46,7 @@ export function AccountRequests() {
       header: 'Message',
       accessorKey: 'message',
       cell: ({ row }: { row: { original: AccountRequest } }) => (
-        <span className="max-w-[200px] truncate block">{row.original.message || '—'}</span>
+        <span className="max-w-[120px] sm:max-w-[200px] truncate block">{row.original.message || '—'}</span>
       ),
     },
     {

@@ -38,7 +38,7 @@ export function Reports() {
       <PageHeader title="Reports" description="Academic performance overview" />
 
       <div className="space-y-6">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={handleExportCsv}>
             <Download className="size-4" /> Export CSV
           </Button>
@@ -56,7 +56,7 @@ export function Reports() {
               <div className="space-y-3">
                 {attendanceData.map((d) => (
                   <div key={d.name} className="flex items-center gap-3">
-                    <span className="text-sm text-foreground w-32 truncate">{d.name}</span>
+                    <span className="text-sm text-foreground min-w-0 flex-1 truncate">{d.name}</span>
                     <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                       <div className="h-full rounded-full bg-primary" style={{ width: `${d.rate}%` }} />
                     </div>

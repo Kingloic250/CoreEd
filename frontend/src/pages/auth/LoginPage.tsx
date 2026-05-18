@@ -78,8 +78,8 @@ export function LoginPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
       <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-accent/30 blur-3xl" />
-      <div className="relative flex min-h-screen items-center justify-center p-6">
-        <Card className="w-full max-w-md border-border/60 bg-card/80 shadow-2xl backdrop-blur-xl">
+      <div className="relative flex min-h-screen items-center justify-center p-3 sm:p-6">
+        <Card className="w-full max-w-sm sm:max-w-md border-border/60 bg-card/80 shadow-2xl backdrop-blur-xl">
           <CardHeader className="space-y-4 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
               <GraduationCap className="h-7 w-7" />

@@ -17,3 +17,6 @@ export const markAttendance = (payload: {
 
 export const getStudentAttendance = (studentId: string) =>
   axiosInstance.get(`${BASE}/student/${studentId}`) as unknown as Promise<unknown[]>;
+
+export const updateAttendance = (id: string, payload: { status: string }) =>
+  axiosInstance.put(`${BASE}/${id}`, payload) as unknown as Promise<unknown>;

@@ -1,217 +1,191 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, Check, X, Search, Users } from 'lucide-react';
+import { Users, BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DataTable } from '@/components/common/DataTable';
+import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useGetStudents } from '@/hooks/useStudents';
-import { useEnrollStudents } from '@/hooks/useCourses';
+import { useGetLecturers } from '@/hooks/useLecturers';
+import { useGetDepartments } from '@/hooks/useDepartments';
+import type { ColumnDef } from '@tanstack/react-table';
 
 type Course = Record<string, unknown>;
 type Student = Record<string, unknown>;
 
 export function ManageEnrollment() {
-  const navigate = useNavigate();
   const [courseId, setCourseId] = useState('');
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [search, setSearch] = useState('');
 
   const { data: coursesData, isLoading: coursesLoading } = useGetCourses();
-  const { data: studentsData, isLoading: studentsLoading } = useGetStudents();
-  const enrollMutation = useEnrollStudents();
+  const { data: studentsData } = useGetStudents();
+  const { data: lecturers } = useGetLecturers();
+  const { data: departments } = useGetDepartments();
 
   const courses = (coursesData as Course[]) ?? [];
   const students = (studentsData as Student[]) ?? [];
+  const lecturersList = (lecturers as Record<string, string>[]) ?? [];
+  const departmentsList = ((departments ?? []) as { id: string; name: string }[]);
+
   const selectedCourse = courses.find((c) => c.id === courseId);
 
-  const enrolledIds = useMemo(() => {
-    if (!selectedCourse) return new Set<string>();
-    return new Set((selectedCourse.studentIds as string[]) ?? []);
-  }, [selectedCourse]);
+  const enrolledStudents = useMemo(() => {
+    if (!selectedCourse) return [];
+    const ids = new Set((selectedCourse.studentIds as string[]) ?? []);
+    return students.filter((s) => ids.has(String(s.id)));
+  }, [selectedCourse, students]);
 
-  const handleCourseChange = (id: string) => {
-    setCourseId(id);
-    setSearch('');
-    const course = courses.find((c) => c.id === id);
-    if (course) {
-      setSelected(new Set((course.studentIds as string[]) ?? []));
-    }
+  const getLecturerName = (id: string) => {
+    const l = lecturersList.find((l) => l.id === id);
+    return l ? `${l.firstName} ${l.lastName}` : id;
   };
 
-  const toggleStudent = (studentId: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(studentId)) next.delete(studentId);
-      else next.add(studentId);
-      return next;
-    });
+  const getDepartmentName = (id: string) => {
+    const d = departmentsList.find((d) => d.id === id);
+    return d ? d.name : id;
   };
 
-  const selectAll = () => {
-    setSelected(new Set(filteredStudents.map((s) => String(s.id))));
-  };
-
-  const deselectAll = () => {
-    setSelected(new Set());
-  };
-
-  const handleSave = async () => {
-    if (!courseId) return;
-    await enrollMutation.mutateAsync({ id: courseId, studentIds: Array.from(selected) });
-  };
-
-  const filteredStudents = students.filter((s) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      String(s.firstName).toLowerCase().includes(q) ||
-      String(s.lastName).toLowerCase().includes(q) ||
-      String(s.email).toLowerCase().includes(q)
-    );
-  });
-
-  const addedCount = useMemo(() => {
-    return Array.from(selected).filter((id) => !enrolledIds.has(id)).length;
-  }, [selected, enrolledIds]);
-
-  const removedCount = useMemo(() => {
-    return Array.from(enrolledIds).filter((id) => !selected.has(id)).length;
-  }, [selected, enrolledIds]);
+  const availableColumns: ColumnDef<Course>[] = [
+    { accessorKey: 'name', header: 'Course' },
+    {
+      accessorKey: 'department',
+      header: 'Department',
+      cell: ({ row }) => getDepartmentName(String(row.original.department)),
+    },
+    {
+      accessorKey: 'lecturerId',
+      header: 'Lecturer',
+      cell: ({ row }) => getLecturerName(String(row.original.lecturerId)),
+    },
+    { accessorKey: 'room', header: 'Room' },
+    {
+      accessorKey: 'credits',
+      header: 'Credits',
+    },
+    {
+      accessorKey: 'year',
+      header: 'Year',
+    },
+    {
+      accessorKey: 'studentIds',
+      header: 'Enrolled',
+      cell: ({ row }) => {
+        const count = (row.original.studentIds as string[])?.length ?? 0;
+        return <Badge variant="secondary">{count} student{count !== 1 ? 's' : ''}</Badge>;
+      },
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Enrollment Management</h1>
-          <p className="text-sm text-muted-foreground">Bulk enroll or unenroll students in courses</p>
-        </div>
-      </div>
+      <PageHeader title="Enrollment Overview" description="View enrolled students and available course listings" />
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Select Course</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="max-w-xs">
-            <Label htmlFor="enroll-course">Course</Label>
-            <Select value={courseId} onValueChange={handleCourseChange}>
-              <SelectTrigger id="enroll-course" aria-label="Select course">
-                <SelectValue placeholder="Choose a course..." />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((c) => (
-                  <SelectItem key={String(c.id)} value={String(c.id)}>
-                    {String(c.name)} ({String(c.year)})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="enrolled" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="enrolled">
+            <Users className="size-4 mr-1.5" /> Enrolled Students
+          </TabsTrigger>
+          <TabsTrigger value="available">
+            <BookOpen className="size-4 mr-1.5" /> Available Courses
+          </TabsTrigger>
+        </TabsList>
 
-      {selectedCourse && (
-        <>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Users className="size-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                <strong className="text-foreground">{selected.size}</strong> enrolled
-                {addedCount > 0 && (
-                  <Badge variant="outline" className="ml-2 text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800">
-                    <Check className="size-3 mr-0.5" /> +{addedCount}
-                  </Badge>
-                )}
-                {removedCount > 0 && (
-                  <Badge variant="outline" className="ml-2 text-red-600 border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800">
-                    <X className="size-3 mr-0.5" /> -{removedCount}
-                  </Badge>
-                )}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search students..."
-                  className="pl-8 h-9 w-56"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+        <TabsContent value="enrolled" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Select Course</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="max-w-xs">
+                <Label htmlFor="enroll-course">Course</Label>
+                <Select value={courseId} onValueChange={setCourseId}>
+                  <SelectTrigger id="enroll-course" aria-label="Select course">
+                    <SelectValue placeholder="Choose a course..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((c) => (
+                      <SelectItem key={String(c.id)} value={String(c.id)}>
+                        {String(c.name)} ({String(c.year)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Button variant="outline" size="sm" onClick={selectAll}>Select All</Button>
-              <Button variant="outline" size="sm" onClick={deselectAll}>Deselect All</Button>
-              <Button size="sm" onClick={handleSave} disabled={enrollMutation.isPending || (!addedCount && !removedCount)}>
-                <Save className="size-3.5 mr-1.5" />
-                {enrollMutation.isPending ? 'Saving...' : 'Save Enrollment'}
-              </Button>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-md border border-border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">Enrolled</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Year</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {studentsLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 4 }).map((_, j) => (
-                        <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : filteredStudents.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-10">
-                      No students found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredStudents.map((student) => {
-                    const id = String(student.id);
-                    const isChecked = selected.has(id);
-                    return (
-                      <TableRow key={id} className="hover:bg-muted/50 cursor-pointer" onClick={() => toggleStudent(id)}>
-                        <TableCell>
-                          <Checkbox checked={isChecked} onCheckedChange={() => toggleStudent(id)} aria-label="Toggle enrollment" />
-                        </TableCell>
-                        <TableCell className="font-medium">{String(student.firstName)} {String(student.lastName)}</TableCell>
-                        <TableCell className="text-muted-foreground">{String(student.email)}</TableCell>
-                        <TableCell>{String(student.year ?? '—')}</TableCell>
+          {selectedCourse ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  {String(selectedCourse.name)}
+                  <Badge variant="outline" className="text-xs font-normal">
+                    {getDepartmentName(String(selectedCourse.department))}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs font-normal">
+                    {enrolledStudents.length} enrolled
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="rounded-md border border-border overflow-x-auto">
+                  <Table className="min-w-[500px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student #</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Year</TableHead>
                       </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </>
-      )}
+                    </TableHeader>
+                    <TableBody>
+                      {enrolledStudents.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground py-10">
+                            No students enrolled in this course
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        enrolledStudents.map((s) => (
+                          <TableRow key={String(s.id)}>
+                            <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">
+                              {String(s.studentNumber ?? '—')}
+                            </TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">
+                              {String(s.firstName)} {String(s.lastName)}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{String(s.email)}</TableCell>
+                            <TableCell>{String(s.year ?? '—')}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <Users className="size-12 mb-4 opacity-30" />
+              <p className="text-lg font-medium">Select a course to view enrolled students</p>
+              <p className="text-sm">Choose a course from the dropdown above to see who is enrolled.</p>
+            </div>
+          )}
+        </TabsContent>
 
-      {!courseId && !coursesLoading && (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-          <Users className="size-12 mb-4 opacity-30" />
-          <p className="text-lg font-medium">Select a course to manage enrollment</p>
-          <p className="text-sm">Choose a course from the dropdown above to view and edit enrolled students.</p>
-        </div>
-      )}
+        <TabsContent value="available">
+          <DataTable
+            columns={availableColumns}
+            data={courses}
+            isLoading={coursesLoading}
+            searchPlaceholder="Search courses..."
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

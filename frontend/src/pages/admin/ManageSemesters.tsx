@@ -146,7 +146,7 @@ export function ManageSemesters() {
             <DialogTitle>{editing ? 'Edit Semester' : 'Add New Semester'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="sem-name">Semester</Label>
                 <Select value={form.name} onValueChange={(v) => setForm({ ...form, name: v })}>
@@ -165,7 +165,7 @@ export function ManageSemesters() {
                 <Input id="sem-year" placeholder="e.g. 2025/2026" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="sem-start">Start Date</Label>
                 <Input id="sem-start" type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />

@@ -72,7 +72,7 @@ export function Transcript() {
                   <Separator className="mt-4" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 mb-6 text-sm">
                   <div>
                     <span className="text-muted-foreground">Student Name: </span>
                     <span className="font-medium">{user?.name}</span>

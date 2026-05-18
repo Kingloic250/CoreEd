@@ -274,6 +274,9 @@ export function GradeInput() {
                             <tr key={sid} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
                               <td className="py-2.5 pr-3">
                                 <span className="text-xs text-muted-foreground mr-2">{idx + 1}.</span>
+                                {(student.studentNumber as string) && (
+                                  <span className="text-xs font-mono text-muted-foreground mr-2">{String(student.studentNumber)}</span>
+                                )}
                                 <span className="font-medium">{String(student.firstName)} {String(student.lastName)}</span>
                               </td>
                               {gradingComponents.map((comp) => {

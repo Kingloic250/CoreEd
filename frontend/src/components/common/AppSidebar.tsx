@@ -8,7 +8,7 @@ import {
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
-  SidebarMenuItem, SidebarSeparator,
+  SidebarMenuItem, SidebarSeparator, useSidebar,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +74,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ role }: AppSidebarProps) {
   const { user } = useAuth();
+  const { setOpenMobile } = useSidebar();
   const navItems = navMap[role] ?? [];
 
   return (
@@ -104,6 +105,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
                       to={item.url}
                       end={item.url === '/admin' || item.url === '/lecturer' || item.url === '/student'}
                       className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
+                      onClick={() => setOpenMobile(false)}
                     >
                       {({ isActive }) => (
                         <>

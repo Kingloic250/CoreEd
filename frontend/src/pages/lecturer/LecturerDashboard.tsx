@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetCourses } from '@/hooks/useCourses';
-import { useGetGrades } from '@/hooks/useGrades';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
 import { useGetActiveSemester } from '@/hooks/useSemesters';
 
@@ -24,14 +23,11 @@ export function LecturerDashboard() {
   const { data: courses, isLoading: coursesLoading } = useGetCourses(
     lecturerId && semesterId ? { lecturerId, semesterId } : undefined
   );
-  const { data: grades, isLoading: gradesLoading } = useGetGrades({ courseId: undefined });
 
   const myCourses = (courses as Record<string, unknown>[]) ?? [];
   const todayCourses = myCourses.filter((c) =>
     (c.schedule as Record<string, string>[])?.some((s) => s.day === today)
   );
-
-  const recentGrades = ((grades as Record<string, unknown>[]) ?? []).slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -109,30 +105,6 @@ export function LecturerDashboard() {
           </div>
         )}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Recent Grades Entered</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {gradesLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-8" />)}
-            </div>
-          ) : recentGrades.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No grades entered yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {recentGrades.map((g) => (
-                <div key={String(g.id)} className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{String(g.subject)} — {String(g.semester)}</span>
-                  <Badge variant="outline">{String(g.grade)}</Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

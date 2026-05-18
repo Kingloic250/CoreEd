@@ -39,3 +39,15 @@ export function useLogAttendance() {
     },
   });
 }
+
+export function useUpdateAttendance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      attendanceApi.updateAttendance(id, { status }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ATTENDANCE] });
+      toast.success('Attendance updated');
+    },
+  });
+}

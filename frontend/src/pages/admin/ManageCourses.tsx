@@ -31,11 +31,6 @@ export function ManageCourses() {
   const lecturersList = (lecturers as CourseRecord[]) ?? [];
   const departmentsList = ((departments ?? []) as { id: string; name: string }[]);
 
-  const getLecturerName = (lecturerId: string) => {
-    const l = lecturersList.find((l) => l.id === lecturerId) as Record<string, string> | undefined;
-    return l ? `${l.firstName} ${l.lastName}` : lecturerId;
-  };
-
   const getDepartmentName = (departmentId: string) => {
     const d = departmentsList.find((d) => d.id === departmentId);
     return d ? d.name : departmentId;
@@ -53,23 +48,13 @@ export function ManageCourses() {
 
   const columns: ColumnDef<CourseRecord>[] = [
     { accessorKey: 'name', header: 'Course Name' },
-    { accessorKey: 'year', header: 'Year' },
     {
       accessorKey: 'department',
       header: 'Department',
       cell: ({ row }) => getDepartmentName(String(row.original.department)),
     },
-    {
-      accessorKey: 'lecturerId',
-      header: 'Lecturer',
-      cell: ({ row }) => getLecturerName(String(row.original.lecturerId)),
-    },
-    {
-      accessorKey: 'studentIds',
-      header: 'Students',
-      cell: ({ row }) => `${(row.original.studentIds as string[])?.length ?? 0} students`,
-    },
-    { accessorKey: 'room', header: 'Room' },
+    { accessorKey: 'credits', header: 'Credits' },
+    { accessorKey: 'year', header: 'Year' },
     {
       id: 'actions',
       header: '',

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock, MapPin, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCourses } from '@/hooks/useCourses';
@@ -69,9 +70,25 @@ export function StudentTimetable() {
 
   const today = DAYS[new Date().getDay() === 0 ? 0 : new Date().getDay() - 1];
 
+  const handleDownload = () => window.print();
+
   return (
     <div className="space-y-4">
-      <PageHeader title="My Timetable" description="Your weekly course schedule" />
+      <div className="flex items-start justify-between gap-3">
+        <PageHeader title="My Timetable" description="Your weekly course schedule" />
+        <Button onClick={handleDownload} variant="outline" className="shrink-0 mt-1 print:hidden">
+          <Download className="size-4" /> Download
+        </Button>
+      </div>
+
+      <div className="print:p-4">
+        <style>{`
+          @media print {
+            .print\\:hidden { display: none !important; }
+            .print\\:p-4 { padding: 1rem !important; }
+            body { background: white !important; }
+          }
+        `}</style>
 
       {isLoading ? (
         <div className="space-y-2">
@@ -140,6 +157,7 @@ export function StudentTimetable() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
