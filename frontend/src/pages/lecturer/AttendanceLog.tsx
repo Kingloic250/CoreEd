@@ -20,7 +20,7 @@ import { useGetActiveSemester } from '@/hooks/useSemesters';
 import { ATTENDANCE_STATUSES } from '@/utils/constants';
 import { attendanceStatusBadge as attendanceStatusBadgeMap } from '@/utils/formatters';
 
-type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+type AttendanceStatus = 'present' | 'absent';
 type StatusEntry = { studentId: string; status: AttendanceStatus };
 
 export function AttendanceLog() {

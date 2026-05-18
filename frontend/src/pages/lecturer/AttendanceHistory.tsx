@@ -17,7 +17,7 @@ import { useGetActiveSemester } from '@/hooks/useSemesters';
 import { attendanceStatusBadge as statusBadge } from '@/utils/formatters';
 import { useState } from 'react';
 
-const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'];
+const ATTENDANCE_STATUSES = ['present', 'absent'];
 
 export function AttendanceHistory() {
   const [courseFilter, setCourseFilter] = useState('');
@@ -139,8 +139,6 @@ export function AttendanceHistory() {
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="present">Present</SelectItem>
               <SelectItem value="absent">Absent</SelectItem>
-              <SelectItem value="late">Late</SelectItem>
-              <SelectItem value="excused">Excused</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -169,8 +167,6 @@ export function AttendanceHistory() {
             const isEditing = editingKey === key;
             const present = entries.filter((e) => e.status === 'present').length;
             const absent = entries.filter((e) => e.status === 'absent').length;
-            const late = entries.filter((e) => e.status === 'late').length;
-            const excused = entries.filter((e) => e.status === 'excused').length;
 
             const currentStatuses: Record<string, string> = {};
             for (const e of entries) {
@@ -193,8 +189,6 @@ export function AttendanceHistory() {
                   <div className="flex gap-2 mt-2 flex-wrap">
                     <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950">Present: {present}</Badge>
                     <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50 dark:bg-red-950">Absent: {absent}</Badge>
-                    <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950">Late: {late}</Badge>
-                    <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950">Excused: {excused}</Badge>
                     {!isEditing ? (
                       <Button variant="ghost" size="icon-sm" onClick={() => startEditing(key, entries)} aria-label="Edit attendance">
                         <Pencil className="size-3.5" />
@@ -266,9 +260,7 @@ export function AttendanceHistory() {
                                 <SelectItem key={s} value={s}>
                                   <span className="flex items-center gap-1.5">
                                     <span className={`size-1.5 rounded-full ${
-                                      s === 'present' ? 'bg-emerald-500' :
-                                      s === 'absent' ? 'bg-red-500' :
-                                      s === 'late' ? 'bg-amber-500' : 'bg-blue-500'
+                                      s === 'present' ? 'bg-emerald-500' : 'bg-red-500'
                                     }`} />
                                     {s.charAt(0).toUpperCase() + s.slice(1)}
                                   </span>

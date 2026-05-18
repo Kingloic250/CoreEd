@@ -15,15 +15,11 @@ type AttendanceRecord = { date: string; status: string };
 const STATUS_STYLES: Record<string, string> = {
   present: 'bg-emerald-500 text-white',
   absent: 'bg-destructive text-white',
-  late: 'bg-yellow-500 text-white',
-  excused: 'bg-blue-500 text-white',
 };
 
 const STATUS_LEGEND = [
   { label: 'Present', style: 'bg-emerald-500' },
   { label: 'Absent', style: 'bg-destructive' },
-  { label: 'Late', style: 'bg-yellow-500' },
-  { label: 'Excused', style: 'bg-blue-500' },
 ];
 
 export function MyAttendance() {

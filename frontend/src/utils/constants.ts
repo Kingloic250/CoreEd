@@ -80,7 +80,7 @@ export const GRADE_SCALE = [
   { min: 0, max: 49, letter: 'F', color: 'text-destructive' },
 ] as const;
 
-export const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'] as const;
+export const ATTENDANCE_STATUSES = ['present', 'absent'] as const;
 export type AttendanceStatus = typeof ATTENDANCE_STATUSES[number];
 
 export const SEMESTERS = ['Semester 1', 'Semester 2', 'Summer'] as const;

@@ -45,13 +45,9 @@ export const getFullName = (firstName: string, lastName: string): string =>
 export const attendanceStatusColor: Record<string, string> = {
   present: 'text-emerald-600 bg-emerald-50',
   absent: 'text-destructive bg-red-50',
-  late: 'text-yellow-600 bg-yellow-50',
-  excused: 'text-blue-600 bg-blue-50',
 };
 
 export const attendanceStatusBadge: Record<string, string> = {
   present: 'bg-emerald-100 text-emerald-700',
   absent: 'bg-red-100 text-red-700',
-  late: 'bg-yellow-100 text-yellow-700',
-  excused: 'bg-blue-100 text-blue-700',
 };

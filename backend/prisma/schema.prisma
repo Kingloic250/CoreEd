@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  lecturer
+  student
+}
+
+enum StudentStatus {
+  active
+  inactive
+  graduated
+  expelled
+}
+
+enum Gender {
+  male
+  female
+}
+
+enum AttendanceStatus {
+  present
+  absent
+}
+
+model User {
+  id       String @id
+  name     String
+  email    String @unique
+  password String
+  role     Role
+  avatar   String?
+
+  accountRequests AccountRequest[] @relation("schoolEmail")
+  @@map("users")
+}
+
+model Student {
+  id             String        @id
+  firstName      String        @map("firstName")
+  lastName       String        @map("lastName")
+  email          String        @unique
+  dateOfBirth    String?       @map("dateOfBirth")
+  gender         Gender?
+  year           String
+  enrollmentDate String?       @map("enrollmentDate")
+  status         StudentStatus @default(active)
+  studentNumber  String?       @unique @map("studentNumber")
+
+  attendance Attendance[]
+  grades    Grade[]
+  @@map("students")
+}
+
+model Lecturer {
+  id              String  @id
+  firstName       String  @map("firstName")
+  lastName        String  @map("lastName")
+  email           String  @unique
+  department      String?
+  assignedCourses Json    @default("[]") @map("assignedCourses")
+  qualification   String?
+  joinDate        String? @map("joinDate")
+
+  courses Course[]
+  @@map("lecturers")
+}
+
+model Department {
+  id              String  @id
+  name            String
+  code            String?
+  headLecturerId  String? @map("headLecturerId")
+  description     String?
+
+  @@map("departments")
+}
+
+model Semester {
+  id        String  @id
+  name      String
+  year      String?
+  startDate String? @map("startDate")
+  endDate   String? @map("endDate")
+  isActive  Int     @default(0) @map("isActive")
+
+  @@map("semesters")
+}
+
+model Course {
+  id                String  @id
+  name              String
+  year              String?
+  department        String?
+  lecturerId        String? @map("lecturerId")
+  semesterId        String? @map("semesterId")
+  credits           Int     @default(3)
+  room              String?
+  schedule          Json    @default("[]")
+  studentIds        Json    @default("[]") @map("studentIds")
+  gradingComponents Json    @default("[]") @map("gradingComponents")
+
+  lecturer   Lecturer?    @relation(fields: [lecturerId], references: [id])
+  attendance Attendance[]
+  grades     Grade[]
+  @@map("courses")
+}
+
+model Attendance {
+  id        String           @id
+  courseId   String?          @map("courseId")
+  studentId  String?          @map("studentId")
+  date      String?
+  status    AttendanceStatus?
+  markedBy  String?          @map("markedBy")
+
+  course  Course?  @relation(fields: [courseId], references: [id])
+  student Student? @relation(fields: [studentId], references: [id])
+
+  @@index([courseId], name: "idx_attendance_course")
+  @@index([studentId], name: "idx_attendance_student")
+  @@map("attendance")
+}
+
+model Grade {
+  id              String  @id
+  studentId       String? @map("studentId")
+  courseId        String? @map("courseId")
+  semester        String?
+  score           Float   @default(0)
+  maxScore        Float   @default(100) @map("maxScore")
+  grade           String?
+  comments        String?
+  componentScores Json    @default("{}") @map("componentScores")
+
+  course  Course?  @relation(fields: [courseId], references: [id])
+  student Student? @relation(fields: [studentId], references: [id])
+
+  @@index([studentId], name: "idx_grades_student")
+  @@index([courseId], name: "idx_grades_course")
+  @@map("grades")
+}
+
+model Announcement {
+  id          String   @id
+  title       String
+  body        String?
+  targetRoles Json     @default("[]") @map("targetRoles")
+  createdBy   String?  @map("createdBy")
+  createdAt   DateTime @default(now()) @map("createdAt")
+  priority    String   @default("normal")
+
+  @@map("announcements")
+}
+
+model AccountRequest {
+  id            String    @id
+  name          String?
+  email         String?
+  classOrSubject String?  @map("classOrSubject")
+  message       String?
+  status        String    @default("pending")
+  schoolEmail   String?   @map("schoolEmail")
+  password      String?
+  createdAt     DateTime  @default(now()) @map("createdAt")
+  approvedAt    DateTime? @map("approvedAt")
+
+  user User? @relation("schoolEmail", fields: [schoolEmail], references: [email])
+  @@map("account_requests")
+}
+
+model AuditLog {
+  id             String   @id
+  action         String?
+  performedBy    String?  @map("performedBy")
+  performedById  String?  @map("performedById")
+  targetType     String?  @map("targetType")
+  targetId       String?  @map("targetId")
+  details        String?
+  timestamp      DateTime @default(now()) @map("timestamp")
+
+  @@index([timestamp(sort: Desc)], name: "idx_audit_logs_timestamp")
+  @@map("audit_logs")
+}
