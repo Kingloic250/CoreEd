@@ -1,10 +1,12 @@
-// Centered layout for authentication pages (login, forgot password, etc.)
 import { Outlet } from 'react-router-dom';
+import { PageTransition } from '@/components/common/PageTransition';
 
 export function AuthLayout() {
   return (
     <div className="min-h-screen bg-background">
-      <Outlet />
+      <PageTransition>
+        <Outlet />
+      </PageTransition>
     </div>
   );
 }

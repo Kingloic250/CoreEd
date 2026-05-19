@@ -1,4 +1,5 @@
 import { Users, GraduationCap, BookOpen, TrendingUp, Plus, Building2, CalendarDays, UserPlus, ScrollText } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,18 +41,31 @@ export function AdminDashboard() {
         <p className="text-sm text-muted-foreground mt-1">Welcome back, here is what is happening today.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+      >
         {studentsLoading ? <LoadingSpinner /> : (
-          <StatCard title="Total Students" value={totalStudents} icon={GraduationCap} trend="up" trendValue="+3 this month" />
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <StatCard title="Total Students" value={totalStudents} icon={GraduationCap} trend="up" trendValue="+3 this month" />
+          </motion.div>
         )}
         {lecturersLoading ? <LoadingSpinner /> : (
-          <StatCard title="Total Lecturers" value={totalLecturers} icon={Users} trend="neutral" trendValue="No change" />
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <StatCard title="Total Lecturers" value={totalLecturers} icon={Users} trend="neutral" trendValue="No change" />
+          </motion.div>
         )}
         {coursesLoading ? <LoadingSpinner /> : (
-          <StatCard title="Total Courses" value={totalCourses} icon={BookOpen} trend="neutral" trendValue="No change" />
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <StatCard title="Total Courses" value={totalCourses} icon={BookOpen} trend="neutral" trendValue="No change" />
+          </motion.div>
         )}
-        <StatCard title="Attendance Rate" value={87} icon={TrendingUp} trend="up" trendValue="+2% vs last week" suffix="%" />
-      </div>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <StatCard title="Attendance Rate" value={87} icon={TrendingUp} trend="up" trendValue="+2% vs last week" suffix="%" />
+        </motion.div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">

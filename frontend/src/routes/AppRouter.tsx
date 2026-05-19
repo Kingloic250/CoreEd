@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ProtectedRoute } from './ProtectedRoute';
+import { PageTransition } from '@/components/common/PageTransition';
 
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
@@ -83,7 +84,7 @@ export function AppRouter() {
           />
         </Route>
 
-        <Route path="/contact-admin" element={<ContactAdminPage />} />
+        <Route path="/contact-admin" element={<PageTransition><ContactAdminPage /></PageTransition>} />
 
         <Route
           path="/admin"
@@ -164,23 +165,27 @@ export function AppRouter() {
         <Route
           path="/unauthorized"
           element={
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground">403 — Unauthorized</h1>
-                <p className="mt-2 text-muted-foreground">You do not have permission to view this page.</p>
+            <PageTransition>
+              <div className="flex min-h-screen items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-2xl font-bold text-foreground">403 — Unauthorized</h1>
+                  <p className="mt-2 text-muted-foreground">You do not have permission to view this page.</p>
+                </div>
               </div>
-            </div>
+            </PageTransition>
           }
         />
         <Route
           path="*"
           element={
-            <div className="flex min-h-screen items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground">404 — Page Not Found</h1>
-                <p className="mt-2 text-muted-foreground">The page you are looking for does not exist.</p>
+            <PageTransition>
+              <div className="flex min-h-screen items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-2xl font-bold text-foreground">404 — Page Not Found</h1>
+                  <p className="mt-2 text-muted-foreground">The page you are looking for does not exist.</p>
+                </div>
               </div>
-            </div>
+            </PageTransition>
           }
         />
       </Routes>

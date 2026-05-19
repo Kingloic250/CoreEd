@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { BookOpen, ClipboardList, Users, MapPin, Clock } from 'lucide-react';
@@ -52,12 +53,18 @@ export function LecturerDashboard() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+          >
             {todayCourses.map((c) => {
               const todaySlot = (c.schedule as Record<string, string>[])?.find((s) => s.day === today);
               return (
-                <Card key={String(c.id)}>
-                  <CardContent className="pt-5 pb-4">
+                <motion.div key={String(c.id)} variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                  <Card>
+                    <CardContent className="pt-5 pb-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-semibold text-foreground">{String(c.name)}</p>
@@ -78,9 +85,10 @@ export function LecturerDashboard() {
                     </Button>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
+              </motion.div>
+            );
+          })}
+          </motion.div>
         )}
       </div>
 
@@ -89,20 +97,27 @@ export function LecturerDashboard() {
         {coursesLoading ? (
           <Skeleton className="h-24" />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+          >
             {myCourses.map((c) => (
-              <Card key={String(c.id)}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">{String(c.name)}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs text-muted-foreground space-y-1">
-                  <p className="flex items-center gap-1"><Users className="size-3" /> {(c.studentIds as string[])?.length ?? 0} students</p>
-                  <p className="flex items-center gap-1"><MapPin className="size-3" /> Room {String(c.room)}</p>
-                  <p className="flex items-center gap-1"><BookOpen className="size-3" /> {String(c.year)}</p>
-                </CardContent>
-              </Card>
+              <motion.div key={String(c.id)} variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{String(c.name)}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground space-y-1">
+                    <p className="flex items-center gap-1"><Users className="size-3" /> {(c.studentIds as string[])?.length ?? 0} students</p>
+                    <p className="flex items-center gap-1"><MapPin className="size-3" /> Room {String(c.room)}</p>
+                    <p className="flex items-center gap-1"><BookOpen className="size-3" /> {String(c.year)}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
