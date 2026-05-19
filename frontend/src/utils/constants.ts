@@ -56,6 +56,14 @@ export const API_PATHS = {
   SEMESTERS: '/api/v1/semesters',
   AUDIT_LOGS: '/api/v1/audit-logs',
   USERS: '/api/v1/users',
+  ASSIGNMENTS: '/api/v1/assignments',
+  CALENDAR_EVENTS: '/api/v1/calendar-events',
+  MATERIALS: '/api/v1/materials',
+  CLAIMS: '/api/v1/claims',
+  FEES: '/api/v1/fees',
+  INVOICES: '/api/v1/invoices',
+  PAYMENTS: '/api/v1/payments',
+  MESSAGES: '/api/v1/messages',
 } as const;
 
 export const QUERY_KEYS = {
@@ -70,6 +78,14 @@ export const QUERY_KEYS = {
   SEMESTERS: 'semesters',
   AUDIT_LOGS: 'audit-logs',
   USERS: 'users',
+  ASSIGNMENTS: 'assignments',
+  CALENDAR_EVENTS: 'calendar-events',
+  MATERIALS: 'materials',
+  CLAIMS: 'claims',
+  FEES: 'fees',
+  INVOICES: 'invoices',
+  PAYMENTS: 'payments',
+  MESSAGES: 'messages',
 } as const;
 
 export const GRADE_SCALE = [

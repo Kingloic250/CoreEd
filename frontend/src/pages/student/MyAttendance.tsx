@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
+import { CircularProgress } from '@/components/common/CircularProgress';
 import { useGetAttendance } from '@/hooks/useAttendance';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -58,7 +59,6 @@ export function MyAttendance() {
             { label: 'Total Days', value: records.length, color: '' },
             { label: 'Present', value: presentCount, color: 'text-emerald-600' },
             { label: 'Absent', value: absentCount, color: 'text-destructive' },
-            { label: 'Attendance Rate', value: `${pct}%`, color: pct >= 80 ? 'text-emerald-600' : 'text-destructive' },
           ].map((stat) => (
             <Card key={stat.label}>
               <CardContent className="pt-4 pb-3">
@@ -69,6 +69,14 @@ export function MyAttendance() {
               </CardContent>
             </Card>
           ))}
+          {/* Attendance Ring */}
+          <Card>
+            <CardContent className="pt-4 pb-3 flex items-center justify-center">
+              {isLoading ? <Skeleton className="size-20 rounded-full" /> : (
+                <CircularProgress value={pct} size={80} strokeWidth={6} />
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Calendar */}

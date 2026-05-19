@@ -10,6 +10,13 @@ import departmentsData from './data/departments.json';
 import semestersData from './data/semesters.json';
 import accountRequestsData from './data/account_requests.json';
 import auditLogsData from './data/audit_logs.json';
+import assignmentsData from './data/assignments.json';
+import eventsData from './data/events.json';
+import materialsData from './data/materials.json';
+import claimsData from './data/claims.json';
+import invoicesData from './data/invoices.json';
+import paymentsData from './data/payments.json';
+import messagesData from './data/messages.json';
 import { getToken } from '@/utils/tokenManager';
 
 let students = [...studentsData] as Record<string, unknown>[];
@@ -22,6 +29,13 @@ let departments = [...departmentsData] as Record<string, unknown>[];
 let semesters = [...semestersData] as Record<string, unknown>[];
 let auditLogs = [...auditLogsData] as Record<string, unknown>[];
 let userAccounts = [...users] as Record<string, unknown>[];
+let assignments = [...assignmentsData] as Record<string, unknown>[];
+let calendarEvents = [...eventsData] as Record<string, unknown>[];
+let materials = [...materialsData] as Record<string, unknown>[];
+let claims = [...claimsData] as Record<string, unknown>[];
+let invoices = [...invoicesData] as Record<string, unknown>[];
+let payments = [...paymentsData] as Record<string, unknown>[];
+let messages = [...messagesData] as Record<string, unknown>[];
 
 const generateId = (prefix: string) => `${prefix}${Date.now()}`;
 
@@ -604,6 +618,245 @@ export function setupMockApi() {
       accountRequests[idx] = { ...accountRequests[idx], status: 'rejected' };
       logAudit('reject_request', 'account_request', id, `Rejected account request from ${accountRequests[idx].name}`);
       return [200, accountRequests[idx]];
+    });
+
+    // ─── ASSIGNMENTS ─────────────────────────────────────────────────────
+    mock.onGet('/api/v1/assignments').reply((config) => {
+      const courseId = config.params?.courseId;
+      const studentId = config.params?.studentId;
+      let result = [...assignments] as Record<string, unknown>[];
+      if (courseId) result = result.filter((a) => a.courseId === String(courseId));
+      if (studentId) {
+        result = result.filter((a) =>
+          (a.submissions as Record<string, unknown>[])?.some(
+            (s) => s.studentId === String(studentId)
+          )
+        );
+      }
+      return [200, result];
+    });
+
+    mock.onGet(/\/api\/v1\/assignments\/\w+$/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const assignment = assignments.find((a) => a.id === id);
+      return assignment ? [200, assignment] : [404, { message: 'Assignment not found' }];
+    });
+
+    mock.onPost('/api/v1/assignments').reply((config) => {
+      const payload = JSON.parse(config.data);
+      const newAssignment = {
+        id: `a${Date.now()}`,
+        ...payload,
+        submissions: payload.submissions ?? [],
+        createdAt: new Date().toISOString(),
+      };
+      assignments.push(newAssignment);
+      logAudit('create_assignment', 'assignment', newAssignment.id, `Created assignment "${payload.title}" for course ${payload.courseId}`);
+      return [201, newAssignment];
+    });
+
+    mock.onPut(/\/api\/v1\/assignments\/\w+$/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const payload = JSON.parse(config.data);
+      const idx = assignments.findIndex((a) => a.id === id);
+      if (idx === -1) return [404, { message: 'Assignment not found' }];
+      assignments[idx] = { ...assignments[idx], ...payload };
+      logAudit('update_assignment', 'assignment', id, `Updated assignment "${payload.title ?? assignments[idx].title}"`);
+      return [200, assignments[idx]];
+    });
+
+    mock.onDelete(/\/api\/v1\/assignments\/\w+$/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const assignment = assignments.find((a) => a.id === id);
+      assignments = assignments.filter((a) => a.id !== id);
+      if (assignment) logAudit('delete_assignment', 'assignment', id, `Deleted assignment "${assignment.title}"`);
+      return [204];
+    });
+
+    mock.onPost(/\/api\/v1\/assignments\/\w+\/submit/).reply((config) => {
+      const parts = config.url?.split('/').filter(Boolean) ?? [];
+      const id = parts[3];
+      const payload = JSON.parse(config.data);
+      const idx = assignments.findIndex((a) => a.id === id);
+      if (idx === -1) return [404, { message: 'Assignment not found' }];
+      const submissions = [...((assignments[idx].submissions as Record<string, unknown>[]) ?? [])];
+      const subIdx = submissions.findIndex((s) => s.studentId === payload.studentId);
+      if (subIdx !== -1) {
+        submissions[subIdx] = {
+          ...submissions[subIdx],
+          submittedAt: new Date().toISOString(),
+          fileUrl: payload.fileUrl ?? null,
+          content: payload.content ?? '',
+          status: 'submitted',
+        };
+      } else {
+        submissions.push({
+          studentId: payload.studentId,
+          submittedAt: new Date().toISOString(),
+          fileUrl: payload.fileUrl ?? null,
+          content: payload.content ?? '',
+          status: 'submitted',
+          score: null,
+          feedback: null,
+        });
+      }
+      assignments[idx] = { ...assignments[idx], submissions };
+      logAudit('submit_assignment', 'assignment', id, `Student ${payload.studentId} submitted assignment`);
+      return [200, assignments[idx]];
+    });
+
+    mock.onPut(/\/api\/v1\/assignments\/\w+\/grade\/\w+/).reply((config) => {
+      const parts = config.url?.split('/').filter(Boolean) ?? [];
+      const id = parts[3];
+      const studentId = parts[5];
+      const payload = JSON.parse(config.data);
+      const idx = assignments.findIndex((a) => a.id === id);
+      if (idx === -1) return [404, { message: 'Assignment not found' }];
+      const submissions = [...((assignments[idx].submissions as Record<string, unknown>[]) ?? [])];
+      const subIdx = submissions.findIndex((s) => s.studentId === studentId);
+      if (subIdx === -1) return [404, { message: 'Submission not found' }];
+      submissions[subIdx] = {
+        ...submissions[subIdx],
+        score: payload.score,
+        feedback: payload.feedback,
+        status: 'graded',
+        gradedAt: new Date().toISOString(),
+      };
+      assignments[idx] = { ...assignments[idx], submissions };
+      logAudit('grade_submission', 'assignment', id, `Graded submission for student ${studentId}`);
+      return [200, submissions[subIdx]];
+    });
+
+    // ─── CALENDAR EVENTS ─────────────────────────────────────────────────
+    mock.onGet('/api/v1/calendar-events').reply((config) => {
+      const { type, startDate, endDate } = config.params ?? {};
+      let result = [...calendarEvents];
+      if (type) result = result.filter((e) => e.type === type);
+      if (startDate) result = result.filter((e) => String(e.date) >= startDate);
+      if (endDate) result = result.filter((e) => String(e.date) <= endDate);
+      return [200, result];
+    });
+
+    mock.onPost('/api/v1/calendar-events').reply((config) => {
+      const payload = JSON.parse(config.data);
+      const newEvent = {
+        id: `ev${Date.now()}`,
+        ...payload,
+        createdAt: new Date().toISOString(),
+      };
+      calendarEvents.push(newEvent);
+      logAudit('create_event', 'calendar', newEvent.id, `Created event "${payload.title}" (${payload.type})`);
+      return [201, newEvent];
+    });
+
+    mock.onPut(/\/api\/v1\/calendar-events\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const payload = JSON.parse(config.data);
+      const idx = calendarEvents.findIndex((e) => e.id === id);
+      if (idx === -1) return [404, { message: 'Event not found' }];
+      calendarEvents[idx] = { ...calendarEvents[idx], ...payload };
+      logAudit('update_event', 'calendar', id, `Updated event "${payload.title ?? calendarEvents[idx].title}"`);
+      return [200, calendarEvents[idx]];
+    });
+
+    mock.onDelete(/\/api\/v1\/calendar-events\/\w+/).reply((config) => {
+      const id = config.url?.split('/').pop();
+      const event = calendarEvents.find((e) => e.id === id);
+      calendarEvents = calendarEvents.filter((e) => e.id !== id);
+      if (event) logAudit('delete_event', 'calendar', id, `Deleted event "${event.title}"`);
+      return [204];
+    });
+
+    // ─── MATERIALS ──────────────────────────────────────────────────────
+    mock.onGet('/api/v1/materials').reply((config) => {
+      const { courseId, type } = config.params ?? {};
+      let result = [...materials];
+      if (courseId) result = result.filter((m) => m.courseId === courseId);
+      if (type) result = result.filter((m) => m.type === type);
+      return [200, result];
+    });
+
+    // ─── CLAIMS ───────────────────────────────────────────────────────────
+    mock.onGet('/api/v1/claims').reply((config) => {
+      const { studentId } = config.params ?? {};
+      let result = [...claims];
+      if (studentId) result = result.filter((c) => c.studentId === studentId);
+      return [200, result];
+    });
+
+    mock.onPost('/api/v1/claims').reply((config) => {
+      const payload = JSON.parse(config.data);
+      const { token } = getToken();
+      const newClaim = {
+        id: `cl${String(claims.length + 1).padStart(3, '0')}`,
+        ...payload,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        resolvedAt: null,
+        resolvedBy: null,
+        resolutionNote: null,
+      };
+      claims.push(newClaim);
+      logAudit('create_claim', 'claim', newClaim.id, `Claim filed for grade ${payload.gradeId}`);
+      return [201, newClaim];
+    });
+
+    // ─── INVOICES ────────────────────────────────────────────────────────
+    mock.onGet('/api/v1/invoices').reply((config) => {
+      const { studentId, status } = config.params ?? {};
+      let result = [...invoices];
+      if (studentId) result = result.filter((inv) => inv.studentId === studentId);
+      if (status) result = result.filter((inv) => inv.status === status);
+      return [200, result];
+    });
+
+    // ─── PAYMENTS ────────────────────────────────────────────────────────
+    mock.onGet('/api/v1/payments').reply((config) => {
+      const { studentId } = config.params ?? {};
+      let result = [...payments];
+      if (studentId) {
+        const studentInvoices = invoices.filter((inv) => inv.studentId === studentId);
+        const invoiceIds = new Set(studentInvoices.map((inv) => inv.id));
+        result = result.filter((pmt) => invoiceIds.has(pmt.invoiceId));
+      }
+      return [200, result];
+    });
+
+    // ─── MESSAGES ─────────────────────────────────────────────────────────
+    mock.onGet('/api/v1/messages').reply((config) => {
+      const { userId, folder } = config.params ?? {};
+      let result = [...messages];
+      if (userId) {
+        if (folder === 'sent') {
+          result = result.filter((m) => m.senderId === userId);
+        } else {
+          result = result.filter((m) => m.recipientId === userId);
+        }
+      }
+      result.sort((a, b) => new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime());
+      return [200, result];
+    });
+
+    mock.onPost('/api/v1/messages').reply((config) => {
+      const payload = JSON.parse(config.data);
+      const newMsg = {
+        id: `msg${String(messages.length + 1).padStart(3, '0')}`,
+        ...payload,
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+      messages.push(newMsg);
+      logAudit('send_message', 'message', newMsg.id, `Message "${payload.subject}" sent to ${payload.recipientName}`);
+      return [201, newMsg];
+    });
+
+    mock.onPatch(/\/api\/v1\/messages\/\w+\/read/).reply((config) => {
+      const id = config.url?.split('/').filter(Boolean) ?? [];
+      const msgId = id[3];
+      const msg = messages.find((m) => m.id === msgId);
+      if (!msg) return [404, { message: 'Message not found' }];
+      msg.read = true;
+      return [200, msg];
     });
   });
 }

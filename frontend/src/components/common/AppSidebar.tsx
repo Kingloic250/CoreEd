@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   BarChart3, ClipboardList, FileText, Bell, School,
   ClipboardCheck, Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
-  Library, ScrollText, Shield, CalendarRange
+  Library, ScrollText, Shield, CalendarRange, Wallet, Mail
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -28,11 +28,15 @@ const adminNav = [
   { title: 'Audit Logs', url: '/admin/audit-logs', icon: ScrollText },
   { title: 'Users', url: '/admin/users', icon: Shield },
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
+  { title: 'Calendar', url: '/admin/calendar', icon: Calendar },
 ];
 
 const lecturerNav = [
   { title: 'Dashboard', url: '/lecturer', icon: LayoutDashboard },
   { title: 'My Courses', url: '/lecturer/courses', icon: BookOpen },
+  { title: 'Assignments', url: '/lecturer/assignments', icon: FileText },
+  { title: 'Calendar', url: '/lecturer/calendar', icon: Calendar },
+  { title: 'Messages', url: '/lecturer/messages', icon: Mail },
   { title: 'Timetable', url: '/lecturer/timetable', icon: Calendar },
   { title: 'Mark Attendance', url: '/lecturer/attendance', icon: ClipboardList },
   { title: 'Attendance History', url: '/lecturer/attendance/history', icon: ClipboardCheck },
@@ -45,6 +49,10 @@ const studentNav = [
   { title: 'My Attendance', url: '/student/attendance', icon: Calendar },
   { title: 'My Grades', url: '/student/grades', icon: Trophy },
   { title: 'Course Catalog', url: '/student/courses', icon: Library },
+  { title: 'My Studies', url: '/student/studies', icon: FileText },
+  { title: 'Fee Ledger', url: '/student/fees', icon: Wallet },
+  { title: 'Messages', url: '/student/messages', icon: Mail },
+  { title: 'Calendar', url: '/student/calendar', icon: Calendar },
   { title: 'My Timetable', url: '/student/timetable', icon: CalendarDays },
   { title: 'Transcript', url: '/student/transcript', icon: FileText },
   { title: 'Announcements', url: '/student/announcements', icon: Bell },

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "cl001",
+    "gradeId": "g003",
+    "studentId": "s001",
+    "subject": "Mathematics",
+    "semester": "Summer",
+    "claimedGrade": "A",
+    "reason": "I believe my final exam score was incorrectly added. My calculation shows 94, not 91.",
+    "status": "pending",
+    "createdAt": "2026-05-18T10:30:00Z",
+    "resolvedAt": null,
+    "resolvedBy": null,
+    "resolutionNote": null
+  },
+  {
+    "id": "cl002",
+    "gradeId": "g015",
+    "studentId": "s008",
+    "subject": "English",
+    "semester": "Semester 1",
+    "claimedGrade": "A",
+    "reason": "My project was submitted on time but the system marked it as late.",
+    "status": "approved",
+    "createdAt": "2026-04-10T08:15:00Z",
+    "resolvedAt": "2026-04-12T14:00:00Z",
+    "resolvedBy": "Jean Pierre Habimana",
+    "resolutionNote": "After review, the project was indeed submitted on time. Grade stands."
+  },
+  {
+    "id": "cl003",
+    "gradeId": "g032",
+    "studentId": "s010",
+    "subject": "Biology",
+    "semester": "Semester 1",
+    "claimedGrade": "F",
+    "reason": "I missed the final exam due to medical reasons. I have a doctor's note.",
+    "status": "rejected",
+    "createdAt": "2026-03-20T11:00:00Z",
+    "resolvedAt": "2026-03-25T09:30:00Z",
+    "resolvedBy": "Jean Pierre Habimana",
+    "resolutionNote": "Medical documentation must be submitted within 48 hours per policy. Submitted 5 days late."
+  }
+]

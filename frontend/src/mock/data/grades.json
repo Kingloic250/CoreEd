@@ -29,5 +29,6 @@
   { "id": "g028", "studentId": "s004", "courseId": "c001", "subject": "Mathematics", "semester": "Summer", "score": 74, "maxScore": 100, "grade": "B", "comments": "Continued improvement" },
   { "id": "g029", "studentId": "s005", "courseId": "c002", "subject": "Mathematics", "semester": "Semester 2", "score": 61, "maxScore": 100, "grade": "C", "comments": "More effort needed" },
   { "id": "g030", "studentId": "s007", "courseId": "c003", "subject": "English", "semester": "Semester 2", "score": 79, "maxScore": 100, "grade": "B", "comments": "Good improvement" },
-  { "id": "g031", "studentId": "s009", "courseId": "c001", "subject": "Mathematics", "semester": "Semester 2", "score": 82, "maxScore": 100, "grade": "A", "comments": "Great improvement" }
+  { "id": "g031", "studentId": "s009", "courseId": "c001", "subject": "Mathematics", "semester": "Semester 2", "score": 82, "maxScore": 100, "grade": "A", "comments": "Great improvement" },
+  { "id": "g032", "studentId": "s010", "courseId": "c006", "subject": "Biology", "semester": "Semester 1", "score": 34, "maxScore": 100, "grade": "F", "comments": "Failed - must retake this course", "componentScores": {} }
 ]
