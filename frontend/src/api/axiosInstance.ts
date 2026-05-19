@@ -15,7 +15,6 @@ const axiosInstance = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor: attach Bearer token from in-memory store
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getToken();
@@ -27,7 +26,6 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: normalize responses and handle auth errors
 axiosInstance.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -35,14 +33,12 @@ axiosInstance.interceptors.response.use(
     const message =
       error.response?.data?.message ?? error.message ?? 'An unexpected error occurred';
 
-    if (status === 401) {
+    if (status === 401 && getToken()) {
       clearToken();
-      // Import lazily to avoid circular dependency with authStore
       import('@/store/authStore').then(({ useAuthStore }) => {
         useAuthStore.getState().logout();
       });
       window.location.href = '/login';
-      return Promise.reject({ message, status, errors: [] });
     }
 
     return Promise.reject({

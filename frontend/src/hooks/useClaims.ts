@@ -7,7 +7,7 @@ export function useGetClaims(studentId?: string) {
   return useQuery({
     queryKey: [QUERY_KEYS.CLAIMS, studentId],
     queryFn: () => claimsApi.getClaims({ studentId }),
-    enabled: !!studentId,
+    enabled: true,
   });
 }
 
@@ -22,5 +22,18 @@ export function useCreateClaim() {
     onError: () => {
       toast.error('Failed to submit claim');
     },
+  });
+}
+
+export function useUpdateClaim() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      claimsApi.updateClaim(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.CLAIMS] });
+      toast.success('Claim resolved');
+    },
+    onError: () => toast.error('Failed to resolve claim'),
   });
 }

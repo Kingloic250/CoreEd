@@ -7,3 +7,6 @@ export const getClaims = (params: { studentId?: string }) =>
 
 export const createClaim = (payload: unknown) =>
   axiosInstance.post(BASE, payload) as unknown as Promise<unknown>;
+
+export const updateClaim = (id: string, data: Record<string, unknown>) =>
+  axiosInstance.patch(`${BASE}/${id}`, data) as unknown as Promise<unknown>;

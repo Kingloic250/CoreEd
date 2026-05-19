@@ -35,6 +35,7 @@ import { GradeBook } from '@/pages/lecturer/GradeBook';
 import { LecturerProfile } from '@/pages/lecturer/LecturerProfile';
 import { ManageAssignments } from '@/pages/lecturer/ManageAssignments';
 import { AssignmentSubmissions } from '@/pages/lecturer/AssignmentSubmissions';
+import { ManageClaims } from '@/pages/lecturer/ManageClaims';
 
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { AcademicCalendar } from '@/pages/AcademicCalendar';
@@ -123,6 +124,7 @@ export function AppRouter() {
           <Route path="courses/:id" element={<CourseDetail />} />
           <Route path="assignments" element={<ManageAssignments />} />
           <Route path="assignments/:id" element={<AssignmentSubmissions />} />
+          <Route path="claims" element={<ManageClaims />} />
           <Route path="calendar" element={<AcademicCalendar role="lecturer" />} />
           <Route path="messages" element={<Inbox role="lecturer" />} />
           <Route path="timetable" element={<MyTimetable />} />

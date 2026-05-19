@@ -11,6 +11,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/common/PageHeader';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useGetCalendarEvents, useCreateCalendarEvent, useUpdateCalendarEvent, useDeleteCalendarEvent } from '@/hooks/useCalendar';
 import { formatDate } from '@/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,6 +34,7 @@ export function ManageCalendar() {
   const [filter, setFilter] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
   const [form, setForm] = useState({
     title: '', description: '', type: 'event', date: '',
     time: '', endTime: '', courseName: '',
@@ -83,7 +85,7 @@ export function ManageCalendar() {
   };
 
   const handleDelete = (id: string, title: string) => {
-    if (window.confirm(`Delete "${title}"?`)) deleteMutation.mutate(id);
+    setConfirmDelete({ id, title });
   };
 
   return (
@@ -217,6 +219,14 @@ export function ManageCalendar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={() => setConfirmDelete(null)}
+        onConfirm={() => { if (confirmDelete) deleteMutation.mutate(confirmDelete.id); }}
+        title="Delete Event"
+        description={confirmDelete ? `Delete "${confirmDelete.title}"? This cannot be undone.` : ''}
+      />
     </div>
   );
 }

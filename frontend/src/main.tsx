@@ -8,9 +8,8 @@ import { ThemeProvider } from '@/components/theme-provider.tsx';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
       retry: (failureCount, error) => {
-        // Don't retry on 4xx errors
         if (error instanceof Error && 'status' in error) {
           const status = (error as { status: number }).status;
           if (status >= 400 && status < 500) return false;
@@ -22,21 +21,12 @@ const queryClient = new QueryClient({
   },
 });
 
-async function bootstrap() {
-  if (import.meta.env.VITE_MOCK_API === 'true') {
-    const { setupMockApi } = await import('@/mock/mockApi');
-    setupMockApi();
-  }
-
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <App />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </StrictMode>
-  );
-}
-
-bootstrap();
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </QueryClientProvider>
+  </StrictMode>
+);

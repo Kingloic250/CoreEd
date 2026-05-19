@@ -97,12 +97,14 @@ export function AssignmentDetail() {
                   <CardContent className="space-y-2">
                     {(a.attachments as string[]).map((file) => (
                       <div key={file} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
-                        <span className="flex items-center gap-2">
-                          <FileText className="size-4 text-muted-foreground" />
-                          {file}
-                        </span>
-                        <Button variant="ghost" size="icon-sm" asChild>
-                          <a href="#" onClick={(e) => e.preventDefault()}><Download className="size-4" /></a>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="size-4 text-muted-foreground shrink-0" />
+                          <span className="truncate">{file}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="gap-1 shrink-0 h-7 text-xs" asChild>
+                          <a href="#" download={file} onClick={(e) => e.preventDefault()}>
+                            <Download className="size-3.5" /> Download
+                          </a>
                         </Button>
                       </div>
                     ))}
@@ -123,9 +125,16 @@ export function AssignmentDetail() {
                         <span>Submitted on {formatDate(String(mySubmission?.submittedAt))}</span>
                       </div>
                       {mySubmission?.fileUrl && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <FileText className="size-4" />
-                          {String(mySubmission.fileUrl)}
+                        <div className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="size-4 text-muted-foreground shrink-0" />
+                            <span className="truncate">{String(mySubmission.fileUrl).split('/').pop()}</span>
+                          </div>
+                          <Button variant="ghost" size="sm" className="gap-1 shrink-0 h-7 text-xs">
+                            <a href="#" download={String(mySubmission.fileUrl).split('/').pop()} onClick={(e) => e.preventDefault()}>
+                              <Download className="size-3.5" /> Download
+                            </a>
+                          </Button>
                         </div>
                       )}
                       {mySubmission?.status === 'graded' && (

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   BarChart3, ClipboardList, FileText, Bell, School,
   ClipboardCheck, Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
-  Library, ScrollText, Shield, CalendarRange, Wallet, Mail
+  Library, ScrollText, Shield, CalendarRange, Wallet, Mail, AlertCircle
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
+import { useGetMessages } from '@/hooks/useMessages';
 import { getInitials } from '@/utils/formatters';
 
 const adminNav = [
@@ -37,6 +38,7 @@ const lecturerNav = [
   { title: 'Assignments', url: '/lecturer/assignments', icon: FileText },
   { title: 'Calendar', url: '/lecturer/calendar', icon: Calendar },
   { title: 'Messages', url: '/lecturer/messages', icon: Mail },
+  { title: 'Grade Claims', url: '/lecturer/claims', icon: AlertCircle },
   { title: 'Timetable', url: '/lecturer/timetable', icon: Calendar },
   { title: 'Mark Attendance', url: '/lecturer/attendance', icon: ClipboardList },
   { title: 'Attendance History', url: '/lecturer/attendance/history', icon: ClipboardCheck },
@@ -84,6 +86,10 @@ export function AppSidebar({ role }: AppSidebarProps) {
   const { user } = useAuth();
   const { setOpenMobile } = useSidebar();
   const navItems = navMap[role] ?? [];
+  const { data: messages } = useGetMessages({ userId: user?.id, folder: 'inbox' });
+  const unreadCount = ((messages as Record<string, unknown>[]) ?? []).filter(
+    (m) => !m.read && m.recipientId === user?.id
+  ).length;
 
   return (
     <Sidebar collapsible="icon">
@@ -119,6 +125,11 @@ export function AppSidebar({ role }: AppSidebarProps) {
                         <>
                           <item.icon />
                           <span>{item.title}</span>
+                          {item.title === 'Messages' && unreadCount > 0 && (
+                            <Badge className="ml-auto size-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
+                              {unreadCount > 99 ? '99+' : unreadCount}
+                            </Badge>
+                          )}
                           {isActive && <span className="sr-only">(current page)</span>}
                         </>
                       )}

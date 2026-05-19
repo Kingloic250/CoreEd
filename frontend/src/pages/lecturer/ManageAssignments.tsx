@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Calendar, FileText } from 'lucide-react';
+import { useState, useMemo, useRef } from 'react';
+import { Plus, Pencil, Trash2, Calendar, FileText, Upload, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/common/PageHeader';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useGetAssignments, useCreateAssignment, useUpdateAssignment, useDeleteAssignment } from '@/hooks/useAssignments';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
 import { useGetCourses } from '@/hooks/useCourses';
@@ -37,12 +38,15 @@ export function ManageAssignments() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
 
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formCourseId, setFormCourseId] = useState('');
   const [formDueDate, setFormDueDate] = useState('');
   const [formMaxScore, setFormMaxScore] = useState('100');
+  const [formAttachments, setFormAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const coursesForSelect = useMemo(() => {
     if (myCourses.length > 0) return myCourses;
@@ -58,6 +62,7 @@ export function ManageAssignments() {
     setFormCourseId(myCourses[0]?.id ? String(myCourses[0].id) : '');
     setFormDueDate('');
     setFormMaxScore('100');
+    setFormAttachments([]);
     setDialogOpen(true);
   };
 
@@ -68,17 +73,23 @@ export function ManageAssignments() {
     setFormCourseId(String(a.courseId));
     setFormDueDate(String(a.dueDate));
     setFormMaxScore(String(a.maxScore));
+    setFormAttachments([]);
     setDialogOpen(true);
   };
 
   const handleSave = () => {
     if (!formTitle.trim() || !formCourseId) return;
+    const existingAttachments = editingId
+      ? ((allAssignments as Record<string, unknown>[])?.find((a) => a.id === editingId)?.attachments as string[]) ?? []
+      : [];
+    const newFileNames = formAttachments.map((f) => f.name);
     const data: Record<string, unknown> = {
       title: formTitle.trim(),
       description: formDescription.trim(),
       courseId: formCourseId,
       dueDate: formDueDate,
       maxScore: Number(formMaxScore),
+      attachments: [...existingAttachments, ...newFileNames],
     };
     if (editingId) {
       updateMutation.mutate({ id: editingId, data });
@@ -94,9 +105,7 @@ export function ManageAssignments() {
   };
 
   const handleDelete = (id: string, title: string) => {
-    if (window.confirm(`Delete "${title}"? This cannot be undone.`)) {
-      deleteMutation.mutate(id);
-    }
+    setConfirmDelete({ id, title });
   };
 
   if (isLoading) return <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}</div>;
@@ -166,6 +175,48 @@ export function ManageAssignments() {
               <Label>Description</Label>
               <Textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Describe the assignment..." rows={4} />
             </div>
+            <div className="space-y-2">
+              <Label>Attachments (optional)</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.length) {
+                      setFormAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
+                    }
+                  }}
+                />
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="size-3.5" /> Choose Files
+                </Button>
+                {formAttachments.length > 0 && (
+                  <span className="text-xs text-muted-foreground">{formAttachments.length} file(s) selected</span>
+                )}
+              </div>
+              {formAttachments.length > 0 && (
+                <div className="space-y-1">
+                  {formAttachments.map((f, idx) => (
+                    <div key={idx} className="flex items-center justify-between rounded border px-2.5 py-1.5 text-xs">
+                      <span className="flex items-center gap-1.5 truncate">
+                        <FileText className="size-3 shrink-0 text-muted-foreground" />
+                        {f.name}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="size-5"
+                        onClick={() => setFormAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                      >
+                        <X className="size-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Due Date</Label>
@@ -185,6 +236,14 @@ export function ManageAssignments() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onOpenChange={() => setConfirmDelete(null)}
+        onConfirm={() => { if (confirmDelete) deleteMutation.mutate(confirmDelete.id); }}
+        title="Delete Assignment"
+        description={confirmDelete ? `Delete "${confirmDelete.title}"? This cannot be undone.` : ''}
+      />
     </div>
   );
 }

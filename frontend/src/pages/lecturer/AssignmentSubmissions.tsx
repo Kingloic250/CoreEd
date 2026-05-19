@@ -129,10 +129,15 @@ export function AssignmentSubmissions() {
                     {/* File */}
                     <div className="text-sm">
                       {sub?.fileUrl ? (
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <FileText className="size-3" />
-                          {String(sub.fileUrl).split('/').pop()}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="size-3 text-muted-foreground shrink-0" />
+                          <span className="truncate text-xs text-muted-foreground">{String(sub.fileUrl).split('/').pop()}</span>
+                          <Button variant="ghost" size="sm" className="h-6 text-xs gap-1 px-1.5" asChild>
+                            <a href="#" download={String(sub.fileUrl).split('/').pop()} onClick={(e) => e.preventDefault()}>
+                              <Download className="size-3" />
+                            </a>
+                          </Button>
+                        </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}

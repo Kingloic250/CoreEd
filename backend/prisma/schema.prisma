@@ -53,8 +53,11 @@ model Student {
   status         StudentStatus @default(active)
   studentNumber  String?       @unique @map("studentNumber")
 
-  attendance Attendance[]
-  grades    Grade[]
+  attendance          Attendance[]
+  grades              Grade[]
+  submissions         AssignmentSubmission[]
+  claims              Claim[]
+  invoices            Invoice[]
   @@map("students")
 }
 
@@ -109,6 +112,8 @@ model Course {
   lecturer   Lecturer?    @relation(fields: [lecturerId], references: [id])
   attendance Attendance[]
   grades     Grade[]
+  assignments Assignment[]
+  materials   CourseMaterial[]
   @@map("courses")
 }
 
@@ -187,4 +192,209 @@ model AuditLog {
 
   @@index([timestamp(sort: Desc)], name: "idx_audit_logs_timestamp")
   @@map("audit_logs")
+}
+
+enum SubmissionStatus {
+  pending
+  submitted
+  graded
+  overdue
+}
+
+enum EventType {
+  exam
+  deadline
+  holiday
+  event
+}
+
+enum MaterialType {
+  slide
+  syllabus
+  reading
+}
+
+enum ClaimStatus {
+  pending
+  approved
+  rejected
+}
+
+enum InvoiceStatus {
+  pending
+  paid
+  overdue
+  cancelled
+}
+
+enum PaymentMethod {
+  bank_transfer
+  mobile_money
+  credit_card
+  cash
+}
+
+model Assignment {
+  id          String   @id
+  courseId    String?  @map("courseId")
+  courseName  String?  @map("courseName")
+  title       String
+  description String?
+  dueDate     String?  @map("dueDate")
+  maxScore    Float    @default(100) @map("maxScore")
+  attachments Json     @default("[]")
+  createdBy   String?  @map("createdBy")
+  createdAt   DateTime @default(now()) @map("createdAt")
+
+  course Course? @relation(fields: [courseId], references: [id])
+  submissions AssignmentSubmission[]
+
+  @@index([courseId], name: "idx_assignments_course")
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id          String           @id
+  assignmentId String?          @map("assignmentId")
+  studentId   String?          @map("studentId")
+  submittedAt DateTime?        @map("submittedAt")
+  fileUrl     String?          @map("fileUrl")
+  content     String?
+  status      SubmissionStatus @default(submitted)
+  score       Float?
+  feedback    String?
+  gradedAt    DateTime?        @map("gradedAt")
+
+  assignment Assignment? @relation(fields: [assignmentId], references: [id])
+  student    Student?    @relation(fields: [studentId], references: [id])
+
+  @@index([assignmentId], name: "idx_submissions_assignment")
+  @@index([studentId], name: "idx_submissions_student")
+  @@map("assignment_submissions")
+}
+
+model CalendarEvent {
+  id          String    @id
+  title       String
+  description String?
+  type        EventType
+  date        String?
+  time        String?
+  endTime     String?   @map("endTime")
+  courseId    String?   @map("courseId")
+  courseName  String?   @map("courseName")
+  targetRoles Json      @default("[]") @map("targetRoles")
+  createdBy   String?   @map("createdBy")
+  createdAt   DateTime  @default(now()) @map("createdAt")
+
+  @@index([type], name: "idx_events_type")
+  @@index([date], name: "idx_events_date")
+  @@map("calendar_events")
+}
+
+model CourseMaterial {
+  id          String       @id
+  title       String
+  type        MaterialType
+  courseId    String?      @map("courseId")
+  courseName  String?      @map("courseName")
+  fileName    String?      @map("fileName")
+  description String?
+  uploadedBy  String?      @map("uploadedBy")
+  uploadedAt  DateTime     @default(now()) @map("uploadedAt")
+
+  course Course? @relation(fields: [courseId], references: [id])
+  @@index([courseId], name: "idx_materials_course")
+  @@index([type], name: "idx_materials_type")
+  @@map("course_materials")
+}
+
+model Claim {
+  id            String      @id
+  gradeId       String?     @map("gradeId")
+  studentId     String?     @map("studentId")
+  subject       String?
+  semester      String?
+  claimedGrade  String?     @map("claimedGrade")
+  reason        String?
+  status        ClaimStatus @default(pending)
+  createdAt     DateTime    @default(now()) @map("createdAt")
+  resolvedAt    DateTime?   @map("resolvedAt")
+  resolvedBy    String?     @map("resolvedBy")
+  resolutionNote String?    @map("resolutionNote")
+
+  student Student? @relation(fields: [studentId], references: [id])
+  @@index([studentId], name: "idx_claims_student")
+  @@index([status], name: "idx_claims_status")
+  @@map("grade_appeals")
+}
+
+model Invoice {
+  id           String         @id
+  studentId    String?        @map("studentId")
+  studentName  String?        @map("studentName")
+  totalAmount  Float          @map("totalAmount")
+  dueDate      String?        @map("dueDate")
+  status       InvoiceStatus  @default(pending)
+  semester     String?
+  academicYear String?        @map("academicYear")
+  createdAt    DateTime       @default(now()) @map("createdAt")
+
+  student Student? @relation(fields: [studentId], references: [id])
+  items   InvoiceItem[]
+  payments Payment[]
+
+  @@index([studentId], name: "idx_invoices_student")
+  @@index([status], name: "idx_invoices_status")
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id
+  invoiceId   String? @map("invoiceId")
+  description String?
+  amount      Float
+
+  invoice Invoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId], name: "idx_invoice_items_invoice")
+  @@map("invoice_items")
+}
+
+model Payment {
+  id         String        @id
+  invoiceId  String?       @map("invoiceId")
+  amount     Float
+  method     PaymentMethod
+  reference  String?
+  paidAt     DateTime?     @map("paidAt")
+  receivedBy String?       @map("receivedBy")
+
+  invoice Invoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId], name: "idx_payments_invoice")
+  @@map("payments")
+}
+
+model Message {
+  id            String   @id
+  senderId      String?  @map("senderId")
+  senderName    String?  @map("senderName")
+  senderRole    String?  @map("senderRole")
+  recipientId   String?  @map("recipientId")
+  recipientName String?  @map("recipientName")
+  recipientRole String?  @map("recipientRole")
+  subject       String?
+  body          String?
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("createdAt")
+  parentId      String?  @map("parentId")
+
+  parent   Message?  @relation("MessageThread", fields: [parentId], references: [id])
+  replies  Message[] @relation("MessageThread")
+
+  @@index([senderId], name: "idx_messages_sender")
+  @@index([recipientId], name: "idx_messages_recipient")
+  @@index([parentId], name: "idx_messages_parent")
+  @@map("messages")
 }
