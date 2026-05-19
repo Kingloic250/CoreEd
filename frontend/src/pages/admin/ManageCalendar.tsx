@@ -39,6 +39,10 @@ export function ManageCalendar() {
     title: '', description: '', type: 'event', date: '',
     time: '', endTime: '', courseName: '',
   });
+  const [initialForm, setInitialForm] = useState({
+    title: '', description: '', type: 'event', date: '',
+    time: '', endTime: '', courseName: '',
+  });
 
   const eventList = ((events as Record<string, unknown>[]) ?? []).filter(
     (e) => !filter || e.type === filter
@@ -46,13 +50,15 @@ export function ManageCalendar() {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm({ title: '', description: '', type: 'event', date: '', time: '', endTime: '', courseName: '' });
+    const empty = { title: '', description: '', type: 'event', date: '', time: '', endTime: '', courseName: '' };
+    setForm(empty);
+    setInitialForm(empty);
     setDialogOpen(true);
   };
 
   const openEdit = (e: Record<string, unknown>) => {
     setEditingId(String(e.id));
-    setForm({
+    const vals = {
       title: String(e.title ?? ''),
       description: String(e.description ?? ''),
       type: String(e.type ?? 'event'),
@@ -60,9 +66,13 @@ export function ManageCalendar() {
       time: String(e.time ?? ''),
       endTime: String(e.endTime ?? ''),
       courseName: String(e.courseName ?? ''),
-    });
+    };
+    setForm(vals);
+    setInitialForm(vals);
     setDialogOpen(true);
   };
+
+  const formChanged = form.title !== initialForm.title || form.description !== initialForm.description || form.type !== initialForm.type || form.date !== initialForm.date || form.time !== initialForm.time || form.endTime !== initialForm.endTime || form.courseName !== initialForm.courseName;
 
   const handleSave = () => {
     if (!form.title.trim() || !form.date) return;
@@ -213,7 +223,7 @@ export function ManageCalendar() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!form.title.trim() || !form.date}>
+            <Button onClick={handleSave} disabled={!form.title.trim() || !form.date || (editingId !== null && !formChanged)}>
               {editingId ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>

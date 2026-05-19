@@ -81,6 +81,8 @@ export function ManageStudents() {
       ),
     },
     { accessorKey: 'year', header: 'Year' },
+    { accessorKey: 'department', header: 'Department' },
+    { accessorKey: 'facultyId', header: 'Faculty', cell: ({ row }) => { const f = (row.original as any).faculty; return f ? f.name : '—'; } },
     {
       accessorKey: 'gender',
       header: 'Gender',

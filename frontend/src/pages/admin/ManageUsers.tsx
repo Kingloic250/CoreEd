@@ -40,6 +40,7 @@ export function ManageUsers() {
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<UserRecord | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', role: 'student' });
+  const [initialEditForm, setInitialEditForm] = useState({ name: '', email: '', role: 'student' });
 
   const [resetOpen, setResetOpen] = useState(false);
   const [resetting, setResetting] = useState<UserRecord | null>(null);
@@ -65,13 +66,17 @@ export function ManageUsers() {
 
   const openEdit = (u: UserRecord) => {
     setEditing(u);
-    setEditForm({
+    const vals = {
       name: String(u.name ?? ''),
       email: String(u.email ?? ''),
       role: String(u.role ?? 'student'),
-    });
+    };
+    setEditForm(vals);
+    setInitialEditForm(vals);
     setEditOpen(true);
   };
+
+  const editFormChanged = editForm.name !== initialEditForm.name || editForm.email !== initialEditForm.email || editForm.role !== initialEditForm.role;
 
   const handleEdit = async () => {
     if (!editing?.id) return;
@@ -210,7 +215,7 @@ export function ManageUsers() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleEdit} disabled={updateMutation.isPending || !editForm.name || !editForm.email}>
+            <Button onClick={handleEdit} disabled={updateMutation.isPending || !editForm.name || !editForm.email || !editFormChanged}>
               {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>

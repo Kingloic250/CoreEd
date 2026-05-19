@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useGetCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from '@/hooks/useCourses';
 import { useGetLecturers } from '@/hooks/useLecturers';
-import { useGetDepartments } from '@/hooks/useDepartments';
+import { useGetFaculties } from '@/hooks/useFaculties';
 import { CourseForm } from '@/components/forms/CourseForm';
 import type { CourseFormData } from '@/utils/validators';
 
@@ -22,19 +22,14 @@ export function ManageCourses() {
 
   const { data, isLoading } = useGetCourses();
   const { data: lecturers } = useGetLecturers();
-  const { data: departments } = useGetDepartments();
+  const { data: faculties } = useGetFaculties();
   const createMutation = useCreateCourse();
   const updateMutation = useUpdateCourse();
   const deleteMutation = useDeleteCourse();
 
   const courses = (data as CourseRecord[]) ?? [];
   const lecturersList = (lecturers as CourseRecord[]) ?? [];
-  const departmentsList = ((departments ?? []) as { id: string; name: string }[]);
-
-  const getDepartmentName = (departmentId: string) => {
-    const d = departmentsList.find((d) => d.id === departmentId);
-    return d ? d.name : departmentId;
-  };
+  const facultiesList = ((faculties ?? []) as { id: string; name: string; department?: { id: string; name: string } | null }[]);
 
   const handleSubmit = async (formData: CourseFormData) => {
     if (editing?.id) {
@@ -51,7 +46,10 @@ export function ManageCourses() {
     {
       accessorKey: 'department',
       header: 'Department',
-      cell: ({ row }) => getDepartmentName(String(row.original.department)),
+      cell: ({ row }) => {
+        const dept = (row.original.faculty as { department?: { name: string } } | undefined)?.department?.name ?? String(row.original.department ?? '');
+        return dept;
+      },
     },
     { accessorKey: 'credits', header: 'Credits' },
     { accessorKey: 'year', header: 'Year' },
@@ -100,7 +98,7 @@ export function ManageCourses() {
           <CourseForm
             defaultValues={editing as (CourseFormData & { id: string }) | undefined}
             lecturers={lecturersList}
-            departments={departmentsList}
+            faculties={facultiesList}
             onSubmit={handleSubmit}
             isLoading={createMutation.isPending || updateMutation.isPending}
             onCancel={() => setOpen(false)}

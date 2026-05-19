@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, X, Mail, Key, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Check, X, Mail, Key, Clock, CheckCircle, XCircle, AlertTriangle, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,29 @@ export function AccountRequests() {
     {
       header: 'Email',
       accessorKey: 'email',
+    },
+    {
+      header: 'Student ID',
+      accessorKey: 'studentId',
+      cell: ({ row }: { row: { original: AccountRequest } }) => (
+        <span className="inline-flex items-center gap-1.5">
+          <CreditCard className="size-3 text-muted-foreground" />
+          {row.original.studentId || '—'}
+        </span>
+      ),
+    },
+    {
+      header: 'Flag',
+      accessorKey: 'flagged',
+      cell: ({ row }: { row: { original: AccountRequest } }) => {
+        if (!row.original.flagged) return null;
+        return (
+          <Badge variant="outline" className="gap-1 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+            <AlertTriangle className="size-3" />
+            Suspicious
+          </Badge>
+        );
+      },
     },
     {
       header: 'Class/Grade',
@@ -134,6 +157,13 @@ export function AccountRequests() {
             </DialogDescription>
           </DialogHeader>
 
+          {approving?.flagged && (
+            <div className="flex items-start gap-2 rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <span>This request is flagged — the student ID <strong>{approving.studentId}</strong> was not found in the system. You should reject this request.</span>
+            </div>
+          )}
+
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="schoolEmail">University Email</Label>
@@ -168,7 +198,7 @@ export function AccountRequests() {
             <Button variant="outline" onClick={() => setApproving(null)}>
               Cancel
             </Button>
-            <Button onClick={handleApprove} disabled={!schoolEmail || !password || approveMutation.isPending}>
+            <Button onClick={handleApprove} disabled={!schoolEmail || !password || approving?.flagged || approveMutation.isPending}>
               {approveMutation.isPending ? 'Approving...' : 'Approve & Create Account'}
             </Button>
           </DialogFooter>

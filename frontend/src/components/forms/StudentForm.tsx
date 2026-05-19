@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Spinner } from '@/components/ui/spinner';
 import { studentSchema, type StudentFormData } from '@/utils/validators';
 import { YEARS } from '@/utils/constants';
+import { useGetFaculties } from '@/hooks/useFaculties';
 
 interface StudentFormProps {
   defaultValues?: Partial<StudentFormData & { id: string }>;
@@ -16,10 +17,18 @@ interface StudentFormProps {
 }
 
 export function StudentForm({ defaultValues, onSubmit, isLoading, onCancel }: StudentFormProps) {
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<StudentFormData>({
+  const { data: faculties } = useGetFaculties();
+  const facultiesList = (faculties as any[]) ?? [];
+
+  const { register, handleSubmit, setValue, formState: { errors, isDirty } } = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema) as never,
-    defaultValues: defaultValues ?? { status: 'active' },
+    defaultValues: defaultValues ?? {},
   });
+
+  const getFacultyLabel = (f: any) => {
+    const dept = f.department?.name ?? '';
+    return dept ? `${dept} → ${f.name}` : f.name;
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
@@ -50,8 +59,8 @@ export function StudentForm({ defaultValues, onSubmit, isLoading, onCancel }: St
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="gender" aria-label="Gender">Gender</Label>
-          <Select onValueChange={(v) => setValue('gender', v as 'male' | 'female')} defaultValue={defaultValues?.gender}>
-            <SelectTrigger id="gender" aria-invalid={!!errors.gender} aria-label="Select gender">
+            <Select onValueChange={(v) => setValue('gender', v as 'male' | 'female')} defaultValue={defaultValues?.gender}>
+            <SelectTrigger className="w-full" id="gender" aria-invalid={!!errors.gender} aria-label="Select gender">
               <SelectValue placeholder="Select gender" />
             </SelectTrigger>
             <SelectContent>
@@ -63,45 +72,40 @@ export function StudentForm({ defaultValues, onSubmit, isLoading, onCancel }: St
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="year" aria-label="Year">Year</Label>
-        <Select onValueChange={(v) => setValue('year', v)} defaultValue={defaultValues?.year}>
-          <SelectTrigger id="year" aria-invalid={!!errors.year} aria-label="Select year">
-            <SelectValue placeholder="Select year" />
-          </SelectTrigger>
-          <SelectContent>
-            {YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        {errors.year && <p className="text-xs text-destructive">{errors.year.message}</p>}
-      </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="enrollmentDate" aria-label="Enrollment date">Enrollment Date</Label>
-          <Input id="enrollmentDate" type="date" aria-invalid={!!errors.enrollmentDate} {...register('enrollmentDate')} />
-          {errors.enrollmentDate && <p className="text-xs text-destructive">{errors.enrollmentDate.message}</p>}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="status">Status</Label>
-          <Select onValueChange={(v) => setValue('status', v as 'active' | 'inactive')} defaultValue={defaultValues?.status ?? 'active'}>
-            <SelectTrigger id="status" aria-invalid={!!errors.status}>
-              <SelectValue placeholder="Select status" />
+          <Label htmlFor="year" aria-label="Year">Year</Label>
+          <Select onValueChange={(v) => setValue('year', v)} defaultValue={defaultValues?.year}>
+            <SelectTrigger className="w-full" id="year" aria-invalid={!!errors.year} aria-label="Select year">
+              <SelectValue placeholder="Select year" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="graduated">Graduated</SelectItem>
-              <SelectItem value="expelled">Expelled</SelectItem>
+              {YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
-          {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
+          {errors.year && <p className="text-xs text-destructive">{errors.year.message}</p>}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="facultyId" aria-label="Faculty">Faculty</Label>
+          <Select onValueChange={(v) => setValue('facultyId', v)} defaultValue={defaultValues?.facultyId}>
+            <SelectTrigger className="w-full" id="facultyId" aria-invalid={!!errors.facultyId} aria-label="Select faculty">
+              <SelectValue placeholder="Select faculty" />
+            </SelectTrigger>
+            <SelectContent>
+              {facultiesList.map((f: any) => (
+                <SelectItem key={String(f.id)} value={String(f.id)}>
+                  {getFacultyLabel(f)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.facultyId && <p className="text-xs text-destructive">{errors.facultyId.message}</p>}
         </div>
       </div>
 
       <div className="flex gap-2 pt-2 justify-end">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || !isDirty}>
           {isLoading && <Spinner className="size-4" />}
           {defaultValues?.id ? 'Update Student' : 'Add Student'}
         </Button>

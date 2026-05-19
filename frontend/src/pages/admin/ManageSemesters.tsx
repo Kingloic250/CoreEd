@@ -20,6 +20,7 @@ export function ManageSemesters() {
   const [editing, setEditing] = useState<Semester | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: 'Semester 1', year: '', startDate: '', endDate: '' });
+  const [initialForm, setInitialForm] = useState({ name: 'Semester 1', year: '', startDate: '', endDate: '' });
 
   const { data, isLoading } = useGetSemesters();
   const createMutation = useCreateSemester();
@@ -31,20 +32,26 @@ export function ManageSemesters() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ name: 'Semester 1', year: '', startDate: '', endDate: '' });
+    const empty = { name: 'Semester 1', year: '', startDate: '', endDate: '' };
+    setForm(empty);
+    setInitialForm(empty);
     setOpen(true);
   };
 
   const openEdit = (sem: Semester) => {
     setEditing(sem);
-    setForm({
+    const vals = {
       name: String(sem.name ?? 'Semester 1'),
       year: String(sem.year ?? ''),
       startDate: String(sem.startDate ?? ''),
       endDate: String(sem.endDate ?? ''),
-    });
+    };
+    setForm(vals);
+    setInitialForm(vals);
     setOpen(true);
   };
+
+  const formChanged = form.name !== initialForm.name || form.year !== initialForm.year || form.startDate !== initialForm.startDate || form.endDate !== initialForm.endDate;
 
   const handleSubmit = async () => {
     if (!form.name || !form.year || !form.startDate || !form.endDate) return;
@@ -177,7 +184,7 @@ export function ManageSemesters() {
             </div>
             <div className="flex gap-2 pt-2 justify-end">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="button" onClick={handleSubmit} disabled={!form.name || !form.year || !form.startDate || !form.endDate || createMutation.isPending || updateMutation.isPending}>
+              <Button type="button" onClick={handleSubmit} disabled={!form.name || !form.year || !form.startDate || !form.endDate || !formChanged || createMutation.isPending || updateMutation.isPending}>
                 {editing ? 'Update Semester' : 'Add Semester'}
               </Button>
             </div>

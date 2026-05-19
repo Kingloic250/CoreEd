@@ -5,9 +5,11 @@ export interface AccountRequest {
   id: string;
   name: string;
   email: string;
+  studentId?: string;
   classOrSubject: string;
   message?: string;
   status: 'pending' | 'approved' | 'rejected';
+  flagged: boolean;
   schoolEmail?: string;
   password?: string;
   createdAt: string;
@@ -17,6 +19,7 @@ export interface AccountRequest {
 export interface SubmitRequestPayload {
   name: string;
   email: string;
+  studentId: string;
   classOrSubject: string;
   message?: string;
 }

@@ -19,15 +19,14 @@ export const studentSchema = z.object({
     }, 'Date of birth must be valid (age 17–60)'),
   gender: z.enum(['male', 'female'] as const, { error: 'Gender is required' }),
   year: z.string().min(1, 'Year is required'),
-  enrollmentDate: z.string().min(1, 'Enrollment date is required'),
-  status: z.enum(['active', 'inactive', 'graduated', 'expelled']).default('active'),
+  facultyId: z.string().min(1, 'Faculty is required'),
 });
 
 export const lecturerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters').optional().or(z.literal('')),
   department: z.string().min(1, 'Department is required'),
   assignedCourses: z.array(z.string()).default([]),
   qualification: z.string().min(2, 'Qualification is required'),
@@ -37,7 +36,7 @@ export const lecturerSchema = z.object({
 export const courseSchema = z.object({
   name: z.string().min(2, 'Course name must be at least 2 characters'),
   year: z.string().min(1, 'Year is required'),
-  department: z.string().min(1, 'Department is required'),
+  facultyId: z.string().min(1, 'Faculty is required'),
   credits: z.coerce.number().int().min(1, 'Credits must be at least 1').max(20, 'Credits cannot exceed 20'),
   lecturerId: z.string().min(1, 'Lecturer is required'),
   room: z.string().min(1, 'Room is required'),

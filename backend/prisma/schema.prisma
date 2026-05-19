@@ -50,6 +50,8 @@ model Student {
   dateOfBirth    String?       @map("dateOfBirth")
   gender         Gender?
   year           String
+  department     String?
+  facultyId      String?       @map("facultyId")
   enrollmentDate String?       @map("enrollmentDate")
   status         StudentStatus @default(active)
   studentNumber  String?       @unique @map("studentNumber")
@@ -59,6 +61,7 @@ model Student {
   submissions         AssignmentSubmission[]
   claims              Claim[]
   invoices            Invoice[]
+  faculty             Faculty?   @relation(fields: [facultyId], references: [id])
   @@map("students")
 }
 
@@ -83,7 +86,21 @@ model Department {
   headLecturerId  String? @map("headLecturerId")
   description     String?
 
+  faculties Faculty[]
   @@map("departments")
+}
+
+model Faculty {
+  id           String @id
+  name         String
+  code         String?
+  departmentId String @map("departmentId")
+  description  String?
+
+  department Department @relation(fields: [departmentId], references: [id])
+  students   Student[]
+  courses    Course[]
+  @@map("faculties")
 }
 
 model Semester {
@@ -102,6 +119,7 @@ model Course {
   name              String
   year              String?
   department        String?
+  facultyId         String? @map("facultyId")
   lecturerId        String? @map("lecturerId")
   semesterId        String? @map("semesterId")
   credits           Int     @default(3)
@@ -111,6 +129,7 @@ model Course {
   gradingComponents Json    @default("[]") @map("gradingComponents")
 
   lecturer   Lecturer?    @relation(fields: [lecturerId], references: [id])
+  faculty    Faculty?     @relation(fields: [facultyId], references: [id])
   attendance Attendance[]
   grades     Grade[]
   assignments Assignment[]
@@ -169,9 +188,11 @@ model AccountRequest {
   id            String    @id
   name          String?
   email         String?
+  studentId     String?   @map("studentId")
   classOrSubject String?  @map("classOrSubject")
   message       String?
   status        String    @default("pending")
+  flagged       Boolean   @default(false)
   schoolEmail   String?   @map("schoolEmail")
   password      String?
   createdAt     DateTime  @default(now()) @map("createdAt")

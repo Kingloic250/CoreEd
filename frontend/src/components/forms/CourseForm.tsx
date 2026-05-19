@@ -12,17 +12,23 @@ import { YEARS } from '@/utils/constants';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
+interface FacultyOption {
+  id: string;
+  name: string;
+  department?: { id: string; name: string } | null;
+}
+
 interface CourseFormProps {
   defaultValues?: Partial<CourseFormData & { id: string }>;
   lecturers: Record<string, unknown>[];
-  departments: { id: string; name: string }[];
+  faculties: FacultyOption[];
   onSubmit: (data: CourseFormData) => void;
   isLoading?: boolean;
   onCancel: () => void;
 }
 
-export function CourseForm({ defaultValues, lecturers, departments, onSubmit, isLoading, onCancel }: CourseFormProps) {
-  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<CourseFormData>({
+export function CourseForm({ defaultValues, lecturers, faculties, onSubmit, isLoading, onCancel }: CourseFormProps) {
+  const { register, handleSubmit, setValue, control, formState: { errors, isDirty } } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
     defaultValues: defaultValues ?? { schedule: [{ day: '', startTime: '', endTime: '' }] },
   });
@@ -57,18 +63,28 @@ export function CourseForm({ defaultValues, lecturers, departments, onSubmit, is
         </div>
       </div>
 
+      <div className="space-y-1.5">
+        <Label htmlFor="cf-room" aria-label="Room">Room</Label>
+        <Input id="cf-room" placeholder="e.g. Room 301" aria-invalid={!!errors.room} {...register('room')} />
+        {errors.room && <p className="text-xs text-destructive">{errors.room.message}</p>}
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="cf-department" aria-label="Department">Department</Label>
-          <Select onValueChange={(v) => setValue('department', v)} defaultValue={defaultValues?.department}>
-            <SelectTrigger id="cf-department" aria-label="Select department">
-              <SelectValue placeholder="Select department" />
+          <Label htmlFor="cf-faculty" aria-label="Faculty">Faculty</Label>
+          <Select onValueChange={(v) => setValue('facultyId', v)} defaultValue={defaultValues?.facultyId}>
+            <SelectTrigger id="cf-faculty" className="w-full" aria-label="Select faculty">
+              <SelectValue placeholder="Select faculty" />
             </SelectTrigger>
-            <SelectContent>
-              {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+            <SelectContent className="max-w-[var(--radix-select-trigger-width)]">
+              {faculties.map((f) => (
+                <SelectItem key={f.id} value={f.id} className="truncate">
+                  {f.department ? `${f.department.name} → ${f.name}` : f.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          {errors.department && <p className="text-xs text-destructive">{errors.department.message}</p>}
+          {errors.facultyId && <p className="text-xs text-destructive">{errors.facultyId.message}</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="cf-lecturer" aria-label="Lecturer">Lecturer</Label>
@@ -131,7 +147,7 @@ export function CourseForm({ defaultValues, lecturers, departments, onSubmit, is
 
       <div className="flex gap-2 pt-2 justify-end">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || !isDirty}>
           {isLoading && <Spinner className="size-4" />}
           {defaultValues?.id ? 'Update Course' : 'Add Course'}
         </Button>

@@ -6,6 +6,13 @@ const morgan = require('morgan');
 
 const authRoutes = require('./routes/auth');
 const verifyRoutes = require('./routes/verify');
+const accountRequestRoutes = require('./routes/accountRequests');
+const studentRoutes = require('./routes/students');
+const departmentRoutes = require('./routes/departments');
+const lecturerRoutes = require('./routes/lecturers');
+const facultyRoutes = require('./routes/faculties');
+const courseRoutes = require('./routes/courses');
+const semesterRoutes = require('./routes/semesters');
 const { authenticate } = require('./middleware/auth');
 
 const app = express();
@@ -21,6 +28,13 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/verify', verifyRoutes);
+app.use('/api/v1/account-requests', accountRequestRoutes);
+app.use('/api/v1/students', studentRoutes);
+app.use('/api/v1/departments', departmentRoutes);
+app.use('/api/v1/lecturers', lecturerRoutes);
+app.use('/api/v1/faculties', facultyRoutes);
+app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/semesters', semesterRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

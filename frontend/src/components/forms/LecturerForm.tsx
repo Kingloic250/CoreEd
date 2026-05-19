@@ -19,7 +19,7 @@ interface LecturerFormProps {
 
 export function LecturerForm({ defaultValues, onSubmit, isLoading, onCancel, departments }: LecturerFormProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<LecturerFormData>({
+  const { register, handleSubmit, setValue, formState: { errors, isDirty } } = useForm<LecturerFormData>({
     resolver: zodResolver(lecturerSchema) as never,
     defaultValues: defaultValues ?? {},
   });
@@ -95,7 +95,7 @@ export function LecturerForm({ defaultValues, onSubmit, isLoading, onCancel, dep
 
       <div className="flex gap-2 pt-2 justify-end">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || !isDirty}>
           {isLoading && <Spinner className="size-4" />}
           {defaultValues?.id ? 'Update Lecturer' : 'Add Lecturer'}
         </Button>

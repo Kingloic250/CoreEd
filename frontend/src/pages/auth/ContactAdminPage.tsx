@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GraduationCap, ArrowLeft, Send, User, Mail, BookOpen, MessageSquare, Loader2 } from 'lucide-react';
+import { GraduationCap, ArrowLeft, Send, User, Mail, BookOpen, MessageSquare, Loader2, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ export function ContactAdminPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    studentId: '',
     classOrSubject: '',
     message: '',
   });
@@ -111,6 +112,21 @@ export function ContactAdminPage() {
                     className="pl-10"
                     value={formData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="studentId">Student ID / Number</Label>
+                <div className="relative">
+                  <CreditCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="studentId"
+                    placeholder="e.g. STU-2024-0001"
+                    className="pl-10"
+                    value={formData.studentId}
+                    onChange={(e) => handleChange('studentId', e.target.value)}
                     required
                   />
                 </div>
