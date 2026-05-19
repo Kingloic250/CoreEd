@@ -8,6 +8,7 @@ export interface AuthUser {
   email: string;
   role: string;
   avatar: string | null;
+  verified: boolean;
 }
 
 const USER_STORAGE_KEY = 'auth_user';
@@ -41,6 +42,7 @@ interface AuthState {
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
+  setVerified: () => void;
   clearError: () => void;
 }
 
@@ -75,6 +77,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => {
     saveStoredUser(user);
     set({ user });
+  },
+
+  setVerified: () => {
+    set((state) => {
+      if (!state.user) return state;
+      const updated = { ...state.user, verified: true };
+      saveStoredUser(updated);
+      return { user: updated };
+    });
   },
 
   clearError: () => set({ error: null }),

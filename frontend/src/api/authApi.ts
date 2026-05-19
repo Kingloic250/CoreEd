@@ -21,6 +21,7 @@ export interface AuthUser {
   email: string;
   role: string;
   avatar: string | null;
+  verified: boolean;
 }
 
 export interface LoginResponse {

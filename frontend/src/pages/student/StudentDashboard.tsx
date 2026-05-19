@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { motion } from 'framer-motion';
 import { BookOpen, Calendar, TrendingUp, Bell } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -38,66 +37,55 @@ export function StudentDashboard() {
         <p className="text-background/60 text-sm mt-1">Keep up the great work!</p>
       </div>
 
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
-        className="grid grid-cols-2 sm:grid-cols-3 gap-4"
-      >
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Calendar className="size-4 text-primary" />
-                </div>
-                <div>
-                  {attendanceLoading ? <Skeleton className="h-6 w-12" /> : (
-                    <p className="text-xl font-bold">{attendancePct}%</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">Attendance</p>
-                </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-center gap-3">
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Calendar className="size-4 text-primary" />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              <div>
+                {attendanceLoading ? <Skeleton className="h-6 w-12" /> : (
+                  <p className="text-xl font-bold">{attendancePct}%</p>
+                )}
+                <p className="text-xs text-muted-foreground">Attendance</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="size-4 text-primary" />
-                </div>
-                <div>
-                  {gradesLoading ? <Skeleton className="h-6 w-12" /> : (
-                    <p className="text-xl font-bold">{avgScore}%</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">Avg Score</p>
-                </div>
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-center gap-3">
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="size-4 text-primary" />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              <div>
+                {gradesLoading ? <Skeleton className="h-6 w-12" /> : (
+                  <p className="text-xl font-bold">{avgScore}%</p>
+                )}
+                <p className="text-xs text-muted-foreground">Avg Score</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-          <Card>
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="size-4 text-primary" />
-                </div>
-                <div>
-                  {gradesLoading ? <Skeleton className="h-6 w-12" /> : (
-                    <p className="text-xl font-bold">{gradesList.length}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">Grades</p>
-                </div>
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-center gap-3">
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <BookOpen className="size-4 text-primary" />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
+              <div>
+                {gradesLoading ? <Skeleton className="h-6 w-12" /> : (
+                  <p className="text-xl font-bold">{gradesList.length}</p>
+                )}
+                <p className="text-xs text-muted-foreground">Grades</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Grades */}

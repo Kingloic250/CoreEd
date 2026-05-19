@@ -14,6 +14,10 @@ export function ProtectedRoute({ children, role }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  if (!user?.verified) {
+    return <Navigate to="/verify-email" replace />;
+  }
+
   if (role && user?.role !== role) {
     const dashMap: Record<string, string> = {
       admin: '/admin',

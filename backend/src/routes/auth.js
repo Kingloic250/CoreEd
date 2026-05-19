@@ -27,15 +27,17 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
+    const verified = user.emailVerified;
+
     const token = jwt.sign(
-      { id: user.id, name: user.name, email: user.email, role: user.role },
+      { id: user.id, name: user.name, email: user.email, role: user.role, verified },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, verified },
     });
   } catch (err) {
     console.error('Login error:', err);

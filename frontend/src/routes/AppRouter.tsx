@@ -7,6 +7,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 
 import { LoginPage } from '@/pages/auth/LoginPage';
+import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage';
 import { ContactAdminPage } from '@/pages/auth/ContactAdminPage';
 import { ProfilePage } from '@/pages/admin/ProfilePage';
 
@@ -56,14 +57,20 @@ import { AssignmentDetail } from '@/pages/student/AssignmentDetail';
 import { FeeLedger } from '@/pages/student/FeeLedger';
 
 function RootRedirect() {
-  const { isAuthenticated, getDashboardPath } = useAuth();
-  if (isAuthenticated) return <Navigate to={getDashboardPath()} replace />;
+  const { isAuthenticated, user, getDashboardPath } = useAuth();
+  if (isAuthenticated) {
+    if (!user?.verified) return <Navigate to="/verify-email" replace />;
+    return <Navigate to={getDashboardPath()} replace />;
+  }
   return <Navigate to="/login" replace />;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, getDashboardPath } = useAuth();
-  if (isAuthenticated) return <Navigate to={getDashboardPath()} replace />;
+  const { isAuthenticated, user, getDashboardPath } = useAuth();
+  if (isAuthenticated) {
+    if (!user?.verified) return <Navigate to="/verify-email" replace />;
+    return <Navigate to={getDashboardPath()} replace />;
+  }
   return <>{children}</>;
 }
 
@@ -82,6 +89,7 @@ export function AppRouter() {
               </PublicRoute>
             }
           />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Route>
 
         <Route path="/contact-admin" element={<PageTransition><ContactAdminPage /></PageTransition>} />

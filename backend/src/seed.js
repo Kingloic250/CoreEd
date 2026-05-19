@@ -26,7 +26,7 @@ async function main() {
     await prisma.user.upsert({
       where: { email: u.email },
       update: {},
-      create: { id: u.id, name: u.name, email: u.email, password: hash, role: u.role, avatar: u.avatar ?? null },
+      create: { id: u.id, name: u.name, email: u.email, password: hash, role: u.role, avatar: u.avatar ?? null, emailVerified: false },
     });
   }
   console.log(`  ✓ ${rawUsers.length} users`);

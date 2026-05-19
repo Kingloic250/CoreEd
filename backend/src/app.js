@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 
 const authRoutes = require('./routes/auth');
+const verifyRoutes = require('./routes/verify');
 const { authenticate } = require('./middleware/auth');
 
 const app = express();
@@ -19,6 +20,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/verify', verifyRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

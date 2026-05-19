@@ -2,7 +2,7 @@ import { useAuthStore } from '@/store/authStore';
 import { ROLES, type Role } from '@/utils/constants';
 
 export function useAuth() {
-  const { user, isAuthenticated, isLoading, error, login, logout, setUser, clearError } = useAuthStore();
+  const { user, isAuthenticated, isLoading, error, login, logout, setUser, setVerified, clearError } = useAuthStore();
 
   const hasRole = (role: Role): boolean => user?.role === role;
 
@@ -25,6 +25,7 @@ export function useAuth() {
     login,
     logout,
     setUser,
+    setVerified,
     clearError,
     hasRole,
     isAdmin,
