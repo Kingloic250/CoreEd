@@ -2,8 +2,11 @@ const { Router } = require('express');
 const crypto = require('crypto');
 const prisma = require('../db');
 const { authenticate } = require('../middleware/auth');
+const { cache, clearCache } = require('../middleware/cache');
 
 const router = Router();
+
+const CACHE_PATTERN = 'cache:/api/v1/students*';
 
 function generateStudentNumber(year) {
   const yearSuffix = String(year).slice(-2);
@@ -21,7 +24,7 @@ async function generateUniqueStudentNumber() {
   throw new Error('Could not generate unique student number');
 }
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, cache(60), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   const { search } = req.query;
   const where = search
@@ -76,6 +79,7 @@ router.post('/', authenticate, async (req, res) => {
         studentNumber,
       },
     });
+    await clearCache(CACHE_PATTERN);
     res.status(201).json(student);
   } catch (err) {
     console.error('Create student error:', err);
@@ -98,6 +102,7 @@ router.put('/:id', authenticate, async (req, res) => {
       where: { id: req.params.id },
       data,
     });
+    await clearCache(CACHE_PATTERN);
     res.json(student);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.' });
@@ -108,6 +113,7 @@ router.delete('/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
     await prisma.student.delete({ where: { id: req.params.id } });
+    await clearCache(CACHE_PATTERN);
     res.json({ message: 'Student deleted.' });
   } catch (err) {
     console.error('Delete student error:', err);

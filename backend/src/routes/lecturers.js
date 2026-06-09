@@ -2,10 +2,13 @@ const { Router } = require('express');
 const crypto = require('crypto');
 const prisma = require('../db');
 const { authenticate } = require('../middleware/auth');
+const { cache, clearCache } = require('../middleware/cache');
 
 const router = Router();
 
-router.get('/', authenticate, async (req, res) => {
+const CACHE_PATTERN = 'cache:/api/v1/lecturers';
+
+router.get('/', authenticate, cache(120), async (req, res) => {
   const lecturers = await prisma.lecturer.findMany({ orderBy: { firstName: 'asc' } });
   res.json(lecturers);
 });
@@ -21,6 +24,7 @@ router.post('/', authenticate, async (req, res) => {
     const lecturer = await prisma.lecturer.create({
       data: { id, firstName, lastName, email, department: department ?? null, assignedCourses: [], qualification: qualification ?? null, joinDate: joinDate ?? null },
     });
+    await clearCache(CACHE_PATTERN);
     res.status(201).json(lecturer);
   } catch (err) {
     console.error('Create lecturer error:', err);
@@ -35,6 +39,7 @@ router.put('/:id', authenticate, async (req, res) => {
       where: { id: req.params.id },
       data: req.body,
     });
+    await clearCache(CACHE_PATTERN);
     res.json(lecturer);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.' });
@@ -45,8 +50,10 @@ router.delete('/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
     await prisma.lecturer.delete({ where: { id: req.params.id } });
+    await clearCache(CACHE_PATTERN);
     res.json({ message: 'Lecturer deleted.' });
   } catch (err) {
+    console.error('Delete lecturer error:', err);
     res.status(500).json({ message: 'Internal server error.' });
   }
 });

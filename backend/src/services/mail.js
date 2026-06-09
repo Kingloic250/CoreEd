@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { redis } = require('../redis');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -12,11 +13,9 @@ function makeCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-const codes = new Map();
-
 async function sendVerificationCode(email) {
   const code = makeCode();
-  codes.set(email, { code, expiresAt: Date.now() + 10 * 60 * 1000 });
+  await redis.set(`verify:${email}`, code, 'EX', 600);
 
   await transporter.sendMail({
     from: `"Greenfield Academy" <${process.env.EMAIL_USER}>`,
@@ -29,15 +28,11 @@ async function sendVerificationCode(email) {
   return true;
 }
 
-function verifyCode(email, code) {
-  const stored = codes.get(email);
+async function verifyCode(email, code) {
+  const stored = await redis.get(`verify:${email}`);
   if (!stored) return false;
-  if (Date.now() > stored.expiresAt) {
-    codes.delete(email);
-    return false;
-  }
-  if (stored.code !== code) return false;
-  codes.delete(email);
+  if (stored !== code) return false;
+  await redis.del(`verify:${email}`);
   return true;
 }
 

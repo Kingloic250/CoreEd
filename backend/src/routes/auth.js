@@ -1,7 +1,10 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const prisma = require('../db');
+const { redis } = require('../redis');
+const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -28,9 +31,10 @@ router.post('/login', async (req, res) => {
     }
 
     const verified = user.emailVerified;
+    const jti = crypto.randomUUID();
 
     const token = jwt.sign(
-      { id: user.id, name: user.name, email: user.email, role: user.role, verified },
+      { id: user.id, name: user.name, email: user.email, role: user.role, verified, jti },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -41,6 +45,22 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+router.post('/logout', authenticate, async (req, res) => {
+  try {
+    const { jti, exp } = req.user;
+    if (jti && exp) {
+      const ttl = Math.max(0, exp - Math.floor(Date.now() / 1000));
+      if (ttl > 0) {
+        await redis.set(`blacklist:${jti}`, '1', 'EX', ttl);
+      }
+    }
+    res.json({ message: 'Logged out successfully.' });
+  } catch (err) {
+    console.error('Logout error:', err);
     res.status(500).json({ message: 'Internal server error.' });
   }
 });

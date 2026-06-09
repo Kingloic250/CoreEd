@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
+const { redis } = require('../redis');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-change-in-production';
 
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
@@ -12,6 +13,10 @@ function authenticate(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
+    const blacklisted = await redis.get(`blacklist:${decoded.jti}`);
+    if (blacklisted) {
+      return res.status(401).json({ message: 'Token has been revoked.' });
+    }
     req.user = decoded;
     next();
   } catch (err) {

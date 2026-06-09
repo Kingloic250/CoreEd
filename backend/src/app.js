@@ -14,6 +14,7 @@ const facultyRoutes = require('./routes/faculties');
 const courseRoutes = require('./routes/courses');
 const semesterRoutes = require('./routes/semesters');
 const { authenticate } = require('./middleware/auth');
+const { createRateLimiter } = require('./middleware/rateLimit');
 
 const app = express();
 
@@ -22,12 +23,18 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
+const globalLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 100, keyPrefix: 'global' });
+const authLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 5, keyPrefix: 'auth', lockoutAttempts: 5, lockoutDurationMs: 5 * 60 * 1000 });
+const verifyLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 3, keyPrefix: 'verify' });
+
+app.use(globalLimiter);
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/verify', verifyRoutes);
+app.use('/api/v1/auth', authLimiter, authRoutes);
+app.use('/api/v1/verify', verifyLimiter, verifyRoutes);
 app.use('/api/v1/account-requests', accountRequestRoutes);
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/departments', departmentRoutes);

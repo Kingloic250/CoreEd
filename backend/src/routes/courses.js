@@ -2,10 +2,13 @@ const { Router } = require('express');
 const crypto = require('crypto');
 const prisma = require('../db');
 const { authenticate } = require('../middleware/auth');
+const { cache, clearCache } = require('../middleware/cache');
 
 const router = Router();
 
-router.get('/', authenticate, async (req, res) => {
+const CACHE_PATTERN = 'cache:/api/v1/courses*';
+
+router.get('/', authenticate, cache(60), async (req, res) => {
   try {
     const { search } = req.query;
     const where = search
@@ -63,6 +66,7 @@ router.post('/', authenticate, async (req, res) => {
         schedule: schedule ?? [],
       },
     });
+    await clearCache(CACHE_PATTERN);
     res.status(201).json(course);
   } catch (err) {
     console.error('Create course error:', err);
@@ -85,6 +89,7 @@ router.put('/:id', authenticate, async (req, res) => {
       where: { id: req.params.id },
       data,
     });
+    await clearCache(CACHE_PATTERN);
     res.json(course);
   } catch (err) {
     console.error('Update course error:', err);
@@ -96,6 +101,7 @@ router.delete('/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
     await prisma.course.delete({ where: { id: req.params.id } });
+    await clearCache(CACHE_PATTERN);
     res.json({ message: 'Course deleted.' });
   } catch (err) {
     console.error('Delete course error:', err);
