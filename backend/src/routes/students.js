@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const prisma = require('../db');
 const { authenticate } = require('../middleware/auth');
 const { cache, clearCache } = require('../middleware/cache');
+const { validate } = require('../middleware/validate');
+const { studentCreateSchema, studentUpdateSchema } = require('../validation');
 
 const router = Router();
 
@@ -45,7 +47,7 @@ router.get('/', authenticate, cache(60), async (req, res) => {
   res.json(students);
 });
 
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, validate(studentCreateSchema), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
     const { firstName, lastName, email, dateOfBirth, gender, year, facultyId } = req.body;
@@ -87,7 +89,7 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, validate(studentUpdateSchema), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
     const data = { ...req.body };

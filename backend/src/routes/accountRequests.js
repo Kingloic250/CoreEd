@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const prisma = require('../db');
 const { authenticate } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { accountRequestSchema, approveRequestSchema } = require('../validation');
 
 const router = Router();
 
@@ -14,7 +16,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // POST / — submit a new request
-router.post('/', async (req, res) => {
+router.post('/', validate(accountRequestSchema), async (req, res) => {
   try {
     const { name, email, studentId, classOrSubject, message } = req.body;
     if (!name || !email || !studentId) {
@@ -50,7 +52,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /:id/approve — approve a request
-router.put('/:id/approve', authenticate, async (req, res) => {
+router.put('/:id/approve', authenticate, validate(approveRequestSchema), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
     const { schoolEmail, password } = req.body;

@@ -1,0 +1,98 @@
+const { z } = require('zod');
+
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+const studentCreateSchema = z.object({
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  dateOfBirth: z.string().optional(),
+  gender: z.enum(['male', 'female']).optional(),
+  year: z.string().min(1, 'Year is required'),
+  facultyId: z.string().min(1, 'Faculty is required'),
+});
+
+const studentUpdateSchema = z.object({
+  firstName: z.string().min(2).optional(),
+  lastName: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  dateOfBirth: z.string().optional(),
+  gender: z.enum(['male', 'female']).optional(),
+  year: z.string().optional(),
+  facultyId: z.string().optional(),
+  department: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'graduated', 'suspended']).optional(),
+});
+
+const lecturerCreateSchema = z.object({
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  department: z.string().optional(),
+  qualification: z.string().optional(),
+  joinDate: z.string().optional(),
+});
+
+const departmentCreateSchema = z.object({
+  name: z.string().min(1, 'Department name is required'),
+  code: z.string().optional(),
+  headLecturerId: z.string().optional(),
+  description: z.string().optional(),
+});
+
+const facultyCreateSchema = z.object({
+  name: z.string().min(1, 'Faculty name is required'),
+  code: z.string().optional(),
+  departmentId: z.string().min(1, 'Department is required'),
+  description: z.string().optional(),
+});
+
+const courseCreateSchema = z.object({
+  name: z.string().min(2, 'Course name must be at least 2 characters'),
+  year: z.string().min(1, 'Year is required'),
+  facultyId: z.string().min(1, 'Faculty is required'),
+  lecturerId: z.string().min(1, 'Lecturer is required'),
+  credits: z.number().int().min(1).max(20).optional(),
+  room: z.string().optional(),
+  schedule: z.array(z.object({
+    day: z.string().min(1),
+    startTime: z.string().min(1),
+    endTime: z.string().min(1),
+  })).optional(),
+});
+
+const semesterCreateSchema = z.object({
+  name: z.enum(['Semester 1', 'Semester 2', 'Summer']),
+  year: z.string().min(1, 'Academic year is required'),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().min(1, 'End date is required'),
+});
+
+const accountRequestSchema = z.object({
+  name: z.string().min(2, 'Name is required'),
+  email: z.string().email('Please enter a valid email address'),
+  studentId: z.string().min(1, 'Student ID is required'),
+  classOrSubject: z.string().optional(),
+  message: z.string().optional(),
+});
+
+const approveRequestSchema = z.object({
+  schoolEmail: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+module.exports = {
+  loginSchema,
+  studentCreateSchema,
+  studentUpdateSchema,
+  lecturerCreateSchema,
+  departmentCreateSchema,
+  facultyCreateSchema,
+  courseCreateSchema,
+  semesterCreateSchema,
+  accountRequestSchema,
+  approveRequestSchema,
+};

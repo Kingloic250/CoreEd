@@ -18,8 +18,10 @@ const { createRateLimiter } = require('./middleware/rateLimit');
 
 const app = express();
 
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json());
 

@@ -5,13 +5,15 @@ const crypto = require('crypto');
 const prisma = require('../db');
 const { redis } = require('../redis');
 const { authenticate } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { loginSchema } = require('../validation');
 
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-change-in-production';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
-router.post('/login', async (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res) => {
   try {
     const { email, password } = req.body;
 
