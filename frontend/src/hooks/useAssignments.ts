@@ -58,7 +58,7 @@ export function useDeleteAssignment() {
 export function useSubmitAssignment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { studentId: string; fileUrl?: string; content?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: FormData }) =>
       assignmentsApi.submitAssignment(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.ASSIGNMENTS] });

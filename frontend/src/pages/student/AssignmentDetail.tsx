@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, FileText, Download, Upload, User, CheckCircle2, Clock, AlertCircle, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, Upload, ExternalLink, User, CheckCircle2, Clock, AlertCircle, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,14 +30,11 @@ export function AssignmentDetail() {
   };
 
   const handleSubmit = () => {
-    if (!id || !user?.id) return;
-    submitMutation.mutate({
-      id,
-      data: {
-        studentId: user.id,
-        fileUrl: selectedFile?.name ?? 'submission.pdf',
-      },
-    });
+    if (!id || !user?.id || !selectedFile) return;
+    const form = new FormData();
+    form.append('file', selectedFile);
+    form.append('studentId', user.id);
+    submitMutation.mutate({ id, data: form });
     setSelectedFile(null);
   };
 
@@ -95,15 +92,15 @@ export function AssignmentDetail() {
                     <CardTitle className="text-sm">Attachments</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {(a.attachments as string[]).map((file) => (
-                      <div key={file} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
+                    {(a.attachments as string[]).map((url) => (
+                      <div key={url} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
                         <div className="flex items-center gap-2 min-w-0">
                           <FileText className="size-4 text-muted-foreground shrink-0" />
-                          <span className="truncate">{file}</span>
+                          <span className="truncate">{url.split('/').pop()}</span>
                         </div>
                         <Button variant="ghost" size="sm" className="gap-1 shrink-0 h-7 text-xs" asChild>
-                          <a href="#" download={file} onClick={(e) => e.preventDefault()}>
-                            <Download className="size-3.5" /> Download
+                          <a href={url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="size-3.5" /> Open
                           </a>
                         </Button>
                       </div>
@@ -130,9 +127,9 @@ export function AssignmentDetail() {
                             <FileText className="size-4 text-muted-foreground shrink-0" />
                             <span className="truncate">{String(mySubmission.fileUrl).split('/').pop()}</span>
                           </div>
-                          <Button variant="ghost" size="sm" className="gap-1 shrink-0 h-7 text-xs">
-                            <a href="#" download={String(mySubmission.fileUrl).split('/').pop()} onClick={(e) => e.preventDefault()}>
-                              <Download className="size-3.5" /> Download
+                          <Button variant="ghost" size="sm" className="gap-1 shrink-0 h-7 text-xs" asChild>
+                            <a href={String(mySubmission.fileUrl)} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="size-3.5" /> Open
                             </a>
                           </Button>
                         </div>

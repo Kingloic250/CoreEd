@@ -13,6 +13,10 @@ const lecturerRoutes = require('./routes/lecturers');
 const facultyRoutes = require('./routes/faculties');
 const courseRoutes = require('./routes/courses');
 const semesterRoutes = require('./routes/semesters');
+const profileRoutes = require('./routes/profile');
+const assignmentRoutes = require('./routes/assignments');
+const materialRoutes = require('./routes/materials');
+const uploadRoutes = require('./routes/upload');
 const { authenticate } = require('./middleware/auth');
 const { createRateLimiter } = require('./middleware/rateLimit');
 
@@ -44,9 +48,19 @@ app.use('/api/v1/lecturers', lecturerRoutes);
 app.use('/api/v1/faculties', facultyRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/semesters', semesterRoutes);
+app.use('/api/v1/profile', authenticate, profileRoutes);
+app.use('/api/v1/assignments', assignmentRoutes);
+app.use('/api/v1/materials', materialRoutes);
+app.use('/api/v1/upload', authenticate, uploadRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ message: 'File too large.' });
+  }
+  if (err.message && err.message.startsWith('File type')) {
+    return res.status(400).json({ message: err.message });
+  }
   res.status(err.status || 500).json({
     message: err.message || 'Internal server error',
   });

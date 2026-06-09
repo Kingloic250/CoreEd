@@ -19,11 +19,10 @@ export const updateAssignment = (id: string, data: Record<string, unknown>) =>
 export const deleteAssignment = (id: string) =>
   axiosInstance.delete(`${BASE}/${id}`) as unknown as Promise<void>;
 
-export const submitAssignment = (id: string, data: {
-  studentId: string;
-  fileUrl?: string;
-  content?: string;
-}) => axiosInstance.post(`${BASE}/${id}/submit`, data) as unknown as Promise<unknown>;
+export const submitAssignment = (id: string, data: FormData) =>
+  axiosInstance.post(`${BASE}/${id}/submit`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }) as unknown as Promise<unknown>;
 
 export const gradeSubmission = (assignmentId: string, studentId: string, data: {
   score: number;

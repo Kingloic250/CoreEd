@@ -5,11 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { AvatarUpload } from '@/components/common/AvatarUpload';
 import { useAuth } from '@/hooks/useAuth';
-import { getInitials } from '@/utils/formatters';
 import { profileApi } from '@/api/profileApi';
 
 export function ProfilePage() {
@@ -60,12 +58,8 @@ export function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
-          <CardContent className="flex flex-col items-center py-8">
-            <Avatar className="size-24 mb-4">
-              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                {getInitials(user?.name ?? 'U')}
-              </AvatarFallback>
-            </Avatar>
+          <CardContent className="flex flex-col items-center py-8 gap-3">
+            <AvatarUpload name={user?.name ?? 'U'} avatarUrl={user?.avatar ?? null} />
             <h2 className="text-lg font-semibold text-foreground">{user?.name}</h2>
             <p className="text-sm text-muted-foreground capitalize">{user?.role}</p>
             <p className="text-sm text-muted-foreground">{user?.email}</p>

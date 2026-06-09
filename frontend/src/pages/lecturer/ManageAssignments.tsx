@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { Plus, Pencil, Trash2, Calendar, FileText, Upload, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Calendar, FileText, Upload, X, Loader2, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,12 @@ import {
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { toast } from 'sonner';
 import { useGetAssignments, useCreateAssignment, useUpdateAssignment, useDeleteAssignment } from '@/hooks/useAssignments';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
 import { useGetCourses } from '@/hooks/useCourses';
 import { formatDate } from '@/utils/formatters';
+import axiosInstance from '@/api/axiosInstance';
 
 export function ManageAssignments() {
   const { data: lecturer } = useGetCurrentLecturer();
@@ -55,6 +57,8 @@ export function ManageAssignments() {
       : coursesList;
   }, [myCourses, allAssignments, coursesList]);
 
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
+
   const openCreate = () => {
     setEditingId(null);
     setFormTitle('');
@@ -77,31 +81,47 @@ export function ManageAssignments() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formTitle.trim() || !formCourseId) return;
-    const existingAttachments = editingId
-      ? ((allAssignments as Record<string, unknown>[])?.find((a) => a.id === editingId)?.attachments as string[]) ?? []
-      : [];
-    const newFileNames = formAttachments.map((f) => f.name);
-    const data: Record<string, unknown> = {
-      title: formTitle.trim(),
-      description: formDescription.trim(),
-      courseId: formCourseId,
-      dueDate: formDueDate,
-      maxScore: Number(formMaxScore),
-      attachments: [...existingAttachments, ...newFileNames],
-    };
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, data });
-    } else {
-      const course = coursesList.find((c) => c.id === formCourseId);
-      data.courseName = course?.name ?? 'Unknown';
-      data.createdBy = lecturerProfile
-        ? `${String(lecturerProfile.firstName)} ${String(lecturerProfile.lastName)}`
-        : 'Unknown';
-      createMutation.mutate(data);
+    setUploadingAttachments(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of formAttachments) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('folder', 'coreed/assignments');
+        const { data } = await axiosInstance.post('/api/v1/upload', fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }) as { data: { url: string } };
+        uploadedUrls.push(data.url);
+      }
+      const existingAttachments = editingId
+        ? ((allAssignments as Record<string, unknown>[])?.find((a) => a.id === editingId)?.attachments as string[]) ?? []
+        : [];
+      const data: Record<string, unknown> = {
+        title: formTitle.trim(),
+        description: formDescription.trim(),
+        courseId: formCourseId,
+        dueDate: formDueDate,
+        maxScore: Number(formMaxScore),
+        attachments: [...existingAttachments, ...uploadedUrls],
+      };
+      if (editingId) {
+        updateMutation.mutate({ id: editingId, data });
+      } else {
+        const course = coursesList.find((c) => c.id === formCourseId);
+        data.courseName = course?.name ?? 'Unknown';
+        data.createdBy = lecturerProfile
+          ? `${String(lecturerProfile.firstName)} ${String(lecturerProfile.lastName)}`
+          : 'Unknown';
+        createMutation.mutate(data);
+      }
+      setDialogOpen(false);
+    } catch {
+      toast.error('Failed to upload attachments');
+    } finally {
+      setUploadingAttachments(false);
     }
-    setDialogOpen(false);
   };
 
   const handleDelete = (id: string, title: string) => {
@@ -214,6 +234,21 @@ export function ManageAssignments() {
                       </Button>
                     </div>
                   ))}
+                  {editingId && ((allAssignments as Record<string, unknown>[])?.find((x) => x.id === editingId)?.attachments as string[] ?? []).length > 0 && (
+                    <div className="space-y-1 pt-1">
+                      <p className="text-xs text-muted-foreground">Existing attachments:</p>
+                      {((allAssignments as Record<string, unknown>[])?.find((x) => x.id === editingId)?.attachments as string[] ?? []).map((url: string) => (
+                        <div key={url} className="flex items-center justify-between rounded border px-2.5 py-1.5 text-xs">
+                          <span className="truncate">{url.split('/').pop()}</span>
+                          <Button variant="ghost" size="icon-sm" className="size-5" asChild>
+                            <a href={url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="size-3" />
+                            </a>
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -230,8 +265,12 @@ export function ManageAssignments() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!formTitle.trim() || !formCourseId}>
-              {editingId ? 'Update' : 'Create'}
+            <Button onClick={handleSave} disabled={!formTitle.trim() || !formCourseId || uploadingAttachments}>
+              {uploadingAttachments ? (
+                <><Loader2 className="size-3 mr-1 animate-spin" /> Uploading...</>
+              ) : (
+                editingId ? 'Update' : 'Create'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

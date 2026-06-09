@@ -26,4 +26,11 @@ export const profileApi = {
     const { data } = await axiosInstance.post(API_PATHS.CHANGE_PASSWORD, payload);
     return data;
   },
+
+  uploadAvatar: async (formData: FormData) => {
+    const { data } = await axiosInstance.post(`${API_PATHS.PROFILE}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
 };

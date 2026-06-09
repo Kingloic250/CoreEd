@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, CheckCircle2, Clock, AlertCircle, FileText, Save, Pencil } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, AlertCircle, FileText, Save, Pencil, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -133,8 +133,8 @@ export function AssignmentSubmissions() {
                           <FileText className="size-3 text-muted-foreground shrink-0" />
                           <span className="truncate text-xs text-muted-foreground">{String(sub.fileUrl).split('/').pop()}</span>
                           <Button variant="ghost" size="sm" className="h-6 text-xs gap-1 px-1.5" asChild>
-                            <a href="#" download={String(sub.fileUrl).split('/').pop()} onClick={(e) => e.preventDefault()}>
-                              <Download className="size-3" />
+                            <a href={String(sub.fileUrl)} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="size-3" />
                             </a>
                           </Button>
                         </div>
