@@ -25,6 +25,10 @@ export function useCreateLecturer() {
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.LECTURERS] });
       toast.success('Lecturer added successfully');
     },
+    onError: (err) => {
+      const msg = (err as { message?: string })?.message || 'Failed to add lecturer';
+      toast.error(msg);
+    },
   });
 }
 
@@ -36,6 +40,10 @@ export function useUpdateLecturer() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.LECTURERS] });
       toast.success('Lecturer updated successfully');
+    },
+    onError: (err) => {
+      const msg = (err as { message?: string })?.message || 'Failed to update lecturer';
+      toast.error(msg);
     },
   });
 }

@@ -30,13 +30,17 @@ export function ManageLecturers() {
   const departments = ((deptData as { id: string; name: string }[]) ?? []).map((d) => ({ id: d.id, name: d.name }));
 
   const handleSubmit = async (formData: LecturerFormData) => {
-    if (editing?.id) {
-      await updateMutation.mutateAsync({ id: String(editing.id), payload: formData });
-    } else {
-      await createMutation.mutateAsync(formData);
+    try {
+      if (editing?.id) {
+        await updateMutation.mutateAsync({ id: String(editing.id), payload: formData });
+      } else {
+        await createMutation.mutateAsync(formData);
+      }
+      setOpen(false);
+      setEditing(null);
+    } catch {
+      // error toast handled by mutation onError
     }
-    setOpen(false);
-    setEditing(null);
   };
 
   const columns: ColumnDef<Lecturer>[] = [
