@@ -26,6 +26,9 @@ router.get('/invitation/:token', async (req, res) => {
     }
     res.json({ firstName: lecturer.firstName, lastName: lecturer.lastName });
   } catch (err) {
+    if (err?.code === 'P2022') {
+      return res.status(404).json({ message: 'Invitation system not yet configured.' });
+    }
     console.error('Invitation lookup error:', err);
     res.status(500).json({ message: 'Internal server error.' });
   }
@@ -39,24 +42,27 @@ router.post('/', authenticate, validate(lecturerCreateSchema), async (req, res) 
     const existing = await prisma.lecturer.findUnique({ where: { email } });
     if (existing) return res.status(409).json({ message: 'A lecturer with this email already exists.' });
 
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
-
     const id = crypto.randomUUID();
-    const lecturer = await prisma.lecturer.create({
-      data: {
-        id, firstName, lastName, email, department: department ?? null,
-        assignedCourses: [],
-        qualification: qualification ?? null, joinDate: joinDate ?? null,
-        invitationToken: token,
-        invitationTokenExpires: expiresAt,
-      },
-    });
+    const data = {
+      id, firstName, lastName, email, department: department ?? null,
+      assignedCourses: [],
+      qualification: qualification ?? null, joinDate: joinDate ?? null,
+    };
 
+    let lecturer;
     try {
-      await sendInvitationEmail(email, firstName, lastName, token);
-    } catch (mailErr) {
-      console.error('Invitation email failed:', mailErr);
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+      lecturer = await prisma.lecturer.create({
+        data: { ...data, invitationToken: token, invitationTokenExpires: expiresAt },
+      });
+      try {
+        await sendInvitationEmail(email, firstName, lastName, token);
+      } catch (mailErr) {
+        console.error('Invitation email failed:', mailErr);
+      }
+    } catch {
+      lecturer = await prisma.lecturer.create({ data });
     }
 
     await clearCache(CACHE_PATTERN);
