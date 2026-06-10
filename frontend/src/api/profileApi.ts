@@ -13,24 +13,20 @@ export interface ChangePasswordPayload {
 
 export const profileApi = {
   get: async () => {
-    const { data } = await axiosInstance.get(API_PATHS.PROFILE);
-    return data;
+    return axiosInstance.get(API_PATHS.PROFILE);
   },
 
   update: async (payload: ProfileUpdatePayload) => {
-    const { data } = await axiosInstance.put(API_PATHS.PROFILE, payload);
-    return data;
+    return axiosInstance.put(API_PATHS.PROFILE, payload);
   },
 
   changePassword: async (payload: ChangePasswordPayload) => {
-    const { data } = await axiosInstance.post(API_PATHS.CHANGE_PASSWORD, payload);
-    return data;
+    return axiosInstance.post(API_PATHS.CHANGE_PASSWORD, payload);
   },
 
   uploadAvatar: async (formData: FormData) => {
-    const { data } = await axiosInstance.post(`${API_PATHS.PROFILE}/avatar`, formData, {
+    return axiosInstance.post(`${API_PATHS.PROFILE}/avatar`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return data;
   },
 };

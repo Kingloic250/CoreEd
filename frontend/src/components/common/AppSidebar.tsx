@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   BarChart3, ClipboardList, FileText, Bell, School,
@@ -85,11 +85,19 @@ interface AppSidebarProps {
 export function AppSidebar({ role }: AppSidebarProps) {
   const { user } = useAuth();
   const { setOpenMobile } = useSidebar();
+  const location = useLocation();
   const navItems = navMap[role] ?? [];
   const { data: messages } = useGetMessages({ userId: user?.id, folder: 'inbox' });
   const unreadCount = ((messages as Record<string, unknown>[]) ?? []).filter(
     (m) => !m.read && m.recipientId === user?.id
   ).length;
+
+  const isActive = (item: (typeof navItems)[number]) => {
+    if (item.url === '/admin' || item.url === '/lecturer' || item.url === '/student') {
+      return location.pathname === item.url;
+    }
+    return location.pathname.startsWith(item.url);
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -114,24 +122,14 @@ export function AppSidebar({ role }: AppSidebarProps) {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === '/admin' || item.url === '/lecturer' || item.url === '/student'}
-                      className={({ isActive }) => isActive ? 'data-[active=true]' : ''}
-                      onClick={() => setOpenMobile(false)}
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <item.icon />
-                          <span>{item.title}</span>
-                          {item.title === 'Messages' && unreadCount > 0 && (
-                            <Badge className="ml-auto size-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
-                              {unreadCount > 99 ? '99+' : unreadCount}
-                            </Badge>
-                          )}
-                          {isActive && <span className="sr-only">(current page)</span>}
-                        </>
+                  <SidebarMenuButton asChild isActive={isActive(item)} tooltip={item.title}>
+                    <NavLink to={item.url} onClick={() => setOpenMobile(false)}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                      {item.title === 'Messages' && unreadCount > 0 && (
+                        <Badge className="ml-auto size-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </Badge>
                       )}
                     </NavLink>
                   </SidebarMenuButton>

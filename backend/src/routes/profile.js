@@ -11,7 +11,7 @@ router.get('/', authenticate, async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user) return res.status(404).json({ message: 'User not found.' });
     const { password, ...safe } = user;
-    res.json(safe);
+    res.json({ ...safe, verified: user.emailVerified });
   } catch (err) {
     console.error('Get profile error:', err);
     res.status(500).json({ message: 'Internal server error.' });
@@ -35,7 +35,7 @@ router.put('/', authenticate, async (req, res) => {
       data,
     });
     const { password, ...safe } = user;
-    res.json(safe);
+    res.json({ ...safe, verified: user.emailVerified });
   } catch (err) {
     console.error('Update profile error:', err);
     res.status(500).json({ message: 'Internal server error.' });
@@ -57,7 +57,7 @@ router.post('/avatar', authenticate, uploadAvatar.single('avatar'), async (req, 
       data: { avatar: result.secure_url },
     });
     const { password, ...safe } = user;
-    res.json(safe);
+    res.json({ ...safe, verified: user.emailVerified });
   } catch (err) {
     console.error('Avatar upload error:', err);
     res.status(500).json({ message: 'Failed to upload avatar.' });

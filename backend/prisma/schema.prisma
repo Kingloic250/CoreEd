@@ -66,14 +66,17 @@ model Student {
 }
 
 model Lecturer {
-  id              String  @id
-  firstName       String  @map("firstName")
-  lastName        String  @map("lastName")
-  email           String  @unique
-  department      String?
-  assignedCourses Json    @default("[]") @map("assignedCourses")
-  qualification   String?
-  joinDate        String? @map("joinDate")
+  id                    String   @id
+  firstName             String   @map("firstName")
+  lastName              String   @map("lastName")
+  email                 String   @unique
+  department            String?
+  assignedCourses       Json     @default("[]") @map("assignedCourses")
+  qualification         String?
+  joinDate              String?  @map("joinDate")
+  invitationToken       String?  @unique @map("invitationToken")
+  invitationTokenExpires DateTime? @map("invitationTokenExpires")
+  invitationAcceptedAt  DateTime? @map("invitationAcceptedAt")
 
   courses Course[]
   @@map("lecturers")

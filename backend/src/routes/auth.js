@@ -92,4 +92,50 @@ router.post('/change-password', authenticate, async (req, res) => {
   }
 });
 
+router.post('/setup-account', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: 'Token and password are required.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+
+    const lecturer = await prisma.lecturer.findUnique({ where: { invitationToken: token } });
+    if (!lecturer) {
+      return res.status(400).json({ message: 'Invalid or expired invitation link.' });
+    }
+    if (lecturer.invitationAcceptedAt) {
+      return res.status(400).json({ message: 'This invitation has already been used.' });
+    }
+    if (lecturer.invitationTokenExpires && new Date() > lecturer.invitationTokenExpires) {
+      return res.status(400).json({ message: 'This invitation has expired. Contact your administrator.' });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email: lecturer.email } });
+    if (existingUser) {
+      return res.status(409).json({ message: 'A user account with this email already exists.' });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const userId = crypto.randomUUID();
+
+    await prisma.$transaction([
+      prisma.user.create({
+        data: { id: userId, email: lecturer.email, name: `${lecturer.firstName} ${lecturer.lastName}`, password: hash, role: 'lecturer', emailVerified: true },
+      }),
+      prisma.lecturer.update({
+        where: { id: lecturer.id },
+        data: { invitationToken: null, invitationTokenExpires: null, invitationAcceptedAt: new Date() },
+      }),
+    ]);
+
+    res.json({ message: 'Account activated successfully. You can now log in.' });
+  } catch (err) {
+    console.error('Setup account error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
 module.exports = router;

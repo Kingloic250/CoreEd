@@ -19,7 +19,7 @@ router.post('/send-code', async (req, res) => {
 router.post('/verify-code', async (req, res) => {
   const { email, code } = req.body;
   if (!email || !code) return res.status(400).json({ message: 'Email and code are required' });
-  const ok = verifyCode(email, code);
+  const ok = await verifyCode(email, code);
   if (!ok) return res.status(400).json({ message: 'Invalid or expired code' });
   try {
     await prisma.user.update({

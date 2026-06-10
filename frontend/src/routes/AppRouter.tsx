@@ -9,6 +9,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage';
 import { ContactAdminPage } from '@/pages/auth/ContactAdminPage';
+import { SetPasswordPage } from '@/pages/auth/SetPasswordPage';
 import { ProfilePage } from '@/pages/admin/ProfilePage';
 
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
@@ -93,6 +94,7 @@ export function AppRouter() {
         </Route>
 
         <Route path="/contact-admin" element={<PageTransition><ContactAdminPage /></PageTransition>} />
+        <Route path="/set-password" element={<PageTransition><SetPasswordPage /></PageTransition>} />
 
         <Route
           path="/admin"

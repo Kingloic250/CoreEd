@@ -31,22 +31,18 @@ export interface ApprovePayload {
 
 export const accountRequestApi = {
   getAll: async (): Promise<AccountRequest[]> => {
-    const { data } = await axiosInstance.get(API_PATHS.ACCOUNT_REQUESTS);
-    return data;
+    return axiosInstance.get(API_PATHS.ACCOUNT_REQUESTS);
   },
 
   submit: async (payload: SubmitRequestPayload): Promise<AccountRequest> => {
-    const { data } = await axiosInstance.post(API_PATHS.ACCOUNT_REQUESTS, payload);
-    return data;
+    return axiosInstance.post(API_PATHS.ACCOUNT_REQUESTS, payload);
   },
 
   approve: async (id: string, payload: ApprovePayload): Promise<AccountRequest> => {
-    const { data } = await axiosInstance.put(`${API_PATHS.ACCOUNT_REQUESTS}/${id}/approve`, payload);
-    return data;
+    return axiosInstance.put(`${API_PATHS.ACCOUNT_REQUESTS}/${id}/approve`, payload);
   },
 
   reject: async (id: string): Promise<AccountRequest> => {
-    const { data } = await axiosInstance.put(`${API_PATHS.ACCOUNT_REQUESTS}/${id}/reject`);
-    return data;
+    return axiosInstance.put(`${API_PATHS.ACCOUNT_REQUESTS}/${id}/reject`);
   },
 };
