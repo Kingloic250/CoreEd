@@ -56,7 +56,7 @@ const courseCreateSchema = z.object({
   facultyId: z.string().min(1, 'Faculty is required'),
   lecturerId: z.string().min(1, 'Lecturer is required'),
   credits: z.number().int().min(1).max(20).optional(),
-  room: z.string().optional(),
+  roomId: z.string().optional(),
 });
 
 const semesterCreateSchema = z.object({

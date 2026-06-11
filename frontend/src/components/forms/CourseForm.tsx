@@ -14,16 +14,23 @@ interface FacultyOption {
   department?: { id: string; name: string } | null;
 }
 
+interface RoomOption {
+  id: string;
+  name: string;
+  code: string | null;
+}
+
 interface CourseFormProps {
   defaultValues?: Partial<CourseFormData & { id: string }>;
   lecturers: Record<string, unknown>[];
   faculties: FacultyOption[];
+  rooms: RoomOption[];
   onSubmit: (data: CourseFormData) => void;
   isLoading?: boolean;
   onCancel: () => void;
 }
 
-export function CourseForm({ defaultValues, lecturers, faculties, onSubmit, isLoading, onCancel }: CourseFormProps) {
+export function CourseForm({ defaultValues, lecturers, faculties, rooms, onSubmit, isLoading, onCancel }: CourseFormProps) {
   const { register, handleSubmit, setValue, formState: { errors, isDirty } } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
   });
@@ -57,9 +64,18 @@ export function CourseForm({ defaultValues, lecturers, faculties, onSubmit, isLo
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="cf-room" aria-label="Room">Room</Label>
-        <Input id="cf-room" placeholder="e.g. Room 301" aria-invalid={!!errors.room} {...register('room')} />
-        {errors.room && <p className="text-xs text-destructive">{errors.room.message}</p>}
+        <Label htmlFor="cf-room" aria-label="Room">Room (optional)</Label>
+        <Select onValueChange={(v) => setValue('roomId', v)} defaultValue={defaultValues?.roomId}>
+          <SelectTrigger id="cf-room" className="w-full" aria-label="Select room">
+            <SelectValue placeholder="No room selected" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">No room</SelectItem>
+            {rooms.map((r) => (
+              <SelectItem key={r.id} value={r.id}>{r.name}{r.code ? ` (${r.code})` : ''}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

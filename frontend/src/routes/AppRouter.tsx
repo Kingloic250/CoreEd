@@ -27,6 +27,7 @@ import { Reports } from '@/pages/admin/Reports';
 import { AuditLogs } from '@/pages/admin/AuditLogs';
 import { ManageUsers } from '@/pages/admin/ManageUsers';
 import { ManageTimetable } from '@/pages/admin/ManageTimetable';
+import { ManageRooms } from '@/pages/admin/ManageRooms';
 import { ManageCalendar } from '@/pages/admin/ManageCalendar';
 
 import { LecturerDashboard } from '@/pages/lecturer/LecturerDashboard';
@@ -123,6 +124,7 @@ export function AppRouter() {
           <Route path="audit-logs" element={<AuditLogs />} />
           <Route path="users" element={<ManageUsers />} />
           <Route path="timetable" element={<ManageTimetable />} />
+          <Route path="rooms" element={<ManageRooms />} />
           <Route path="calendar" element={<ManageCalendar />} />
         </Route>
 

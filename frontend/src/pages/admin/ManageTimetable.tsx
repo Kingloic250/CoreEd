@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Clock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Sparkles, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -7,13 +7,21 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { useGetCourses, useUpdateCourse } from '@/hooks/useCourses';
+import { useGetCourses } from '@/hooks/useCourses';
 import { useGetLecturers } from '@/hooks/useLecturers';
+import { useGetFaculties } from '@/hooks/useFaculties';
+import { useGetRooms } from '@/hooks/useRooms';
+import { useGetTimetable, useGenerateTimetable, useApplyTimetable, useCreateTimetableEntry, useUpdateTimetableEntry, useDeleteTimetableEntry } from '@/hooks/useTimetable';
+
+type TimetableEntry = {
+  id: string; courseId: string; day: number; startTime: string; endTime: string; roomId: string | null;
+  course: { id: string; name: string; year: string | null; lecturerId: string | null };
+  room: { id: string; name: string } | null;
+};
 
 type Course = Record<string, unknown>;
-type ScheduleEntry = { day: string; startTime: string; endTime: string };
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const;
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 const HOURS = Array.from({ length: 12 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
 
 const courseColors = [
@@ -29,7 +37,7 @@ const courseColors = [
   'bg-indigo-100 border-indigo-300 text-indigo-800 dark:bg-indigo-950/40 dark:border-indigo-700 dark:text-indigo-300',
 ];
 
-function getCourseColor(courseId: string, index: number) {
+function getCourseColor(courseId: string) {
   const hash = courseId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   return courseColors[hash % courseColors.length];
 }
@@ -40,12 +48,24 @@ const timeToMinutes = (t: string) => {
 };
 
 export function ManageTimetable() {
-  const { data: coursesData, isLoading } = useGetCourses();
+  const [facultyFilter, setFacultyFilter] = useState('');
+
+  const { data: coursesData, isLoading: coursesLoading } = useGetCourses();
   const { data: lecturers } = useGetLecturers();
-  const updateMutation = useUpdateCourse();
+  const { data: faculties } = useGetFaculties();
+  const { data: rooms } = useGetRooms();
+  const { data: timetableData, isLoading: timetableLoading } = useGetTimetable(facultyFilter ? { facultyId: facultyFilter } : undefined);
+  const generateMutation = useGenerateTimetable();
+  const applyMutation = useApplyTimetable();
+  const createMutation = useCreateTimetableEntry();
+  const updateMutation = useUpdateTimetableEntry();
+  const deleteMutation = useDeleteTimetableEntry();
 
   const courses = (coursesData as Course[]) ?? [];
   const lecturersList = (lecturers as Record<string, unknown>[]) ?? [];
+  const facultiesList = (faculties ?? []) as { id: string; name: string; department?: { name: string } }[];
+  const roomsList = (rooms ?? []);
+  const entries = (timetableData ?? []) as TimetableEntry[];
 
   const getLecturerName = useCallback(
     (id: string) => {
@@ -55,90 +75,90 @@ export function ManageTimetable() {
     [lecturersList],
   );
 
-  // Flatten all schedule entries with course info
-  const entries = useMemo(() => {
-    const result: { courseId: string; courseName: string; color: string; day: string; startTime: string; endTime: string; room: string; lecturer: string }[] = [];
-    courses.forEach((c, i) => {
-      const schedule = (c.schedule as ScheduleEntry[]) ?? [];
-      schedule.forEach((s) => {
-        result.push({
-          courseId: String(c.id),
-          courseName: String(c.name),
-          color: getCourseColor(String(c.id), i),
-          day: s.day,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          room: String(c.room ?? ''),
-          lecturer: getLecturerName(String(c.lecturerId)),
-        });
-      });
-    });
-    return result;
-  }, [courses, getLecturerName]);
+  // --- AI Generate Dialog ---
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiForm, setAiForm] = useState({
+    facultyId: '', semesterId: '', daysOfWeek: [0, 1, 2, 3, 4],
+    timeStart: '08:00', timeEnd: '17:00', periodDuration: 60, periodsPerDay: 8,
+  });
+  const [generatedEntries, setGeneratedEntries] = useState<{ courseId: string; day: number; startTime: string; endTime: string; roomId: string | null }[] | null>(null);
 
-  // Schedule entry editor state
+  const toggleDay = (d: number) => {
+    setAiForm((prev) => ({
+      ...prev,
+      daysOfWeek: prev.daysOfWeek.includes(d) ? prev.daysOfWeek.filter((x) => x !== d) : [...prev.daysOfWeek, d].sort(),
+    }));
+  };
+
+  const handleGenerate = async () => {
+    if (!aiForm.facultyId) return;
+    setGeneratedEntries(null);
+    try {
+      const result = await generateMutation.mutateAsync(aiForm);
+      setGeneratedEntries(result.entries);
+    } catch {
+      // error toast handled by hook
+    }
+  };
+
+  const handleApply = async () => {
+    if (!generatedEntries) return;
+    await applyMutation.mutateAsync(generatedEntries);
+    setAiOpen(false);
+    setGeneratedEntries(null);
+  };
+
+  // --- Manual Entry Editor ---
   const [editOpen, setEditOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<{
-    courseId: string; day: string; startTime: string; endTime: string;
+    id?: string; courseId: string; day: number; startTime: string; endTime: string; roomId: string;
   } | null>(null);
-  const [entryForm, setEntryForm] = useState({ courseId: '', day: 'Monday', startTime: '08:00', endTime: '09:00' });
+  const [entryForm, setEntryForm] = useState({ courseId: '', day: 0, startTime: '08:00', endTime: '09:00', roomId: '' });
 
-  const [deleteEntry, setDeleteEntry] = useState<{ courseId: string; day: string; startTime: string } | null>(null);
+  const [deleteEntry, setDeleteEntry] = useState<string | null>(null);
 
-  const openAdd = (day?: string, time?: string) => {
+  const openAdd = (day?: number, time?: string) => {
     setEditingEntry(null);
     setEntryForm({
       courseId: courses.length > 0 ? String(courses[0].id) : '',
-      day: day ?? 'Monday',
+      day: day ?? 0,
       startTime: time ?? '08:00',
       endTime: time ? `${String(Number(time.split(':')[0]) + 1).padStart(2, '0')}:00` : '09:00',
+      roomId: '',
     });
     setEditOpen(true);
   };
 
-  const openEdit = (entry: { courseId: string; day: string; startTime: string; endTime: string }) => {
-    setEditingEntry(entry);
-    setEntryForm({ courseId: entry.courseId, day: entry.day, startTime: entry.startTime, endTime: entry.endTime });
+  const openEdit = (entry: TimetableEntry) => {
+    setEditingEntry({
+      id: entry.id, courseId: entry.courseId, day: entry.day,
+      startTime: entry.startTime, endTime: entry.endTime, roomId: entry.roomId ?? '',
+    });
+    setEntryForm({
+      courseId: entry.courseId, day: entry.day,
+      startTime: entry.startTime, endTime: entry.endTime, roomId: entry.roomId ?? '',
+    });
     setEditOpen(true);
   };
 
   const handleSaveEntry = async () => {
-    const course = courses.find((c) => c.id === entryForm.courseId);
-    if (!course) return;
-
-    const schedule = [...((course.schedule as ScheduleEntry[]) ?? [])];
-
-    if (editingEntry) {
-      // Replace existing entry
-      const idx = schedule.findIndex(
-        (s) => s.day === editingEntry.day && s.startTime === editingEntry.startTime,
-      );
-      if (idx !== -1) {
-        schedule[idx] = { day: entryForm.day, startTime: entryForm.startTime, endTime: entryForm.endTime };
-      }
+    if (editingEntry?.id) {
+      await updateMutation.mutateAsync({ id: editingEntry.id, payload: entryForm });
     } else {
-      schedule.push({ day: entryForm.day, startTime: entryForm.startTime, endTime: entryForm.endTime });
+      await createMutation.mutateAsync(entryForm);
     }
-
-    await updateMutation.mutateAsync({ id: entryForm.courseId, payload: { schedule } });
     setEditOpen(false);
   };
 
   const handleDeleteEntry = async () => {
     if (!deleteEntry) return;
-    const course = courses.find((c) => c.id === deleteEntry.courseId);
-    if (!course) return;
-
-    const schedule = ((course.schedule as ScheduleEntry[]) ?? []).filter(
-      (s) => !(s.day === deleteEntry.day && s.startTime === deleteEntry.startTime),
-    );
-    await updateMutation.mutateAsync({ id: deleteEntry.courseId, payload: { schedule } });
+    await deleteMutation.mutateAsync(deleteEntry);
     setDeleteEntry(null);
   };
 
-  // Group entries by (day, hour) for quick lookup - handle half-hour overlaps
+  // Group entries by (day, hour) for grid
   const entryMap = useMemo(() => {
-    const map = new Map<string, typeof entries>();
+    const map = new Map<string, TimetableEntry[]>();
     for (const e of entries) {
       const key = `${e.day}|${e.startTime}`;
       if (!map.has(key)) map.set(key, []);
@@ -147,159 +167,313 @@ export function ManageTimetable() {
     return map;
   }, [entries]);
 
+  // Group generated entries by day for preview
+  const generatedGrouped = useMemo(() => {
+    if (!generatedEntries) return null;
+    const groups: Record<number, typeof generatedEntries> = {};
+    for (const e of generatedEntries) {
+      if (!groups[e.day]) groups[e.day] = [];
+      groups[e.day].push(e);
+    }
+    return groups;
+  }, [generatedEntries]);
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Timetable</h1>
           <p className="text-sm text-muted-foreground">Weekly course schedule</p>
         </div>
-        <Button onClick={() => openAdd()}>
-          <Plus className="size-3.5 mr-1.5" /> Add Entry
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="default" onClick={() => setAiOpen(true)}>
+            <Sparkles className="size-3.5 mr-1.5" /> AI Generate
+          </Button>
+          <Button variant="outline" onClick={() => openAdd()}>
+            <Plus className="size-3.5 mr-1.5" /> Add Entry
+          </Button>
+        </div>
       </div>
 
-      {isLoading ? (
+      {/* Faculty Filter */}
+      <div className="max-w-xs">
+        <Select value={facultyFilter} onValueChange={setFacultyFilter}>
+          <SelectTrigger aria-label="Filter by faculty">
+            <SelectValue placeholder="All Faculties" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Faculties</SelectItem>
+            {facultiesList.map((f) => (
+              <SelectItem key={f.id} value={f.id}>
+                {f.department ? `${f.department.name} → ${f.name}` : f.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Timetable Grid */}
+      {timetableLoading ? (
         <div className="text-center py-20 text-muted-foreground">Loading timetable...</div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
-          <div className="min-w-[800px]">
-            {/* Header row */}
-            <div className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border bg-muted/30">
+          <div className="min-w-[900px]">
+            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-muted/30">
               <div className="p-2 text-xs font-medium text-muted-foreground border-r border-border">Time</div>
               {DAYS.map((day) => (
                 <div key={day} className="p-2 text-xs font-semibold text-center border-r border-border last:border-r-0">
-                  {day}
+                  {day.slice(0, 3)}
                 </div>
               ))}
             </div>
 
-            {/* Time slot rows */}
             <div className="relative">
-              {HOURS.map((hour, hi) => {
-                const isLast = hi === HOURS.length - 1;
-                return (
-                  <div key={hour} className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border last:border-b-0">
-                    <div className="flex items-start justify-center p-1 text-[10px] text-muted-foreground border-r border-border pt-1.5">
-                      {hour}
-                    </div>
-                    {DAYS.map((day) => {
-                      const slotKey = `${day}|${hour}`;
-                      const slotEntries = entryMap.get(slotKey) ?? [];
-                      const firstHalfEntries = entryMap.get(`${day}|${hour.replace(':00', ':30')}`) ?? [];
-
-                      return (
-                        <div
-                          key={`${day}-${hour}`}
-                          className="relative min-h-[60px] border-r border-border last:border-r-0 p-0.5 cursor-pointer hover:bg-muted/20 group"
-                          onClick={() => openAdd(day, hour)}
-                        >
-                          {slotEntries.map((entry) => (
-                            <div
-                              key={`${entry.courseId}-${entry.startTime}`}
-                              className={`rounded border px-1.5 py-0.5 text-[11px] leading-tight mb-0.5 cursor-pointer ${entry.color}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEdit({ courseId: entry.courseId, day: entry.day, startTime: entry.startTime, endTime: entry.endTime });
-                              }}
-                            >
-                              <div className="font-medium truncate">{entry.courseName}</div>
-                              <div className="truncate opacity-75">{entry.room}</div>
-                            </div>
-                          ))}
-                          {firstHalfEntries.length > 0 && (
-                            <div className="text-[9px] text-muted-foreground/60 italic px-1">…{firstHalfEntries.length} more</div>
-                          )}
-                        </div>
-                      );
-                    })}
+              {HOURS.map((hour, hi) => (
+                <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
+                  <div className="flex items-start justify-center p-1 text-[10px] text-muted-foreground border-r border-border pt-1.5">
+                    {hour}
                   </div>
-                );
-              })}
+                  {DAYS.map((_, di) => {
+                    const slotKey = `${di}|${hour}`;
+                    const slotEntries = entryMap.get(slotKey) ?? [];
+                    return (
+                      <div
+                        key={`${di}-${hour}`}
+                        className="relative min-h-[60px] border-r border-border last:border-r-0 p-0.5 cursor-pointer hover:bg-muted/20 group"
+                        onClick={() => openAdd(di, hour)}
+                      >
+                        {slotEntries.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className={`rounded border px-1.5 py-0.5 text-[11px] leading-tight mb-0.5 cursor-pointer ${getCourseColor(entry.courseId)}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(entry);
+                            }}
+                          >
+                            <div className="font-medium truncate">{entry.course.name}</div>
+                            <div className="truncate opacity-75">{entry.room?.name ?? 'No room'}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* Add/Edit Entry Dialog */}
+      {/* AI Generate Dialog */}
+      <Dialog open={aiOpen} onOpenChange={(v) => { setAiOpen(v); if (!v) setGeneratedEntries(null); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>AI Timetable Generator</DialogTitle>
+            <DialogDescription>Configure parameters and let AI generate the schedule.</DialogDescription>
+          </DialogHeader>
+
+          {!generatedEntries ? (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Faculty *</Label>
+                  <Select value={aiForm.facultyId} onValueChange={(v) => setAiForm({ ...aiForm, facultyId: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select faculty" /></SelectTrigger>
+                    <SelectContent>
+                      {facultiesList.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.department ? `${f.department.name} → ${f.name}` : f.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Periods per day</Label>
+                  <Input type="number" min={1} max={12} value={aiForm.periodsPerDay}
+                    onChange={(e) => setAiForm({ ...aiForm, periodsPerDay: Number(e.target.value) })} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Start time</Label>
+                  <Input type="time" value={aiForm.timeStart} onChange={(e) => setAiForm({ ...aiForm, timeStart: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>End time</Label>
+                  <Input type="time" value={aiForm.timeEnd} onChange={(e) => setAiForm({ ...aiForm, timeEnd: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Period duration (minutes)</Label>
+                <Select value={String(aiForm.periodDuration)} onValueChange={(v) => setAiForm({ ...aiForm, periodDuration: Number(v) })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[30, 45, 60, 90, 120].map((d) => (
+                      <SelectItem key={d} value={String(d)}>{d} min</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Days of week</Label>
+                <div className="flex flex-wrap gap-2">
+                  {DAYS.map((name, i) => (
+                    <Button
+                      key={i}
+                      type="button"
+                      variant={aiForm.daysOfWeek.includes(i) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => toggleDay(i)}
+                    >
+                      {name.slice(0, 3)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  className="w-full"
+                  onClick={handleGenerate}
+                  disabled={!aiForm.facultyId || aiForm.daysOfWeek.length === 0 || generateMutation.isPending}
+                >
+                  {generateMutation.isPending ? (
+                    <><Loader2 className="size-4 animate-spin mr-2" /> Generating...</>
+                  ) : (
+                    <><Sparkles className="size-4 mr-2" /> Generate Schedule</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Preview */
+            <div className="space-y-4 py-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  AI generated <strong>{generatedEntries.length}</strong> entries for {aiForm.daysOfWeek.length} days.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setGeneratedEntries(null)} size="sm">
+                    Regenerate
+                  </Button>
+                  <Button onClick={handleApply} disabled={applyMutation.isPending} size="sm">
+                    {applyMutation.isPending ? 'Applying...' : 'Apply Schedule'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border rounded-md divide-y max-h-64 overflow-y-auto">
+                {DAYS.map((dayName, di) => {
+                  const dayEntries = generatedEntries.filter((e) => e.day === di);
+                  if (dayEntries.length === 0) return null;
+                  const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
+                  return (
+                    <div key={di} className="p-3">
+                      <h4 className="text-sm font-semibold mb-2">{dayName}</h4>
+                      <div className="space-y-1">
+                        {dayEntries.map((e, i) => {
+                          const course = courseMap[e.courseId] as Course | undefined;
+                          const room = roomsList.find((r) => r.id === e.roomId);
+                          return (
+                            <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="size-3 shrink-0" />
+                              <span className="font-mono">{e.startTime}-{e.endTime}</span>
+                              <span className="font-medium text-foreground">{course?.name ?? e.courseId}</span>
+                              {room && <Badge variant="outline" className="text-[10px]">{room.name}</Badge>}
+                              {!e.roomId && <Badge variant="secondary" className="text-[10px]">No room</Badge>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Add/Edit Entry Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingEntry ? 'Edit Schedule Entry' : 'Add Schedule Entry'}</DialogTitle>
-            {editingEntry && (
-              <DialogDescription>Update the schedule for this course slot.</DialogDescription>
-            )}
+            {editingEntry && <DialogDescription>Update the schedule for this course slot.</DialogDescription>}
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="tt-course">Course</Label>
+              <Label>Course</Label>
               <Select value={entryForm.courseId} onValueChange={(v) => setEntryForm({ ...entryForm, courseId: v })}>
-                <SelectTrigger id="tt-course" aria-label="Select course">
-                  <SelectValue placeholder="Select course" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger>
                 <SelectContent>
                   {courses.map((c) => (
-                    <SelectItem key={String(c.id)} value={String(c.id)}>
-                      {String(c.name)}
-                    </SelectItem>
+                    <SelectItem key={String(c.id)} value={String(c.id)}>{String(c.name)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="tt-day">Day</Label>
-                <Select value={entryForm.day} onValueChange={(v) => setEntryForm({ ...entryForm, day: v })}>
-                  <SelectTrigger id="tt-day" aria-label="Select day">
-                    <SelectValue />
-                  </SelectTrigger>
+                <Label>Day</Label>
+                <Select value={String(entryForm.day)} onValueChange={(v) => setEntryForm({ ...entryForm, day: Number(v) })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {DAYS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    {DAYS.map((d, i) => <SelectItem key={i} value={String(i)}>{d}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="tt-start">Start</Label>
-                <Input id="tt-start" type="time" value={entryForm.startTime} onChange={(e) => setEntryForm({ ...entryForm, startTime: e.target.value })} />
+                <Label>Start</Label>
+                <Input type="time" value={entryForm.startTime} onChange={(e) => setEntryForm({ ...entryForm, startTime: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="tt-end">End</Label>
-                <Input id="tt-end" type="time" value={entryForm.endTime} onChange={(e) => setEntryForm({ ...entryForm, endTime: e.target.value })} />
+                <Label>End</Label>
+                <Input type="time" value={entryForm.endTime} onChange={(e) => setEntryForm({ ...entryForm, endTime: e.target.value })} />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Room</Label>
+              <Select value={entryForm.roomId} onValueChange={(v) => setEntryForm({ ...entryForm, roomId: v })}>
+                <SelectTrigger><SelectValue placeholder="No room (optional)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No room</SelectItem>
+                  {roomsList.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>{r.name}{r.code ? ` (${r.code})` : ''}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            {editingEntry && (
-              <Button
-                type="button"
-                variant="outline"
-                className="text-destructive border-destructive/50 hover:bg-destructive/10"
-                onClick={() => {
-                  setEditOpen(false);
-                  setDeleteEntry({ courseId: editingEntry.courseId, day: editingEntry.day, startTime: editingEntry.startTime });
-                }}
-              >
+            {editingEntry?.id && (
+              <Button type="button" variant="outline" className="text-destructive border-destructive/50 hover:bg-destructive/10"
+                onClick={() => { setEditOpen(false); setDeleteEntry(editingEntry.id!); }}>
                 <Trash2 className="size-3.5 mr-1" /> Remove
               </Button>
             )}
             <div className="flex-1" />
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveEntry} disabled={!entryForm.courseId || updateMutation.isPending}>
-              {updateMutation.isPending ? 'Saving...' : editingEntry ? 'Update' : 'Add'}
+            <Button onClick={handleSaveEntry} disabled={!entryForm.courseId || createMutation.isPending || updateMutation.isPending}>
+              {editingEntry ? 'Update' : 'Add'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Entry Confirmation */}
       <ConfirmDialog
         open={!!deleteEntry}
         onOpenChange={(v) => !v && setDeleteEntry(null)}
-        title="Remove Schedule Entry"
-        description="Are you sure you want to remove this schedule entry?"
+        title="Remove Timetable Entry"
+        description="Are you sure you want to remove this entry?"
         confirmLabel="Remove"
         onConfirm={handleDeleteEntry}
-        isLoading={updateMutation.isPending}
+        isLoading={deleteMutation.isPending}
       />
     </div>
   );

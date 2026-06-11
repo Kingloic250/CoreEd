@@ -46,7 +46,7 @@ router.get('/:id', authenticate, async (req, res) => {
 router.post('/', authenticate, validate(courseCreateSchema), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    const { name, year, facultyId, lecturerId, credits, room } = req.body;
+    const { name, year, facultyId, lecturerId, credits, roomId } = req.body;
     if (!name || !year || !facultyId || !lecturerId) {
       return res.status(400).json({ message: 'name, year, facultyId, and lecturerId are required.' });
     }
@@ -65,7 +65,7 @@ router.post('/', authenticate, validate(courseCreateSchema), async (req, res) =>
         facultyId,
         lecturerId,
         credits: credits ?? 3,
-        room: room ?? null,
+        roomId: roomId ?? null,
       },
     });
     await clearCache(CACHE_PATTERN);

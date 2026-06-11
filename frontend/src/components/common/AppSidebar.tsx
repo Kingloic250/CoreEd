@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   BarChart3, ClipboardList, FileText, Bell, School,
   ClipboardCheck, Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
-  Library, ScrollText, Shield, CalendarRange, Wallet, Mail, AlertCircle
+  Library, ScrollText, Shield, CalendarRange, Wallet, Mail, AlertCircle, Building2
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -31,6 +31,7 @@ const adminNav = [
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
   { title: 'Calendar', url: '/admin/calendar', icon: Calendar },
   { title: 'Notifications', url: '/admin/notifications', icon: Bell },
+  { title: 'Rooms', url: '/admin/rooms', icon: Building2 },
 ];
 
 const lecturerNav = [

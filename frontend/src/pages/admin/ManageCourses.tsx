@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useGetCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from '@/hooks/useCourses';
 import { useGetLecturers } from '@/hooks/useLecturers';
 import { useGetFaculties } from '@/hooks/useFaculties';
+import { useGetRooms } from '@/hooks/useRooms';
 import { CourseForm } from '@/components/forms/CourseForm';
 import type { CourseFormData } from '@/utils/validators';
 
@@ -23,6 +24,7 @@ export function ManageCourses() {
   const { data, isLoading } = useGetCourses();
   const { data: lecturers } = useGetLecturers();
   const { data: faculties } = useGetFaculties();
+  const { data: rooms } = useGetRooms();
   const createMutation = useCreateCourse();
   const updateMutation = useUpdateCourse();
   const deleteMutation = useDeleteCourse();
@@ -99,6 +101,7 @@ export function ManageCourses() {
             defaultValues={editing as (CourseFormData & { id: string }) | undefined}
             lecturers={lecturersList}
             faculties={facultiesList}
+            rooms={(rooms ?? [])}
             onSubmit={handleSubmit}
             isLoading={createMutation.isPending || updateMutation.isPending}
             onCancel={() => setOpen(false)}

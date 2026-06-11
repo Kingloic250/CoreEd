@@ -64,6 +64,8 @@ export const API_PATHS = {
   INVOICES: '/api/v1/invoices',
   PAYMENTS: '/api/v1/payments',
   MESSAGES: '/api/v1/messages',
+  ROOMS: '/api/v1/rooms',
+  TIMETABLE: '/api/v1/timetable',
 } as const;
 
 export const QUERY_KEYS = {
@@ -86,6 +88,8 @@ export const QUERY_KEYS = {
   INVOICES: 'invoices',
   PAYMENTS: 'payments',
   MESSAGES: 'messages',
+  ROOMS: 'rooms',
+  TIMETABLE: 'timetable',
 } as const;
 
 export const GRADE_SCALE = [

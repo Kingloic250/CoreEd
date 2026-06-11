@@ -22,6 +22,8 @@ const calendarEventRoutes = require('./routes/calendarEvents');
 const userRoutes = require('./routes/users');
 const reportRoutes = require('./routes/reports');
 const announcementRoutes = require('./routes/announcements');
+const roomRoutes = require('./routes/rooms');
+const timetableRoutes = require('./routes/timetable');
 const { authenticate } = require('./middleware/auth');
 const { createRateLimiter } = require('./middleware/rateLimit');
 
@@ -62,6 +64,8 @@ app.use('/api/v1/calendar-events', authenticate, calendarEventRoutes);
 app.use('/api/v1/users', authenticate, userRoutes);
 app.use('/api/v1/reports', authenticate, reportRoutes);
 app.use('/api/v1/announcements', authenticate, announcementRoutes);
+app.use('/api/v1/rooms', authenticate, roomRoutes);
+app.use('/api/v1/timetable', authenticate, timetableRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

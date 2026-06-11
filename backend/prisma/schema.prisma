@@ -119,6 +119,37 @@ model Semester {
   @@map("semesters")
 }
 
+model Room {
+  id          String   @id
+  name        String
+  code        String?  @unique
+  capacity    Int      @default(0)
+  building    String?
+  description String?
+
+  courses          Course[]
+  timetableEntries TimetableEntry[]
+
+  @@map("rooms")
+}
+
+model TimetableEntry {
+  id        String   @id
+  courseId   String   @map("courseId")
+  day       Int
+  startTime String   @map("startTime")
+  endTime   String   @map("endTime")
+  roomId    String?  @map("roomId")
+
+  course Course @relation(fields: [courseId], references: [id])
+  room   Room?  @relation(fields: [roomId], references: [id])
+
+  @@index([courseId])
+  @@index([roomId])
+  @@index([day])
+  @@map("timetable_entries")
+}
+
 model Course {
   id                String  @id
   name              String
@@ -128,17 +159,18 @@ model Course {
   lecturerId        String? @map("lecturerId")
   semesterId        String? @map("semesterId")
   credits           Int     @default(3)
-  room              String?
-  schedule          Json    @default("[]")
+  roomId            String? @map("roomId")
   studentIds        Json    @default("[]") @map("studentIds")
   gradingComponents Json    @default("[]") @map("gradingComponents")
 
   lecturer   Lecturer?    @relation(fields: [lecturerId], references: [id])
   faculty    Faculty?     @relation(fields: [facultyId], references: [id])
+  room       Room?        @relation(fields: [roomId], references: [id])
   attendance Attendance[]
   grades     Grade[]
   assignments Assignment[]
   materials   CourseMaterial[]
+  timetableEntries TimetableEntry[]
   @@map("courses")
 }
 
