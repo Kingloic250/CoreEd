@@ -5,6 +5,7 @@ const { authenticate } = require('../middleware/auth');
 const { cache, clearCache } = require('../middleware/cache');
 const { validate } = require('../middleware/validate');
 const { departmentCreateSchema } = require('../validation');
+const { logAudit } = require('../helpers');
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.post('/', authenticate, validate(departmentCreateSchema), async (req, res
       data: { id, name, code: code ?? null, headLecturerId: headLecturerId ?? null, description: description ?? null },
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'create_department', performedBy: req.user.email, performedById: req.user.id, targetType: 'department', targetId: dept.id, details: `Created department ${name}` });
     res.status(201).json(dept);
   } catch (err) {
     console.error('Create department error:', err);
@@ -40,6 +42,7 @@ router.put('/:id', authenticate, async (req, res) => {
       data: req.body,
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'update_department', performedBy: req.user.email, performedById: req.user.id, targetType: 'department', targetId: req.params.id, details: `Updated department ${req.params.id}` });
     res.json(dept);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.' });
@@ -49,8 +52,9 @@ router.put('/:id', authenticate, async (req, res) => {
 router.delete('/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    await prisma.department.delete({ where: { id: req.params.id } });
+    const deleted = await prisma.department.delete({ where: { id: req.params.id } });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'delete_department', performedBy: req.user.email, performedById: req.user.id, targetType: 'department', targetId: req.params.id, details: `Deleted department ${deleted.name}` });
     res.json({ message: 'Department deleted.' });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.' });

@@ -26,6 +26,15 @@ const actionConfig: Record<string, { label: string; color: string }> = {
   set_active_semester: { label: 'Set Active Semester', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
   approve_request: { label: 'Approve Request', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
   reject_request: { label: 'Reject Request', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  create_faculty: { label: 'Create Faculty', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  update_faculty: { label: 'Update Faculty', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  delete_faculty: { label: 'Delete Faculty', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  create_calendar_event: { label: 'Create Event', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  update_calendar_event: { label: 'Update Event', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  delete_calendar_event: { label: 'Delete Event', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  update_user: { label: 'Update User', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  reset_password: { label: 'Reset Password', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
+  delete_user: { label: 'Delete User', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
   bulk_enroll: { label: 'Bulk Enroll', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' },
 };
 

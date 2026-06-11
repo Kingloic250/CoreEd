@@ -57,11 +57,6 @@ const courseCreateSchema = z.object({
   lecturerId: z.string().min(1, 'Lecturer is required'),
   credits: z.number().int().min(1).max(20).optional(),
   room: z.string().optional(),
-  schedule: z.array(z.object({
-    day: z.string().min(1),
-    startTime: z.string().min(1),
-    endTime: z.string().min(1),
-  })).optional(),
 });
 
 const semesterCreateSchema = z.object({
@@ -84,6 +79,36 @@ const approveRequestSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+const userUpdateSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Valid email is required'),
+  role: z.enum(['admin', 'lecturer', 'student']),
+});
+
+const userResetPasswordSchema = z.object({
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+const calendarEventSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  type: z.enum(['exam', 'deadline', 'holiday', 'event']),
+  date: z.string().min(1, 'Date is required'),
+  time: z.string().nullable().optional(),
+  endTime: z.string().nullable().optional(),
+  courseName: z.string().nullable().optional(),
+  targetRoles: z.array(z.string()).optional(),
+});
+
 module.exports = {
   loginSchema,
   studentCreateSchema,
@@ -95,4 +120,9 @@ module.exports = {
   semesterCreateSchema,
   accountRequestSchema,
   approveRequestSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  userUpdateSchema,
+  userResetPasswordSchema,
+  calendarEventSchema,
 };

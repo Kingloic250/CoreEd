@@ -39,15 +39,6 @@ export const courseSchema = z.object({
   credits: z.coerce.number().int().min(1, 'Credits must be at least 1').max(20, 'Credits cannot exceed 20'),
   lecturerId: z.string().min(1, 'Lecturer is required'),
   room: z.string().min(1, 'Room is required'),
-  schedule: z
-    .array(
-      z.object({
-        day: z.string().min(1, 'Day is required'),
-        startTime: z.string().min(1, 'Start time is required'),
-        endTime: z.string().min(1, 'End time is required'),
-      })
-    )
-    .min(1, 'At least one schedule slot is required'),
 });
 
 export const gradeSchema = z.object({

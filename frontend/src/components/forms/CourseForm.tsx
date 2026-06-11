@@ -1,16 +1,12 @@
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { courseSchema, type CourseFormData } from '@/utils/validators';
 import { YEARS } from '@/utils/constants';
-
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 interface FacultyOption {
   id: string;
@@ -28,12 +24,9 @@ interface CourseFormProps {
 }
 
 export function CourseForm({ defaultValues, lecturers, faculties, onSubmit, isLoading, onCancel }: CourseFormProps) {
-  const { register, handleSubmit, setValue, control, formState: { errors, isDirty } } = useForm<CourseFormData>({
+  const { register, handleSubmit, setValue, formState: { errors, isDirty } } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
-    defaultValues: defaultValues ?? { schedule: [{ day: '', startTime: '', endTime: '' }] },
   });
-
-  const { fields, append, remove } = useFieldArray({ control, name: 'schedule' });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
@@ -102,47 +95,6 @@ export function CourseForm({ defaultValues, lecturers, faculties, onSubmit, isLo
           </Select>
           {errors.lecturerId && <p className="text-xs text-destructive">{errors.lecturerId.message}</p>}
         </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Schedule</Label>
-          <Button type="button" variant="outline" size="sm" onClick={() => append({ day: '', startTime: '', endTime: '' })}>
-            <Plus className="size-3.5" /> Add Slot
-          </Button>
-        </div>
-        {fields.map((field, index) => (
-          <div key={field.id} className="grid grid-cols-3 gap-2 items-end">
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Day</Label>
-              <Select onValueChange={(v) => setValue(`schedule.${index}.day`, v)}>
-                <SelectTrigger className="h-8 text-xs" aria-label="Select day">
-                  <SelectValue placeholder="Day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DAYS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Start</Label>
-              <Input type="time" className="h-8 text-xs" {...register(`schedule.${index}.startTime`)} />
-            </div>
-            <div className="flex gap-1 items-end">
-              <div className="flex-1 space-y-1">
-                <Label className="text-xs text-muted-foreground">End</Label>
-                <Input type="time" className="h-8 text-xs" {...register(`schedule.${index}.endTime`)} />
-              </div>
-              {fields.length > 1 && (
-                <Button type="button" variant="ghost" size="icon-sm" onClick={() => remove(index)} className="mb-0.5">
-                  <Trash2 className="size-3.5 text-destructive" />
-                </Button>
-              )}
-            </div>
-          </div>
-        ))}
       </div>
 
       <div className="flex gap-2 pt-2 justify-end">

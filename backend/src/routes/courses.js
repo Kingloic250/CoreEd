@@ -5,6 +5,7 @@ const { authenticate } = require('../middleware/auth');
 const { cache, clearCache } = require('../middleware/cache');
 const { validate } = require('../middleware/validate');
 const { courseCreateSchema } = require('../validation');
+const { logAudit } = require('../helpers');
 
 const router = Router();
 
@@ -45,7 +46,7 @@ router.get('/:id', authenticate, async (req, res) => {
 router.post('/', authenticate, validate(courseCreateSchema), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    const { name, year, facultyId, lecturerId, credits, room, schedule } = req.body;
+    const { name, year, facultyId, lecturerId, credits, room } = req.body;
     if (!name || !year || !facultyId || !lecturerId) {
       return res.status(400).json({ message: 'name, year, facultyId, and lecturerId are required.' });
     }
@@ -65,10 +66,10 @@ router.post('/', authenticate, validate(courseCreateSchema), async (req, res) =>
         lecturerId,
         credits: credits ?? 3,
         room: room ?? null,
-        schedule: schedule ?? [],
       },
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'create_course', performedBy: req.user.email, performedById: req.user.id, targetType: 'course', targetId: course.id, details: `Created course ${name} (${year})` });
     res.status(201).json(course);
   } catch (err) {
     console.error('Create course error:', err);
@@ -92,6 +93,7 @@ router.put('/:id', authenticate, async (req, res) => {
       data,
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'update_course', performedBy: req.user.email, performedById: req.user.id, targetType: 'course', targetId: req.params.id, details: `Updated course ${req.params.id}` });
     res.json(course);
   } catch (err) {
     console.error('Update course error:', err);
@@ -102,11 +104,85 @@ router.put('/:id', authenticate, async (req, res) => {
 router.delete('/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    await prisma.course.delete({ where: { id: req.params.id } });
+    const deleted = await prisma.course.delete({ where: { id: req.params.id } });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'delete_course', performedBy: req.user.email, performedById: req.user.id, targetType: 'course', targetId: req.params.id, details: `Deleted course ${deleted.name}` });
     res.json({ message: 'Course deleted.' });
   } catch (err) {
     console.error('Delete course error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+// --- Enrollment routes ---
+
+router.post('/:id/self-enroll', authenticate, async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    if (!studentId) return res.status(400).json({ message: 'studentId is required.' });
+
+    const course = await prisma.course.findUnique({ where: { id: req.params.id } });
+    if (!course) return res.status(404).json({ message: 'Course not found.' });
+
+    const enrolled = (course.studentIds ?? []);
+    if (enrolled.includes(studentId)) {
+      return res.status(400).json({ message: 'Already enrolled in this course.' });
+    }
+
+    const updated = await prisma.course.update({
+      where: { id: req.params.id },
+      data: { studentIds: [...enrolled, studentId] },
+    });
+    await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'self_enroll', performedBy: req.user.email, performedById: req.user.id, targetType: 'course', targetId: req.params.id, details: `Student ${studentId} self-enrolled` });
+    res.json(updated);
+  } catch (err) {
+    console.error('Self-enroll error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+router.post('/:id/self-unenroll', authenticate, async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    if (!studentId) return res.status(400).json({ message: 'studentId is required.' });
+
+    const course = await prisma.course.findUnique({ where: { id: req.params.id } });
+    if (!course) return res.status(404).json({ message: 'Course not found.' });
+
+    const enrolled = (course.studentIds ?? []).filter((id) => id !== studentId);
+
+    const updated = await prisma.course.update({
+      where: { id: req.params.id },
+      data: { studentIds: enrolled },
+    });
+    await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'self_unenroll', performedBy: req.user.email, performedById: req.user.id, targetType: 'course', targetId: req.params.id, details: `Student ${studentId} self-unenrolled` });
+    res.json(updated);
+  } catch (err) {
+    console.error('Self-unenroll error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+router.put('/:id/enroll', authenticate, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+  try {
+    const { studentIds } = req.body;
+    if (!Array.isArray(studentIds)) return res.status(400).json({ message: 'studentIds array is required.' });
+
+    const course = await prisma.course.findUnique({ where: { id: req.params.id } });
+    if (!course) return res.status(404).json({ message: 'Course not found.' });
+
+    const updated = await prisma.course.update({
+      where: { id: req.params.id },
+      data: { studentIds },
+    });
+    await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'admin_enroll', performedBy: req.user.email, performedById: req.user.id, targetType: 'course', targetId: req.params.id, details: `Admin updated enrollment for course ${course.name}` });
+    res.json(updated);
+  } catch (err) {
+    console.error('Admin enroll error:', err);
     res.status(500).json({ message: 'Internal server error.' });
   }
 });

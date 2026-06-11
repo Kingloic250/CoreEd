@@ -6,7 +6,8 @@ const prisma = require('../db');
 const { redis } = require('../redis');
 const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
-const { loginSchema } = require('../validation');
+const { loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validation');
+const { sendResetPasswordEmail } = require('../services/mail');
 
 const router = express.Router();
 
@@ -47,6 +48,60 @@ router.post('/login', validate(loginSchema), async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+router.post('/forgot-password', validate(forgotPasswordSchema), async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.json({ message: 'If that email exists, a reset link has been sent.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken: token, resetTokenExpires: expiresAt },
+    });
+
+    try {
+      await sendResetPasswordEmail(email, token, user.name);
+    } catch (mailErr) {
+      console.error('Reset email failed:', mailErr);
+    }
+
+    res.json({ message: 'If that email exists, a reset link has been sent.' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+router.post('/reset-password', validate(resetPasswordSchema), async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { resetToken: token } });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset link.' });
+    }
+    if (user.resetTokenExpires && new Date() > user.resetTokenExpires) {
+      return res.status(400).json({ message: 'This reset link has expired. Request a new one.' });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hash, resetToken: null, resetTokenExpires: null },
+    });
+
+    res.json({ message: 'Password reset successfully. You can now log in.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
     res.status(500).json({ message: 'Internal server error.' });
   }
 });

@@ -30,6 +30,7 @@ const adminNav = [
   { title: 'Users', url: '/admin/users', icon: Shield },
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
   { title: 'Calendar', url: '/admin/calendar', icon: Calendar },
+  { title: 'Notifications', url: '/admin/notifications', icon: Bell },
 ];
 
 const lecturerNav = [
@@ -44,6 +45,7 @@ const lecturerNav = [
   { title: 'Attendance History', url: '/lecturer/attendance/history', icon: ClipboardCheck },
   { title: 'Enter Grades', url: '/lecturer/grades', icon: Trophy },
   { title: 'Grade Book', url: '/lecturer/grades/book', icon: ScrollText },
+  { title: 'Notifications', url: '/lecturer/notifications', icon: Bell },
 ];
 
 const studentNav = [

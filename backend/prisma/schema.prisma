@@ -30,13 +30,15 @@ enum AttendanceStatus {
 }
 
 model User {
-  id             String @id
-  name           String
-  email          String @unique
-  password       String
-  role           Role
-  avatar         String?
-  emailVerified  Boolean @default(false) @map("emailVerified")
+  id               String    @id
+  name             String
+  email            String    @unique
+  password         String
+  role             Role
+  avatar           String?
+  emailVerified    Boolean   @default(false) @map("emailVerified")
+  resetToken        String?   @unique @map("resetToken")
+  resetTokenExpires DateTime? @map("resetTokenExpires")
 
   accountRequests AccountRequest[] @relation("schoolEmail")
   @@map("users")

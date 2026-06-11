@@ -6,6 +6,7 @@ const { cache, clearCache } = require('../middleware/cache');
 const { validate } = require('../middleware/validate');
 const { lecturerCreateSchema } = require('../validation');
 const { sendInvitationEmail } = require('../services/mail');
+const { logAudit } = require('../helpers');
 
 const router = Router();
 
@@ -61,11 +62,16 @@ router.post('/', authenticate, validate(lecturerCreateSchema), async (req, res) 
       } catch (mailErr) {
         console.error('Invitation email failed:', mailErr);
       }
-    } catch {
-      lecturer = await prisma.lecturer.create({ data });
+    } catch (err) {
+      if (err.code === 'P2002') {
+        lecturer = await prisma.lecturer.create({ data });
+      } else {
+        throw err;
+      }
     }
 
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'create_lecturer', performedBy: req.user.email, performedById: req.user.id, targetType: 'lecturer', targetId: lecturer.id, details: `Created lecturer ${firstName} ${lastName}` });
     const { invitationToken, ...safe } = lecturer;
     res.status(201).json(safe);
   } catch (err) {
@@ -82,6 +88,7 @@ router.put('/:id', authenticate, async (req, res) => {
       data: req.body,
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'update_lecturer', performedBy: req.user.email, performedById: req.user.id, targetType: 'lecturer', targetId: req.params.id, details: `Updated lecturer ${req.params.id}` });
     res.json(lecturer);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.' });
@@ -91,8 +98,9 @@ router.put('/:id', authenticate, async (req, res) => {
 router.delete('/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    await prisma.lecturer.delete({ where: { id: req.params.id } });
+    const deleted = await prisma.lecturer.delete({ where: { id: req.params.id } });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'delete_lecturer', performedBy: req.user.email, performedById: req.user.id, targetType: 'lecturer', targetId: req.params.id, details: `Deleted lecturer ${deleted.firstName} ${deleted.lastName}` });
     res.json({ message: 'Lecturer deleted.' });
   } catch (err) {
     console.error('Delete lecturer error:', err);

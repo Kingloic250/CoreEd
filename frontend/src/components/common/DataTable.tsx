@@ -78,7 +78,7 @@ export function DataTable<TData>({
         </div>
       </div>
 
-      <div className="rounded-md border border-border overflow-x-auto">
+      <div className="rounded-md border border-border overflow-x-auto scrollbar-thin">
         <Table aria-label="Data table" className="min-w-[600px]">
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (

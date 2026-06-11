@@ -21,7 +21,7 @@ export function Announcements() {
   const filtered = list.filter((a) => {
     const matchSearch =
       String(a.title).toLowerCase().includes(search.toLowerCase()) ||
-      String(a.message).toLowerCase().includes(search.toLowerCase());
+      String(a.body ?? a.message ?? '').toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === 'all' || a.priority === filter;
     return matchSearch && matchFilter;
   });
@@ -111,11 +111,11 @@ export function Announcements() {
                         </p>
 
                         {!isExpanded && (
-                          <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">{String(a.message)}</p>
+                          <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">{String(a.body ?? a.message ?? '')}</p>
                         )}
 
                         {isExpanded && (
-                          <p className="text-sm text-foreground mt-2 leading-relaxed whitespace-pre-wrap">{String(a.message)}</p>
+                          <p className="text-sm text-foreground mt-2 leading-relaxed whitespace-pre-wrap">{String(a.body ?? a.message ?? '')}</p>
                         )}
                       </div>
                     </div>

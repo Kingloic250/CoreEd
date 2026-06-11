@@ -5,6 +5,7 @@ const { authenticate } = require('../middleware/auth');
 const { cache, clearCache } = require('../middleware/cache');
 const { validate } = require('../middleware/validate');
 const { facultyCreateSchema } = require('../validation');
+const { logAudit } = require('../helpers');
 
 const router = Router();
 
@@ -31,6 +32,7 @@ router.post('/', authenticate, validate(facultyCreateSchema), async (req, res) =
       data: { id, name, code: code ?? null, departmentId, description: description ?? null },
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'create_faculty', performedBy: req.user.email, performedById: req.user.id, targetType: 'faculty', targetId: faculty.id, details: `Created faculty ${name}` });
     res.status(201).json(faculty);
   } catch (err) {
     console.error('Create faculty error:', err);
@@ -46,6 +48,7 @@ router.put('/:id', authenticate, async (req, res) => {
       data: req.body,
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'update_faculty', performedBy: req.user.email, performedById: req.user.id, targetType: 'faculty', targetId: req.params.id, details: `Updated faculty ${req.params.id}` });
     res.json(faculty);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.' });
@@ -55,8 +58,9 @@ router.put('/:id', authenticate, async (req, res) => {
 router.delete('/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    await prisma.faculty.delete({ where: { id: req.params.id } });
+    const deleted = await prisma.faculty.delete({ where: { id: req.params.id } });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'delete_faculty', performedBy: req.user.email, performedById: req.user.id, targetType: 'faculty', targetId: req.params.id, details: `Deleted faculty ${deleted.name}` });
     res.json({ message: 'Faculty deleted.' });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.' });

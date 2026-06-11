@@ -17,6 +17,11 @@ const profileRoutes = require('./routes/profile');
 const assignmentRoutes = require('./routes/assignments');
 const materialRoutes = require('./routes/materials');
 const uploadRoutes = require('./routes/upload');
+const auditLogRoutes = require('./routes/auditLogs');
+const calendarEventRoutes = require('./routes/calendarEvents');
+const userRoutes = require('./routes/users');
+const reportRoutes = require('./routes/reports');
+const announcementRoutes = require('./routes/announcements');
 const { authenticate } = require('./middleware/auth');
 const { createRateLimiter } = require('./middleware/rateLimit');
 
@@ -52,6 +57,11 @@ app.use('/api/v1/profile', authenticate, profileRoutes);
 app.use('/api/v1/assignments', assignmentRoutes);
 app.use('/api/v1/materials', materialRoutes);
 app.use('/api/v1/upload', authenticate, uploadRoutes);
+app.use('/api/v1/audit-logs', authenticate, auditLogRoutes);
+app.use('/api/v1/calendar-events', authenticate, calendarEventRoutes);
+app.use('/api/v1/users', authenticate, userRoutes);
+app.use('/api/v1/reports', authenticate, reportRoutes);
+app.use('/api/v1/announcements', authenticate, announcementRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

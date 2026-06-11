@@ -58,4 +58,26 @@ async function verifyCode(email, code) {
   return true;
 }
 
-module.exports = { sendVerificationCode, sendInvitationEmail, verifyCode };
+async function sendResetPasswordEmail(email, token, name) {
+  const appName = process.env.APP_NAME || 'Greenfield Academy';
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const link = `${frontendUrl}/reset-password?token=${token}`;
+
+  await transporter.sendMail({
+    from: `"${appName}" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `Reset your password — ${appName}`,
+    text: `Hello ${name},\n\nA password reset was requested for your account.\n\nClick the link below to reset your password:\n${link}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, you can ignore this email.`,
+    html: `<p>Hello <strong>${name}</strong>,</p>
+<p>A password reset was requested for your account.</p>
+<p>Click the button below to reset your password:</p>
+<div style="text-align:center;margin:24px 0">
+  <a href="${link}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">Reset Password</a>
+</div>
+<p style="color:#6b7280;font-size:14px">This link expires in 1 hour.<br>If you didn't request this, you can ignore this email.</p>`,
+  });
+
+  return true;
+}
+
+module.exports = { sendVerificationCode, sendInvitationEmail, sendResetPasswordEmail, verifyCode };

@@ -5,6 +5,7 @@ const prisma = require('../db');
 const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { accountRequestSchema, approveRequestSchema } = require('../validation');
+const { logAudit } = require('../helpers');
 
 const router = Router();
 
@@ -85,6 +86,7 @@ router.put('/:id/approve', authenticate, validate(approveRequestSchema), async (
       }),
     ]);
 
+    await logAudit({ action: 'approve_request', performedBy: req.user.email, performedById: req.user.id, targetType: 'account_request', targetId: request.id, details: `Approved request for ${request.name} (${schoolEmail})` });
     res.json({ message: 'Account approved.' });
   } catch (err) {
     console.error('Approve error:', err);
@@ -96,10 +98,11 @@ router.put('/:id/approve', authenticate, validate(approveRequestSchema), async (
 router.put('/:id/reject', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    await prisma.accountRequest.update({
+    const rejected = await prisma.accountRequest.update({
       where: { id: req.params.id },
       data: { status: 'rejected' },
     });
+    await logAudit({ action: 'reject_request', performedBy: req.user.email, performedById: req.user.id, targetType: 'account_request', targetId: req.params.id, details: `Rejected request for ${rejected.name}` });
     res.json({ message: 'Request rejected.' });
   } catch (err) {
     console.error('Reject error:', err);

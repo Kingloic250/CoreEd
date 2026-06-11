@@ -253,8 +253,6 @@ export function ManageTimetable() {
                   <SelectTrigger id="tt-day" aria-label="Select day">
                     <SelectValue />
                   </SelectTrigger>
-
-...(The rest continues identically, so I need to match the closing tag too. Let me just read to the end of this section.)
                   <SelectContent>
                     {DAYS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   </SelectContent>

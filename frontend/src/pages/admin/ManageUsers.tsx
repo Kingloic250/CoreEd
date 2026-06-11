@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { Pencil, Trash2, MoreHorizontal, Key, Shield, Users, GraduationCap, UserCheck } from 'lucide-react';
+import { Pencil, Trash2, MoreHorizontal, Shield, Users, GraduationCap, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,6 @@ export function ManageUsers() {
   const { user: currentUser } = useAuth();
   const { data, isLoading } = useGetUsers();
   const updateMutation = useUpdateUser();
-  const resetMutation = useResetPassword();
   const deleteMutation = useDeleteUser();
 
   const [tab, setTab] = useState('all');
@@ -41,10 +40,6 @@ export function ManageUsers() {
   const [editing, setEditing] = useState<UserRecord | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', role: 'student' });
   const [initialEditForm, setInitialEditForm] = useState({ name: '', email: '', role: 'student' });
-
-  const [resetOpen, setResetOpen] = useState(false);
-  const [resetting, setResetting] = useState<UserRecord | null>(null);
-  const [newPassword, setNewPassword] = useState('');
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -84,18 +79,6 @@ export function ManageUsers() {
     setEditOpen(false);
   };
 
-  const openReset = (u: UserRecord) => {
-    setResetting(u);
-    setNewPassword('');
-    setResetOpen(true);
-  };
-
-  const handleReset = async () => {
-    if (!resetting?.id || !newPassword) return;
-    await resetMutation.mutateAsync({ id: String(resetting.id), newPassword });
-    setResetOpen(false);
-  };
-
   const columns: ColumnDef<UserRecord>[] = [
     { accessorKey: 'name', header: 'Name' },
     { accessorKey: 'email', header: 'Email' },
@@ -128,9 +111,6 @@ export function ManageUsers() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => openEdit(u)}>
                 <Pencil className="size-3.5" /> Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openReset(u)}>
-                <Key className="size-3.5" /> Reset Password
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -217,36 +197,6 @@ export function ManageUsers() {
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
             <Button onClick={handleEdit} disabled={updateMutation.isPending || !editForm.name || !editForm.email || !editFormChanged}>
               {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reset Password Dialog */}
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
-            <DialogDescription>
-              Set a new password for <strong>{resetting?.name}</strong>.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="um-password">New Password</Label>
-              <Input
-                id="um-password"
-                type="password"
-                placeholder="Enter new password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetOpen(false)}>Cancel</Button>
-            <Button onClick={handleReset} disabled={resetMutation.isPending || !newPassword}>
-              {resetMutation.isPending ? 'Resetting...' : 'Reset Password'}
             </Button>
           </DialogFooter>
         </DialogContent>

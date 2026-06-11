@@ -5,6 +5,7 @@ const { authenticate } = require('../middleware/auth');
 const { cache, clearCache } = require('../middleware/cache');
 const { validate } = require('../middleware/validate');
 const { studentCreateSchema, studentUpdateSchema } = require('../validation');
+const { logAudit } = require('../helpers');
 
 const router = Router();
 
@@ -82,6 +83,7 @@ router.post('/', authenticate, validate(studentCreateSchema), async (req, res) =
       },
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'create_student', performedBy: req.user.email, performedById: req.user.id, targetType: 'student', targetId: student.id, details: `Created student ${firstName} ${lastName} (${studentNumber})` });
     res.status(201).json(student);
   } catch (err) {
     console.error('Create student error:', err);
@@ -105,6 +107,7 @@ router.put('/:id', authenticate, validate(studentUpdateSchema), async (req, res)
       data,
     });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'update_student', performedBy: req.user.email, performedById: req.user.id, targetType: 'student', targetId: req.params.id, details: `Updated student ${req.params.id}` });
     res.json(student);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.' });
@@ -114,8 +117,9 @@ router.put('/:id', authenticate, validate(studentUpdateSchema), async (req, res)
 router.delete('/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    await prisma.student.delete({ where: { id: req.params.id } });
+    const deleted = await prisma.student.delete({ where: { id: req.params.id } });
     await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'delete_student', performedBy: req.user.email, performedById: req.user.id, targetType: 'student', targetId: req.params.id, details: `Deleted student ${deleted.firstName} ${deleted.lastName}` });
     res.json({ message: 'Student deleted.' });
   } catch (err) {
     console.error('Delete student error:', err);
