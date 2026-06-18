@@ -39,6 +39,7 @@ export const courseSchema = z.object({
   credits: z.coerce.number().int().min(1, 'Credits must be at least 1').max(20, 'Credits cannot exceed 20'),
   lecturerId: z.string().min(1, 'Lecturer is required'),
   roomId: z.string().optional(),
+  maxStudents: z.coerce.number().int().min(1).optional().nullable(),
 });
 
 export const gradeSchema = z.object({

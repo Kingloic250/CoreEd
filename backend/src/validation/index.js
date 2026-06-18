@@ -57,6 +57,7 @@ const courseCreateSchema = z.object({
   lecturerId: z.string().min(1, 'Lecturer is required'),
   credits: z.number().int().min(1).max(20).optional(),
   roomId: z.string().optional(),
+  maxStudents: z.coerce.number().int().min(1).optional(),
 });
 
 const semesterCreateSchema = z.object({
@@ -64,6 +65,28 @@ const semesterCreateSchema = z.object({
   year: z.string().min(1, 'Academic year is required'),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
+  registrationOpenDate: z.string().optional(),
+  registrationCloseDate: z.string().optional(),
+  dropDeadline: z.string().optional(),
+  withdrawDeadline: z.string().optional(),
+  maxCreditsPerStudent: z.coerce.number().int().min(1).max(30).optional(),
+});
+
+const enrollSchema = z.object({
+  courseId: z.string().min(1, 'Course is required'),
+  groupId: z.string().min(1, 'Group is required'),
+  studentId: z.string().min(1, 'Student is required'),
+});
+
+const waitlistSchema = z.object({
+  courseId: z.string().min(1, 'Course is required'),
+  groupId: z.string().min(1, 'Group is required'),
+  studentId: z.string().min(1, 'Student is required'),
+});
+
+const dropSchema = z.object({
+  courseId: z.string().min(1, 'Course is required'),
+  studentId: z.string().min(1, 'Student is required'),
 });
 
 const accountRequestSchema = z.object({
@@ -169,6 +192,9 @@ module.exports = {
   facultyCreateSchema,
   courseCreateSchema,
   semesterCreateSchema,
+  enrollSchema,
+  waitlistSchema,
+  dropSchema,
   accountRequestSchema,
   approveRequestSchema,
   forgotPasswordSchema,

@@ -35,14 +35,14 @@ export function StudentCourseDetail() {
 
   const c = course as Record<string, unknown> | undefined;
   const gradingComponents = (c?.gradingComponents as Record<string, unknown>[]) ?? [];
-  const enrolledGroupIds = (myEnrollments?.groups ?? []).map((g: Record<string, unknown>) => g.courseId as string);
-  const isEnrolled = studentId ? enrolledGroupIds.includes(id ?? '') : false;
+  const enrolledCourseIds = (myEnrollments?.enrollments ?? []).map((e: Record<string, unknown>) => e.courseId as string);
+  const isEnrolled = studentId ? enrolledCourseIds.includes(id ?? '') : false;
 
-  const enrolledGroups = ((myEnrollments?.groups ?? []) as Record<string, unknown>[]).filter(
-    (g: Record<string, unknown>) => g.courseId === id
+  const enrolledEnrollments = ((myEnrollments?.enrollments ?? []) as Record<string, unknown>[]).filter(
+    (e: Record<string, unknown>) => e.courseId === id
   );
-  const schedule = enrolledGroups.flatMap(
-    (g: Record<string, unknown>) => (g.schedule as Record<string, string>[]) ?? []
+  const schedule = enrolledEnrollments.flatMap(
+    (e: Record<string, unknown>) => ((e.group as Record<string, unknown>)?.schedule as Record<string, string>[]) ?? []
   );
   const myGrade = (grades as Record<string, unknown>[])?.[0] ?? null;
   const componentScores = (myGrade?.componentScores as Record<string, number>) ?? {};

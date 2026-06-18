@@ -24,12 +24,21 @@ router.get('/', authenticate, cache(120), async (req, res) => {
 router.post('/', authenticate, validate(semesterCreateSchema), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    const { name, year, startDate, endDate } = req.body;
+    const { name, year, startDate, endDate, registrationOpenDate, registrationCloseDate, dropDeadline, withdrawDeadline, maxCreditsPerStudent } = req.body;
     if (!name || !year || !startDate || !endDate) {
       return res.status(400).json({ message: 'name, year, startDate, and endDate are required.' });
     }
     const id = crypto.randomUUID();
-    const semester = await prisma.semester.create({ data: { id, name, year, startDate, endDate } });
+    const semester = await prisma.semester.create({
+      data: {
+        id, name, year, startDate, endDate,
+        registrationOpenDate: registrationOpenDate ?? null,
+        registrationCloseDate: registrationCloseDate ?? null,
+        dropDeadline: dropDeadline ?? null,
+        withdrawDeadline: withdrawDeadline ?? null,
+        maxCreditsPerStudent: maxCreditsPerStudent ?? 21,
+      },
+    });
     await clearCache(CACHE_PATTERN);
     await logAudit({ action: 'create_semester', performedBy: req.user.email, performedById: req.user.id, targetType: 'semester', targetId: semester.id, details: `Created semester ${name} ${year}` });
     res.status(201).json(semester);

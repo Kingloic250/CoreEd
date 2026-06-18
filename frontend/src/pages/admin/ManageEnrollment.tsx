@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Users, BookOpen, X, Plus, Loader2 } from 'lucide-react';
+import { Users, BookOpen, X, Plus, Loader2, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,7 @@ import { useGetStudents } from '@/hooks/useStudents';
 import { useGetLecturers } from '@/hooks/useLecturers';
 import { useGetDepartments } from '@/hooks/useDepartments';
 import { useGetGroups } from '@/hooks/useGroups';
-import { useEnrollStudent, useUnenrollStudent } from '@/hooks/useEnroll';
+import { useEnrollStudent, useUnenrollStudent, useCourseEnrollments } from '@/hooks/useEnroll';
 import { toast } from 'sonner';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -33,6 +33,7 @@ export function ManageEnrollment() {
   const { data: lecturers } = useGetLecturers();
   const { data: departments } = useGetDepartments();
   const { data: groupsData } = useGetGroups(courseId ? { courseId } : undefined);
+  const { data: courseEnrollments, refetch: refetchCourse } = useCourseEnrollments(courseId);
   const enrollMutation = useEnrollStudent();
   const unenrollMutation = useUnenrollStudent();
 
@@ -43,20 +44,18 @@ export function ManageEnrollment() {
   const groups = (groupsData ?? []) as {
     id: string; name: string; capacity: number; enrolledCount: number;
     courseId: string; room: { name: string } | null;
-    enrolledStudentIds: string[];
   }[];
 
   const selectedCourse = courses.find((c) => c.id === courseId);
+  const groupEnrollments = (courseEnrollments ?? []) as Record<string, unknown>[];
+  const selectedGroupData = groupEnrollments.find((g) => g.id === selectedGroupId) as {
+    enrolledStudentIds: string[]; enrolledStudents: Student[]; waitlistCount?: number;
+  } | undefined;
 
-  const enrolledStudentIds = useMemo(() => {
-    if (!selectedGroupId) return [];
-    const g = groups.find((g) => g.id === selectedGroupId);
-    return g?.enrolledStudentIds ?? [];
-  }, [selectedGroupId, groups]);
+  const enrolledStudentIds = selectedGroupData?.enrolledStudentIds ?? [];
+  const enrolledStudents = selectedGroupData?.enrolledStudents ?? [];
+  const waitlistCount = (selectedGroupData as { waitlistCount?: number })?.waitlistCount ?? 0;
 
-  const enrolledStudents = useMemo(() => {
-    return students.filter((s) => enrolledStudentIds.includes(String(s.id)));
-  }, [students, enrolledStudentIds]);
   const { pageData: pagedEnrolled, PaginationBar: PaginationEnrolled } = usePagination(enrolledStudents);
 
   const availableStudents = useMemo(() => {
@@ -75,17 +74,14 @@ export function ManageEnrollment() {
 
   const handleUnenroll = (studentId: string) => {
     if (!selectedCourse || !selectedGroupId) return;
-    // Remove from the specific group
-    const g = groups.find((g) => g.id === selectedGroupId);
-    if (!g) return;
-    const updated = g.enrolledStudentIds.filter((id) => id !== studentId);
-    // Use the enroll endpoint with the full group
-    unenrollMutation.mutate({ courseId, studentId });
+    unenrollMutation.mutate(
+      { courseId, studentId },
+      { onSuccess: () => refetchCourse() }
+    );
   };
 
   const handleAddStudents = () => {
     if (!selectedCourse || !selectedGroupId || selectedStudentIds.length === 0) return;
-    // Enroll each student to the group
     Promise.all(
       selectedStudentIds.map((sid) =>
         enrollMutation.mutateAsync({ courseId, groupId: selectedGroupId, studentId: sid })
@@ -93,6 +89,7 @@ export function ManageEnrollment() {
     ).then(() => {
       setSelectedStudentIds([]);
       setEnrollOpen(false);
+      refetchCourse();
       toast.success(`${selectedStudentIds.length} student(s) enrolled`);
     }).catch(() => {
       toast.error('Failed to enroll some students');
@@ -159,7 +156,7 @@ export function ManageEnrollment() {
               </div>
               <div>
                 <Label htmlFor="enroll-group">Group</Label>
-                <Select value={selectedGroupId} onValueChange={setSelectedGroupId} disabled={!courseId}>
+                <Select value={selectedGroupId} onValueChange={(v) => { setSelectedGroupId(v); refetchCourse(); }} disabled={!courseId}>
                   <SelectTrigger id="enroll-group" aria-label="Select group">
                     <SelectValue placeholder="Choose a group..." />
                   </SelectTrigger>
@@ -188,6 +185,12 @@ export function ManageEnrollment() {
                       <Badge variant="secondary" className="text-xs font-normal">
                         {enrolledStudents.length} enrolled
                       </Badge>
+                      {waitlistCount > 0 && (
+                        <Badge variant="outline" className="text-xs font-normal border-amber-300 text-amber-700 bg-amber-50">
+                          <ListOrdered className="size-3 mr-1" />
+                          {waitlistCount} waitlisted
+                        </Badge>
+                      )}
                     </CardTitle>
                   </div>
                   <Button size="sm" onClick={() => setEnrollOpen(!enrollOpen)}>

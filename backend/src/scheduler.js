@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const prisma = require('./db');
 
 function startScheduler() {
+  // Hourly: auto-activate semesters
   cron.schedule('0 * * * *', async () => {
     try {
       const now = new Date();
@@ -25,7 +26,34 @@ function startScheduler() {
     }
   });
 
-  console.log('[Scheduler] Started (checks every hour)');
+  // Daily midnight: registration window checks
+  cron.schedule('0 0 * * *', async () => {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const activeSemesters = await prisma.semester.findMany({
+        where: { isActive: 1 },
+      });
+
+      for (const sem of activeSemesters) {
+        if (sem.registrationOpenDate === todayStr) {
+          console.log(`[Scheduler] Registration opens today for ${sem.name} ${sem.year}`);
+        }
+        if (sem.registrationCloseDate === todayStr) {
+          console.log(`[Scheduler] Registration closes today for ${sem.name} ${sem.year}`);
+        }
+        if (sem.dropDeadline === todayStr) {
+          console.log(`[Scheduler] Drop deadline is today for ${sem.name} ${sem.year}`);
+        }
+        if (sem.withdrawDeadline === todayStr) {
+          console.log(`[Scheduler] Withdraw deadline is today for ${sem.name} ${sem.year}`);
+        }
+      }
+    } catch (err) {
+      console.error('[Scheduler] Registration window check error:', err);
+    }
+  });
+
+  console.log('[Scheduler] Started (hourly + daily checks)');
 }
 
 module.exports = { startScheduler };

@@ -12,12 +12,11 @@ export function MyExams() {
   const { user } = useAuth();
   const { data: enrollments } = useMyEnrollments(user?.id);
 
-  const enrolledData = enrollments as { groups: { id: string; courseId: string }[] } | undefined;
+  const enrolledData = enrollments as { enrollments: { groupId: string }[] } | undefined;
   const enrolledGroupIds = useMemo(() => {
     const set = new Set<string>();
-    if (enrolledData?.groups) {
-      for (const g of enrolledData.groups) set.add(g.id);
-    }
+    const list = enrolledData?.enrollments ?? [];
+    for (const e of list) set.add(e.groupId);
     return set;
   }, [enrolledData]);
 

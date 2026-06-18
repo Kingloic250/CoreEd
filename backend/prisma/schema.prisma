@@ -29,6 +29,14 @@ enum AttendanceStatus {
   absent
 }
 
+enum EnrollmentStatus {
+  REGISTERED
+  DROPPED
+  WITHDRAWN
+  COMPLETED
+  WAITLISTED
+}
+
 model User {
   id               String    @id
   name             String
@@ -57,6 +65,7 @@ model Student {
   enrollmentDate String?       @map("enrollmentDate")
   status         StudentStatus @default(active)
   studentNumber  String?       @unique @map("studentNumber")
+  maxCredits     Int?          @map("maxCredits")
 
   attendance          Attendance[]
   grades              Grade[]
@@ -64,6 +73,8 @@ model Student {
   claims              Claim[]
   invoices            Invoice[]
   examResults         ExamResult[]
+  enrollments         Enrollment[]
+  waitlistEntries     WaitlistEntry[]
   faculty             Faculty?   @relation(fields: [facultyId], references: [id])
   @@map("students")
 }
@@ -113,14 +124,21 @@ model Faculty {
 }
 
 model Semester {
-  id        String  @id
-  name      String
-  year      String?
-  startDate String? @map("startDate")
-  endDate   String? @map("endDate")
-  isActive  Int     @default(0) @map("isActive")
+  id                    String  @id
+  name                  String
+  year                  String?
+  startDate             String? @map("startDate")
+  endDate               String? @map("endDate")
+  isActive              Int     @default(0) @map("isActive")
+  registrationOpenDate  String? @map("registrationOpenDate")
+  registrationCloseDate String? @map("registrationCloseDate")
+  dropDeadline          String? @map("dropDeadline")
+  withdrawDeadline      String? @map("withdrawDeadline")
+  maxCreditsPerStudent  Int     @default(21) @map("maxCreditsPerStudent")
 
-  groups Group[]
+  groups      Group[]
+  enrollments Enrollment[]
+  waitlistEntries WaitlistEntry[]
   @@map("semesters")
 }
 
@@ -156,10 +174,59 @@ model Group {
   semester Semester? @relation(fields: [semesterId], references: [id])
   grades   Grade[]
   exams    Exam[]
+  enrollments      Enrollment[]
+  waitlistEntries  WaitlistEntry[]
 
   @@index([courseId])
   @@index([lecturerId])
   @@map("groups")
+}
+
+model Enrollment {
+  id         String           @id @default(cuid())
+  studentId  String
+  groupId    String
+  courseId   String
+  semesterId String
+  status     EnrollmentStatus @default(REGISTERED)
+  enrolledAt DateTime         @default(now())
+  droppedAt  DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  student  Student  @relation(fields: [studentId], references: [id])
+  group    Group    @relation(fields: [groupId], references: [id])
+  course   Course   @relation(fields: [courseId], references: [id])
+  semester Semester @relation(fields: [semesterId], references: [id])
+
+  @@unique([studentId, groupId, semesterId])
+  @@index([studentId])
+  @@index([groupId])
+  @@index([courseId])
+  @@index([semesterId])
+  @@index([status])
+  @@map("enrollments")
+}
+
+model WaitlistEntry {
+  id         String   @id @default(cuid())
+  studentId  String
+  groupId    String
+  courseId   String
+  semesterId String
+  position   Int
+  createdAt  DateTime @default(now())
+
+  student  Student  @relation(fields: [studentId], references: [id])
+  group    Group    @relation(fields: [groupId], references: [id])
+  course   Course   @relation(fields: [courseId], references: [id])
+  semester Semester @relation(fields: [semesterId], references: [id])
+
+  @@unique([groupId, position])
+  @@index([studentId])
+  @@index([groupId])
+  @@index([courseId])
+  @@map("waitlist_entries")
 }
 
 model Course {
@@ -173,6 +240,7 @@ model Course {
   credits           Int     @default(3)
   roomId            String? @map("roomId")
   gradingComponents Json    @default("[]") @map("gradingComponents")
+  maxStudents       Int?    @map("maxStudents")
 
   lecturer   Lecturer?    @relation(fields: [lecturerId], references: [id])
   faculty    Faculty?     @relation(fields: [facultyId], references: [id])
@@ -183,6 +251,8 @@ model Course {
   assignments Assignment[]
   materials   CourseMaterial[]
   exams      Exam[]
+  enrollments         Enrollment[]
+  waitlistEntries     WaitlistEntry[]
   @@map("courses")
 }
 

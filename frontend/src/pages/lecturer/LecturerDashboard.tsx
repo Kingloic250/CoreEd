@@ -31,9 +31,9 @@ export function LecturerDashboard() {
   const { data: allGroups } = useGetGroups();
   const groupsByCourse = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const g of (allGroups ?? []) as { courseId: string; enrolledStudentIds: string[] }[]) {
+    for (const g of (allGroups ?? []) as { courseId: string; enrolledCount?: number; enrolledStudentIds: string[] }[]) {
       if (!map[g.courseId]) map[g.courseId] = 0;
-      map[g.courseId] += (g.enrolledStudentIds ?? []).length;
+      map[g.courseId] += g.enrolledCount ?? (g.enrolledStudentIds ?? []).length;
     }
     return map;
   }, [allGroups]);

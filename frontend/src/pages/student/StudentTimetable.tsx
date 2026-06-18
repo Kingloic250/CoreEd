@@ -38,12 +38,19 @@ export function StudentTimetable() {
   const roomMap = useMemo(() => Object.fromEntries(roomsList.map((r) => [r.id, r])), [roomsList]);
 
   // Get all groups the student is enrolled in
-  const enrolledGroups = ((myEnrollments?.groups ?? []) as Record<string, unknown>[]).map(
-    (g) => g as {
-      id: string; name: string; courseId: string; roomId: string | null;
-      schedule: { day: number; startTime: string; endTime: string }[];
-      course: { id: string; name: string; credits: number };
-      room: { id: string; name: string } | null;
+  const enrolledGroups = ((myEnrollments?.enrollments ?? []) as Record<string, unknown>[]).map(
+    (e) => {
+      const g = e.group as Record<string, unknown> | undefined;
+      return {
+        ...g,
+        courseId: e.courseId as string,
+        course: e.course as { id: string; name: string; credits: number },
+      } as {
+        id: string; name: string; courseId: string; roomId: string | null;
+        schedule: { day: number; startTime: string; endTime: string }[];
+        course: { id: string; name: string; credits: number };
+        room: { id: string; name: string } | null;
+      };
     }
   );
 

@@ -49,7 +49,7 @@ router.get('/:id', authenticate, async (req, res) => {
       where: { id: req.params.id },
       include: {
         course: { select: { id: true, name: true, gradingComponents: true } },
-        group: { select: { id: true, name: true, enrolledStudentIds: true } },
+        group: { select: { id: true, name: true } },
         lecturer: { select: { id: true, firstName: true, lastName: true } },
         room: { select: { id: true, name: true, code: true } },
         results: {
@@ -58,6 +58,16 @@ router.get('/:id', authenticate, async (req, res) => {
       },
     });
     if (!exam) return res.status(404).json({ message: 'Exam not found' });
+
+    // Fetch real enrolled student IDs from Enrollment table
+    if (exam.group) {
+      const enrollments = await prisma.enrollment.findMany({
+        where: { groupId: exam.group.id, status: { not: 'DROPPED' } },
+        select: { studentId: true },
+      });
+      exam.group.enrolledStudentIds = enrollments.map((e) => e.studentId);
+    }
+
     res.json(exam);
   } catch (err) {
     console.error(err);

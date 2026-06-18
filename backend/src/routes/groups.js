@@ -29,9 +29,31 @@ router.get('/', authenticate, cache(60), async (req, res) => {
       orderBy: [{ courseId: 'asc' }, { name: 'asc' }],
     });
 
+    const groupIds = groups.map((g) => g.id);
+    const enrollmentCounts = await prisma.enrollment.groupBy({
+      by: ['groupId'],
+      where: { groupId: { in: groupIds }, status: { not: 'DROPPED' } },
+      _count: { id: true },
+    });
+    const countMap = Object.fromEntries(enrollmentCounts.map((e) => [e.groupId, e._count.id]));
+
+    // When filtering by courseId, also include enrolled student IDs from Enrollment table
+    let enrollmentStudentMap = {};
+    if (courseId) {
+      const enrollments = await prisma.enrollment.findMany({
+        where: { courseId, status: { not: 'DROPPED' } },
+        select: { groupId: true, studentId: true },
+      });
+      for (const e of enrollments) {
+        if (!enrollmentStudentMap[e.groupId]) enrollmentStudentMap[e.groupId] = [];
+        enrollmentStudentMap[e.groupId].push(e.studentId);
+      }
+    }
+
     const result = groups.map((g) => ({
       ...g,
-      enrolledCount: (g.enrolledStudentIds ?? []).length,
+      enrolledCount: countMap[g.id] ?? 0,
+      enrolledStudentIds: enrollmentStudentMap[g.id] ?? g.enrolledStudentIds ?? [],
     }));
 
     res.json(result);
@@ -53,7 +75,10 @@ router.get('/:id', authenticate, async (req, res) => {
       },
     });
     if (!group) return res.status(404).json({ message: 'Group not found.' });
-    res.json({ ...group, enrolledCount: (group.enrolledStudentIds ?? []).length });
+    const enrolledCount = await prisma.enrollment.count({
+      where: { groupId: group.id, status: { not: 'DROPPED' } },
+    });
+    res.json({ ...group, enrolledCount });
   } catch (err) {
     console.error('Get group error:', err);
     res.status(500).json({ message: 'Internal server error.' });
@@ -188,9 +213,11 @@ router.delete('/:id', authenticate, async (req, res) => {
     const existing = await prisma.group.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ message: 'Group not found.' });
 
-    const enrolled = (existing.enrolledStudentIds ?? []);
-    if (enrolled.length > 0) {
-      return res.status(400).json({ message: `Cannot delete group: ${enrolled.length} student(s) still enrolled.` });
+    const enrolledCount = await prisma.enrollment.count({
+      where: { groupId: req.params.id, status: { not: 'DROPPED' } },
+    });
+    if (enrolledCount > 0) {
+      return res.status(400).json({ message: `Cannot delete group: ${enrolledCount} student(s) still enrolled.` });
     }
 
     await prisma.group.delete({ where: { id: req.params.id } });

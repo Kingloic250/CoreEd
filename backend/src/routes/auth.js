@@ -8,6 +8,7 @@ const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validation');
 const { sendResetPasswordEmail } = require('../services/mail');
+const { logAudit } = require('../helpers');
 
 const router = express.Router();
 
@@ -41,6 +42,11 @@ router.post('/login', validate(loginSchema), async (req, res) => {
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
+
+    await logAudit({
+      action: 'login', performedBy: user.name, performedById: user.id,
+      targetType: 'user', targetId: user.id, details: 'User logged in',
+    });
 
     res.json({
       token,

@@ -64,6 +64,12 @@ export function CourseForm({ defaultValues, lecturers, faculties, rooms, onSubmi
       </div>
 
       <div className="space-y-1.5">
+        <Label htmlFor="cf-max-students" aria-label="Max Students">Max Students (optional, course-level cap)</Label>
+        <Input id="cf-max-students" type="number" min={1} aria-invalid={!!errors.maxStudents} {...register('maxStudents', { valueAsNumber: true })} placeholder="e.g. 90" />
+        {errors.maxStudents && <p className="text-xs text-destructive">{errors.maxStudents.message}</p>}
+      </div>
+
+      <div className="space-y-1.5">
         <Label htmlFor="cf-room" aria-label="Room">Room (optional)</Label>
           <Select onValueChange={(v) => setValue('roomId', v === 'none' ? '' : v)} defaultValue={defaultValues?.roomId || 'none'}>
           <SelectTrigger id="cf-room" className="w-full" aria-label="Select room">

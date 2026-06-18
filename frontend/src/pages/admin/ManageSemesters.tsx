@@ -19,8 +19,8 @@ export function ManageSemesters() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Semester | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: 'Semester 1', year: '', startDate: '', endDate: '' });
-  const [initialForm, setInitialForm] = useState({ name: 'Semester 1', year: '', startDate: '', endDate: '' });
+  const [form, setForm] = useState({ name: 'Semester 1', year: '', startDate: '', endDate: '', registrationOpenDate: '', registrationCloseDate: '', dropDeadline: '', withdrawDeadline: '', maxCreditsPerStudent: '21' });
+  const [initialForm, setInitialForm] = useState({ name: 'Semester 1', year: '', startDate: '', endDate: '', registrationOpenDate: '', registrationCloseDate: '', dropDeadline: '', withdrawDeadline: '', maxCreditsPerStudent: '21' });
 
   const { data, isLoading } = useGetSemesters();
   const createMutation = useCreateSemester();
@@ -32,7 +32,7 @@ export function ManageSemesters() {
 
   const openAdd = () => {
     setEditing(null);
-    const empty = { name: 'Semester 1', year: '', startDate: '', endDate: '' };
+    const empty = { name: 'Semester 1', year: '', startDate: '', endDate: '', registrationOpenDate: '', registrationCloseDate: '', dropDeadline: '', withdrawDeadline: '', maxCreditsPerStudent: '21' };
     setForm(empty);
     setInitialForm(empty);
     setOpen(true);
@@ -45,13 +45,18 @@ export function ManageSemesters() {
       year: String(sem.year ?? ''),
       startDate: String(sem.startDate ?? ''),
       endDate: String(sem.endDate ?? ''),
+      registrationOpenDate: String(sem.registrationOpenDate ?? ''),
+      registrationCloseDate: String(sem.registrationCloseDate ?? ''),
+      dropDeadline: String(sem.dropDeadline ?? ''),
+      withdrawDeadline: String(sem.withdrawDeadline ?? ''),
+      maxCreditsPerStudent: String(sem.maxCreditsPerStudent ?? '21'),
     };
     setForm(vals);
     setInitialForm(vals);
     setOpen(true);
   };
 
-  const formChanged = form.name !== initialForm.name || form.year !== initialForm.year || form.startDate !== initialForm.startDate || form.endDate !== initialForm.endDate;
+  const formChanged = form.name !== initialForm.name || form.year !== initialForm.year || form.startDate !== initialForm.startDate || form.endDate !== initialForm.endDate || form.registrationOpenDate !== initialForm.registrationOpenDate || form.registrationCloseDate !== initialForm.registrationCloseDate || form.dropDeadline !== initialForm.dropDeadline || form.withdrawDeadline !== initialForm.withdrawDeadline || form.maxCreditsPerStudent !== initialForm.maxCreditsPerStudent;
 
   const handleSubmit = async () => {
     if (!form.name || !form.year || !form.startDate || !form.endDate) return;
@@ -180,6 +185,31 @@ export function ManageSemesters() {
               <div className="space-y-1.5">
                 <Label htmlFor="sem-end">End Date</Label>
                 <Input id="sem-end" type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium mb-3">Registration Settings</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="sem-reg-open">Registration Opens</Label>
+                  <Input id="sem-reg-open" type="date" value={form.registrationOpenDate} onChange={(e) => setForm({ ...form, registrationOpenDate: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sem-reg-close">Registration Closes</Label>
+                  <Input id="sem-reg-close" type="date" value={form.registrationCloseDate} onChange={(e) => setForm({ ...form, registrationCloseDate: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sem-drop">Drop Deadline</Label>
+                  <Input id="sem-drop" type="date" value={form.dropDeadline} onChange={(e) => setForm({ ...form, dropDeadline: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sem-withdraw">Withdraw Deadline</Label>
+                  <Input id="sem-withdraw" type="date" value={form.withdrawDeadline} onChange={(e) => setForm({ ...form, withdrawDeadline: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-1.5 mt-4">
+                <Label htmlFor="sem-max-credits">Max Credits Per Student</Label>
+                <Input id="sem-max-credits" type="number" min={1} max={30} value={form.maxCreditsPerStudent} onChange={(e) => setForm({ ...form, maxCreditsPerStudent: e.target.value })} />
               </div>
             </div>
             <div className="flex gap-2 pt-2 justify-end">
