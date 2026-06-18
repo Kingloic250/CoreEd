@@ -171,3 +171,12 @@
     background: color-mix(in oklch, var(--foreground) 25%, transparent);
   }
 }
+
+/* Hide scrollbars globally */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+}

@@ -11,9 +11,9 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
       <AppSidebar role={role} />
-      <SidebarInset className="overflow-x-hidden">
+      <SidebarInset className="max-h-svh overflow-y-auto">
         <TopBar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin p-4 sm:p-6">
+        <main className="flex-1 overflow-x-hidden p-4 sm:p-6">
           <Outlet />
         </main>
       </SidebarInset>

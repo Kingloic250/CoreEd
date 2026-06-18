@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Users, Clock, BookOpen, Mail } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCourse } from '@/hooks/useCourses';
 import { useGetStudents } from '@/hooks/useStudents';
+import { useGetGroups } from '@/hooks/useGroups';
 import { getInitials } from '@/utils/formatters';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -19,10 +21,27 @@ export function CourseDetail() {
   const { data: students, isLoading: studentsLoading } = useGetStudents({});
 
   const c = course as Record<string, unknown> | undefined;
-  const schedule = (c?.schedule as Record<string, string>[]) ?? [];
   const allStudents = (students as Record<string, unknown>[]) ?? [];
-  const enrolledIds = (c?.studentIds as string[]) ?? [];
+  const { data: courseGroups } = useGetGroups(id ? { courseId: id } : undefined);
+  const enrolledIds = useMemo(() => {
+    if (!courseGroups) return [];
+    const set = new Set<string>();
+    for (const g of courseGroups as { enrolledStudentIds: string[] }[]) {
+      for (const sid of (g.enrolledStudentIds ?? [])) set.add(sid);
+    }
+    return [...set];
+  }, [courseGroups]);
   const enrolledStudents = allStudents.filter((s) => enrolledIds.includes(String(s.id)));
+  const schedule = useMemo(() => {
+    if (!courseGroups) return [];
+    const slots: { day: string; startTime: string; endTime: string }[] = [];
+    for (const g of courseGroups as { name: string; schedule: { day: string; startTime: string; endTime: string }[] }[]) {
+      for (const s of (g.schedule ?? [])) {
+        slots.push({ ...s, day: `${s.day} (${g.name})` });
+      }
+    }
+    return slots;
+  }, [courseGroups]);
 
   return (
     <div>
@@ -65,21 +84,23 @@ export function CourseDetail() {
                     <span>{enrolledStudents.length} students</span>
                   </div>
 
-                  {schedule.length > 0 && (
+                  {courseGroups && (courseGroups as { name: string; schedule: { day: string; startTime: string; endTime: string }[] }[]).length > 0 && (
                     <div className="pt-2 border-t">
-                      <p className="text-xs font-medium text-foreground mb-2">Schedule</p>
-                      {DAYS.filter((d) => schedule.some((s) => s.day === d)).map((day) => {
-                        const slot = schedule.find((s) => s.day === day);
-                        return slot ? (
-                          <div key={day} className="flex items-center justify-between text-xs py-1">
-                            <span className="text-muted-foreground">{day}</span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="size-3" />
-                              {slot.startTime}–{slot.endTime}
-                            </span>
-                          </div>
-                        ) : null;
-                      })}
+                      <p className="text-xs font-medium text-foreground mb-2">Group Schedules</p>
+                      {(courseGroups as { name: string; schedule: { day: string; startTime: string; endTime: string }[] }[]).map((g) => (
+                        <div key={g.name} className="mb-2">
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">{g.name}</p>
+                          {g.schedule.map((s, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs py-0.5">
+                              <span className="text-muted-foreground">{DAYS[Number(s.day)] ?? s.day}</span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="size-3" />
+                                {s.startTime}–{s.endTime}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>

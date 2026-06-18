@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { BookOpen, MapPin, Users, Clock, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
 import { useGetActiveSemester } from '@/hooks/useSemesters';
+import { useGetGroups } from '@/hooks/useGroups';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -21,6 +23,15 @@ export function MyCourses() {
     lecturerId && semesterId ? { lecturerId, semesterId } : undefined
   );
   const myCourses = (courses as Record<string, unknown>[]) ?? [];
+  const { data: allGroups } = useGetGroups();
+  const groupsByCourse = useMemo(() => {
+    const map: Record<string, { enrolledCount: number }> = {};
+    for (const g of (allGroups ?? []) as { courseId: string; enrolledCount: number }[]) {
+      if (!map[g.courseId]) map[g.courseId] = { enrolledCount: 0 };
+      map[g.courseId].enrolledCount += g.enrolledCount;
+    }
+    return map;
+  }, [allGroups]);
 
   return (
     <div>
@@ -49,7 +60,7 @@ export function MyCourses() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="size-3.5 shrink-0" />
-                    <span>{(c.studentIds as string[])?.length ?? 0} students</span>
+                    <span>{(c.studentIds as string[])?.length ?? groupsByCourse[String(c.id)]?.enrolledCount ?? 0} students</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BookOpen className="size-3.5 shrink-0" />

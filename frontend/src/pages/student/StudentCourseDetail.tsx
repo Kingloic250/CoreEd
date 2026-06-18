@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCourse } from '@/hooks/useCourses';
 import { useGetCurrentStudent } from '@/hooks/useStudents';
 import { useGetGrades } from '@/hooks/useGrades';
+import { useMyEnrollments } from '@/hooks/useEnroll';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -26,15 +27,23 @@ export function StudentCourseDetail() {
   const { data: currentStudent } = useGetCurrentStudent();
   const studentId = currentStudent ? (currentStudent as Record<string, unknown>).id as string : undefined;
 
+  const { data: myEnrollments } = useMyEnrollments(studentId);
+
   const { data: grades } = useGetGrades(
     id && studentId ? { courseId: id, studentId } : { courseId: '', studentId: '' },
   );
 
   const c = course as Record<string, unknown> | undefined;
-  const schedule = (c?.schedule as Record<string, string>[]) ?? [];
   const gradingComponents = (c?.gradingComponents as Record<string, unknown>[]) ?? [];
-  const enrolledIds = (c?.studentIds as string[]) ?? [];
-  const isEnrolled = studentId ? enrolledIds.includes(studentId) : false;
+  const enrolledGroupIds = (myEnrollments?.groups ?? []).map((g: Record<string, unknown>) => g.courseId as string);
+  const isEnrolled = studentId ? enrolledGroupIds.includes(id ?? '') : false;
+
+  const enrolledGroups = ((myEnrollments?.groups ?? []) as Record<string, unknown>[]).filter(
+    (g: Record<string, unknown>) => g.courseId === id
+  );
+  const schedule = enrolledGroups.flatMap(
+    (g: Record<string, unknown>) => (g.schedule as Record<string, string>[]) ?? []
+  );
   const myGrade = (grades as Record<string, unknown>[])?.[0] ?? null;
   const componentScores = (myGrade?.componentScores as Record<string, number>) ?? {};
 

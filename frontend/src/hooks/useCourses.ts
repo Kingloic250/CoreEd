@@ -60,51 +60,6 @@ export function useDeleteCourse() {
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES] });
       toast.success('Course deleted successfully');
     },
-  });
+  }  );
 }
 
-export function useEnrollStudents() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, studentIds }: { id: string; studentIds: string[] }) =>
-      coursesApi.enrollStudents(id, studentIds),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES] });
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.STUDENTS] });
-      toast.success('Enrollment updated successfully');
-    },
-    onError: () => {
-      toast.error('Failed to update enrollment');
-    },
-  });
-}
-
-export function useSelfEnroll() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ courseId, studentId }: { courseId: string; studentId: string }) =>
-      coursesApi.selfEnroll(courseId, studentId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES] });
-      toast.success('Successfully enrolled');
-    },
-    onError: () => {
-      toast.error('Failed to enroll');
-    },
-  });
-}
-
-export function useSelfUnenroll() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ courseId, studentId }: { courseId: string; studentId: string }) =>
-      coursesApi.selfUnenroll(courseId, studentId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES] });
-      toast.success('Successfully unenrolled');
-    },
-    onError: () => {
-      toast.error('Failed to unenroll');
-    },
-  });
-}

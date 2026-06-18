@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import { Clock, MapPin, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { PageHeader } from '@/components/common/PageHeader';
-import { useGetCourses } from '@/hooks/useCourses';
+import { useGetGroups } from '@/hooks/useGroups';
+import { useMyEnrollments } from '@/hooks/useEnroll';
 import { useGetCurrentStudent } from '@/hooks/useStudents';
-import { useGetActiveSemester } from '@/hooks/useSemesters';
+import { useGetRooms } from '@/hooks/useRooms';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const;
 const HOURS = Array.from({ length: 12 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
@@ -30,52 +29,46 @@ function getCourseColor(courseId: string) {
 
 export function StudentTimetable() {
   const { data: currentStudent } = useGetCurrentStudent();
-  const { activeSemester } = useGetActiveSemester();
-  const studentId = currentStudent ? (currentStudent as Record<string, unknown>).id as string : undefined;
-  const semesterId = activeSemester ? (activeSemester as Record<string, unknown>).id as string : undefined;
+  const { data: myEnrollments, isLoading: enrollLoading } = useMyEnrollments(
+    (currentStudent as Record<string, unknown> | undefined)?.id as string | undefined
+  );
+  const { data: rooms } = useGetRooms();
 
-  const { data: courses, isLoading } = useGetCourses(
-    studentId && semesterId ? { studentId, semesterId } : undefined
+  const roomsList = (rooms ?? []) as { id: string; name: string; code: string | null }[];
+  const roomMap = useMemo(() => Object.fromEntries(roomsList.map((r) => [r.id, r])), [roomsList]);
+
+  // Get all groups the student is enrolled in
+  const enrolledGroups = ((myEnrollments?.groups ?? []) as Record<string, unknown>[]).map(
+    (g) => g as {
+      id: string; name: string; courseId: string; roomId: string | null;
+      schedule: { day: number; startTime: string; endTime: string }[];
+      course: { id: string; name: string; credits: number };
+      room: { id: string; name: string } | null;
+    }
   );
 
-  const entries = useMemo(() => {
-    const courseList = (courses as Record<string, unknown>[]) ?? [];
-    const result: { courseId: string; courseName: string; color: string; day: string; startTime: string; endTime: string; room: string }[] = [];
-    courseList.forEach((c) => {
-      const schedule = (c.schedule as Record<string, string>[]) ?? [];
-      schedule.forEach((s) => {
-        result.push({
-          courseId: String(c.id),
-          courseName: String(c.name),
-          color: getCourseColor(String(c.id)),
-          day: s.day,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          room: String(c.room ?? ''),
-        });
-      });
-    });
-    return result;
-  }, [courses]);
-
   const entryMap = useMemo(() => {
-    const map = new Map<string, typeof entries>();
-    for (const e of entries) {
-      const key = `${e.day}|${e.startTime}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(e);
+    const map = new Map<string, typeof enrolledGroups>();
+    for (const g of enrolledGroups) {
+      for (const slot of (g.schedule ?? [])) {
+        const key = `${slot.day}|${slot.startTime}`;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(g);
+      }
     }
     return map;
-  }, [entries]);
+  }, [enrolledGroups]);
 
   const today = DAYS[new Date().getDay() === 0 ? 0 : new Date().getDay() - 1];
-
   const handleDownload = () => window.print();
 
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
-        <PageHeader title="My Timetable" description="Your weekly course schedule" />
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">My Timetable</h1>
+          <p className="text-sm text-muted-foreground">Your weekly course schedule</p>
+        </div>
         <Button onClick={handleDownload} variant="outline" className="shrink-0 mt-1 print:hidden">
           <Download className="size-4" /> Download
         </Button>
@@ -90,73 +83,72 @@ export function StudentTimetable() {
           }
         `}</style>
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </div>
-      ) : entries.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">
-          No courses scheduled this semester. Enroll in courses to see your timetable.
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <div className="min-w-[800px]">
-            <div className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border bg-muted/30">
-              <div className="p-2 text-xs font-medium text-muted-foreground border-r border-border">Time</div>
-              {DAYS.map((day) => (
-                <div
-                  key={day}
-                  className={`p-2 text-xs font-semibold text-center border-r border-border last:border-r-0 ${
-                    day === today ? 'bg-primary/10 text-primary' : ''
-                  }`}
-                >
-                  {day}
+        {enrollLoading ? (
+          <div className="text-center py-20 text-muted-foreground">Loading timetable...</div>
+        ) : enrolledGroups.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground">
+            No courses scheduled. Enroll in courses to see your timetable.
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <div className="min-w-[800px]">
+              <div className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border bg-muted/30">
+                <div className="p-2 text-xs font-medium text-muted-foreground border-r border-border">Time</div>
+                {DAYS.map((day) => (
+                  <div
+                    key={day}
+                    className={`p-2 text-xs font-semibold text-center border-r border-border last:border-r-0 ${
+                      day === today ? 'bg-primary/10 text-primary' : ''
+                    }`}
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {HOURS.map((hour) => (
+                <div key={hour} className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border last:border-b-0">
+                  <div className="flex items-start justify-center p-1 text-[10px] text-muted-foreground border-r border-border pt-1.5">
+                    {hour}
+                  </div>
+                  {DAYS.map((day) => {
+                    const slotKey = `${day}|${hour}`;
+                    const slotEntries = entryMap.get(slotKey) ?? [];
+                    const isToday = day === today;
+
+                    return (
+                      <div
+                        key={`${day}-${hour}`}
+                        className={`relative min-h-[60px] border-r border-border last:border-r-0 p-0.5 ${
+                          isToday ? 'bg-primary/[0.02]' : ''
+                        }`}
+                      >
+                        {slotEntries.map((g) => {
+                          const room = g.roomId ? roomMap[g.roomId] : null;
+                          return (
+                            <div
+                              key={`${g.id}-${slotKey}`}
+                              className={`rounded border px-1.5 py-0.5 text-[11px] leading-tight mb-0.5 ${getCourseColor(g.courseId)}`}
+                            >
+                              <div className="font-medium truncate flex items-center gap-1">
+                                <Clock className="size-3 shrink-0" />
+                                {g.course?.name ?? 'Course'} ({g.name})
+                              </div>
+                              <div className="truncate opacity-75 flex items-center gap-1">
+                                <MapPin className="size-2.5 shrink-0" />
+                                {room?.name ?? g.room?.name ?? 'No room'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
-
-            {HOURS.map((hour) => (
-              <div key={hour} className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border last:border-b-0">
-                <div className="flex items-start justify-center p-1 text-[10px] text-muted-foreground border-r border-border pt-1.5">
-                  {hour}
-                </div>
-                {DAYS.map((day) => {
-                  const slotKey = `${day}|${hour}`;
-                  const slotEntries = entryMap.get(slotKey) ?? [];
-                  const isToday = day === today;
-
-                  return (
-                    <div
-                      key={`${day}-${hour}`}
-                      className={`relative min-h-[60px] border-r border-border last:border-r-0 p-0.5 ${
-                        isToday ? 'bg-primary/[0.02]' : ''
-                      }`}
-                    >
-                      {slotEntries.map((entry) => (
-                        <div
-                          key={`${entry.courseId}-${entry.startTime}`}
-                          className={`rounded border px-1.5 py-0.5 text-[11px] leading-tight mb-0.5 ${entry.color}`}
-                        >
-                          <div className="font-medium truncate flex items-center gap-1">
-                            <Clock className="size-3 shrink-0" />
-                            {entry.courseName}
-                          </div>
-                          <div className="truncate opacity-75 flex items-center gap-1">
-                            <MapPin className="size-2.5 shrink-0" />
-                            {entry.room}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );

@@ -118,7 +118,7 @@ Return ONLY a valid JSON array — no markdown, no explanation. Each entry:
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,7 +211,7 @@ router.post('/apply', authenticate, async (req, res) => {
     res.json({ message: `Applied ${created.length} timetable entries.`, count: created.length });
   } catch (err) {
     console.error('Apply timetable error:', err);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({ message: err?.message || 'Internal server error.' });
   }
 });
 

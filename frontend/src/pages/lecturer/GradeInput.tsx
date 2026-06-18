@@ -1,25 +1,33 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Save, Calculator } from 'lucide-react';
+import { Save, Send, Calculator } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { PageHeader } from '@/components/common/PageHeader';
-import { useGetCourses, useGetCourse } from '@/hooks/useCourses';
+import { useGetCourses } from '@/hooks/useCourses';
 import { useGetStudents } from '@/hooks/useStudents';
-import { useGetGrades, useCreateGrade } from '@/hooks/useGrades';
+import { useGetGrades, useCreateGrade, useSubmitGrades } from '@/hooks/useGrades';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
 import { useGetActiveSemester, useGetSemesters } from '@/hooks/useSemesters';
 import { useGetDepartments } from '@/hooks/useDepartments';
+import { useGetGroups } from '@/hooks/useGroups';
 import { SEMESTERS } from '@/utils/constants';
 import { getLetterGrade, getGradeColor } from '@/utils/formatters';
 
 type ComponentScoreMap = Record<string, string>;
+
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  draft: { label: 'Draft', className: 'bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-400' },
+  submitted: { label: 'Submitted', className: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400' },
+  approved: { label: 'Approved', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' },
+  rejected: { label: 'Rejected', className: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400' },
+};
 
 function calcWeightedScore(components: { name: string; maxScore: number; weight: number }[], scores: ComponentScoreMap): number {
   let weighted = 0;
@@ -37,6 +45,7 @@ function calcWeightedScore(components: { name: string; maxScore: number; weight:
 export function GradeInput() {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('');
   const [componentScores, setComponentScores] = useState<Record<string, ComponentScoreMap>>({});
   const [saving, setSaving] = useState(false);
@@ -71,6 +80,7 @@ export function GradeInput() {
 
   useEffect(() => {
     setSelectedCourse('');
+    setSelectedGroup('');
     setComponentScores({});
   }, [selectedAcademicYear]);
 
@@ -79,10 +89,11 @@ export function GradeInput() {
   );
   const { data: courseDetail } = useGetCourse(selectedCourse || undefined);
   const { data: gradesData } = useGetGrades(
-    selectedCourse ? { courseId: selectedCourse, semester: selectedSemester || undefined } : {}
+    selectedCourse ? { courseId: selectedCourse, semester: selectedSemester || undefined, groupId: selectedGroup || undefined } : {}
   );
   const { data: students, isLoading: studentsLoading } = useGetStudents({});
   const createGrade = useCreateGrade();
+  const submitGradesMutation = useSubmitGrades();
 
   const courseList = (courses as Record<string, unknown>[]) ?? [];
   const allStudents = (students as Record<string, unknown>[]) ?? [];
@@ -95,17 +106,31 @@ export function GradeInput() {
   const gradingComponents = (courseDetail as Record<string, unknown>)?.gradingComponents as
     { name: string; maxScore: number; weight: number }[] | undefined;
 
-  const selectedCourseData = filteredCourses.find((c) => String(c.id) === selectedCourse);
-  const courseStudentIds = (selectedCourseData?.studentIds as string[]) ?? [];
+  const { data: courseGroups } = useGetGroups(selectedCourse ? { courseId: selectedCourse } : undefined);
+  const groupsList = (courseGroups as { id: string; name: string; enrolledStudentIds: string[] }[]) ?? [];
+
+  const selectedGroupData = groupsList.find((g) => g.id === selectedGroup);
+
+  const courseStudentIds = useMemo(() => {
+    if (selectedGroupData) return selectedGroupData.enrolledStudentIds ?? [];
+    const set = new Set<string>();
+    for (const g of groupsList) {
+      for (const sid of (g.enrolledStudentIds ?? [])) set.add(sid);
+    }
+    return [...set];
+  }, [groupsList, selectedGroupData]);
+
   const courseStudents = allStudents.filter((s) => courseStudentIds.includes(String(s.id)));
 
-  const derivedSubject = selectedCourseData
-    ? (deptList.find((d) => String(d.id) === String(selectedCourseData.department))?.name as string) ?? ''
-    : '';
+  const derivedSubject = (() => {
+    const c = filteredCourses.find((c) => String(c.id) === selectedCourse);
+    if (!c) return '';
+    const dept = deptList.find((d) => String(d.id) === String(c.department));
+    return dept?.name as string ?? '';
+  })();
 
   const canShow = selectedAcademicYear && selectedCourse && selectedSemester;
 
-  // Pre-fill component scores from existing grades
   useEffect(() => {
     if (!selectedCourse || !selectedSemester || existingGrades.length === 0) return;
     const newScores: Record<string, ComponentScoreMap> = {};
@@ -121,7 +146,7 @@ export function GradeInput() {
       }
     }
     setComponentScores((prev) => ({ ...prev, ...newScores }));
-  }, [selectedCourse, selectedSemester, existingGrades]);
+  }, [selectedCourse, selectedSemester, existingGrades, selectedGroup]);
 
   const handleScoreChange = (studentId: string, componentName: string, value: string) => {
     if (value === '' || (/^\d{0,3}(\.\d{0,1})?$/.test(value) && parseFloat(value) <= (gradingComponents?.find(c => c.name === componentName)?.maxScore ?? 100))) {
@@ -132,7 +157,24 @@ export function GradeInput() {
     }
   };
 
-  const handleSubmit = async () => {
+  // Build a map of existing grades keyed by studentId
+  const gradeStatusMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const g of existingGrades) {
+      const sid = String(g.studentId);
+      if (!map[sid] || g.status === 'submitted' || g.status === 'approved') {
+        map[sid] = String(g.status ?? 'draft');
+      }
+    }
+    return map;
+  }, [existingGrades]);
+
+  const isSubmitted = useMemo(() => {
+    if (!courseStudents.length || !existingGrades.length) return false;
+    return courseStudents.every((s) => gradeStatusMap[String(s.id)] === 'submitted' || gradeStatusMap[String(s.id)] === 'approved');
+  }, [courseStudents, gradeStatusMap]);
+
+  const handleSave = async () => {
     if (!selectedCourse || !selectedSemester || !gradingComponents) return;
 
     const toSave = courseStudents.filter((s) => {
@@ -156,7 +198,7 @@ export function GradeInput() {
           return createGrade.mutateAsync({
             studentId: sid,
             courseId: selectedCourse,
-            subject: derivedSubject,
+            groupId: selectedGroup || undefined,
             semester: selectedSemester,
             score: weightedScore,
             maxScore: 100,
@@ -174,11 +216,22 @@ export function GradeInput() {
     }
   };
 
+  const handleSubmit = () => {
+    if (!selectedCourse) return;
+    submitGradesMutation.mutate({
+      courseId: selectedCourse,
+      groupId: selectedGroup || undefined,
+      semester: selectedSemester || undefined,
+    });
+  };
+
   const getStudentTotal = (studentId: string) => {
     if (!gradingComponents) return null;
     const raw = componentScores[studentId] ?? {};
     return calcWeightedScore(gradingComponents, raw);
   };
+
+  const hasDraftGrades = existingGrades.some((g) => String(g.status) === 'draft');
 
   return (
     <div>
@@ -187,10 +240,10 @@ export function GradeInput() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Select Course</CardTitle>
+            <CardTitle className="text-base">Select Course & Group</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="space-y-1.5">
                 <Label>Academic Year</Label>
                 <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
@@ -203,13 +256,23 @@ export function GradeInput() {
               <div className="space-y-1.5">
                 <Label>Course</Label>
                 {coursesLoading ? <Skeleton className="h-9" /> : (
-                  <Select value={selectedCourse} onValueChange={setSelectedCourse} disabled={!selectedAcademicYear}>
+                  <Select value={selectedCourse} onValueChange={(v) => { setSelectedCourse(v); setSelectedGroup(''); }} disabled={!selectedAcademicYear}>
                     <SelectTrigger aria-label="Select course"><SelectValue placeholder={selectedAcademicYear ? 'Select course' : 'Select year first'} /></SelectTrigger>
                     <SelectContent>
                       {filteredCourses.map((c) => (<SelectItem key={String(c.id)} value={String(c.id)}>{String(c.name)}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 )}
+              </div>
+              <div className="space-y-1.5">
+                <Label>Group <span className="text-muted-foreground">(optional)</span></Label>
+                <Select value={selectedGroup} onValueChange={setSelectedGroup} disabled={!selectedCourse}>
+                  <SelectTrigger aria-label="Select group"><SelectValue placeholder="All groups" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All groups</SelectItem>
+                    {groupsList.map((g) => (<SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Semester</Label>
@@ -229,7 +292,8 @@ export function GradeInput() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <CardTitle className="text-base">
-                  {String(selectedCourseData?.name)} — {selectedSemester} ({selectedAcademicYear})
+                  {String(filteredCourses.find((c) => String(c.id) === selectedCourse)?.name ?? '')} — {selectedSemester} ({selectedAcademicYear})
+                  {selectedGroupData && <span className="text-muted-foreground ml-2 text-xs">({selectedGroupData.name})</span>}
                 </CardTitle>
                 {gradingComponents && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -261,6 +325,7 @@ export function GradeInput() {
                           ))}
                           <th className="py-2 pl-2 font-medium text-center min-w-[70px]">Total</th>
                           <th className="py-2 pl-2 font-medium text-center min-w-[50px]">Grade</th>
+                          <th className="py-2 pl-2 font-medium text-center min-w-[80px]">Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -269,6 +334,8 @@ export function GradeInput() {
                           const total = getStudentTotal(sid);
                           const letter = total !== null ? getLetterGrade(total) : null;
                           const color = letter ? getGradeColor(letter) : '';
+                          const status = gradeStatusMap[sid] ?? 'draft';
+                          const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.draft;
 
                           return (
                             <tr key={sid} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
@@ -281,6 +348,7 @@ export function GradeInput() {
                               </td>
                               {gradingComponents.map((comp) => {
                                 const val = componentScores[sid]?.[comp.name] ?? '';
+                                const disabled = status === 'submitted' || status === 'approved';
                                 return (
                                   <td key={comp.name} className="py-2 px-2 text-center">
                                     <Input
@@ -292,6 +360,7 @@ export function GradeInput() {
                                       onChange={(e) => handleScoreChange(sid, comp.name, e.target.value)}
                                       className="w-20 h-8 text-sm text-center mx-auto"
                                       aria-label={`${comp.name} score for ${student.firstName}`}
+                                      disabled={disabled}
                                     />
                                   </td>
                                 );
@@ -304,6 +373,9 @@ export function GradeInput() {
                                   <Badge variant="outline" className={`w-8 justify-center ${color}`}>{letter}</Badge>
                                 )}
                               </td>
+                              <td className="py-2 pl-2 text-center">
+                                <Badge className={`${statusCfg.className} text-xs`}>{statusCfg.label}</Badge>
+                              </td>
                             </tr>
                           );
                         })}
@@ -311,10 +383,22 @@ export function GradeInput() {
                     </table>
                   </div>
 
-                  <Button className="w-full mt-4" onClick={handleSubmit} disabled={saving || createGrade.isPending}>
-                    {saving || createGrade.isPending ? <Spinner className="size-4" /> : <Save className="size-4" />}
-                    Save All Grades
-                  </Button>
+                  <div className="flex items-center gap-3 mt-4">
+                    <Button className="flex-1" onClick={handleSave} disabled={saving || createGrade.isPending || isSubmitted}>
+                      {saving || createGrade.isPending ? <Spinner className="size-4" /> : <Save className="size-4" />}
+                      Save Grades
+                    </Button>
+                    {hasDraftGrades && (
+                      <Button
+                        variant="secondary"
+                        onClick={handleSubmit}
+                        disabled={submitGradesMutation.isPending}
+                      >
+                        {submitGradesMutation.isPending ? <Spinner className="size-4" /> : <Send className="size-4" />}
+                        Submit for Review
+                      </Button>
+                    )}
+                  </div>
                 </>
               )}
             </CardContent>

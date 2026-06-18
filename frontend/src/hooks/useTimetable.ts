@@ -14,6 +14,12 @@ export function useGetTimetable(params?: { facultyId?: string; year?: string; se
 export function useGenerateTimetable() {
   return useMutation({
     mutationFn: timetableApi.generateTimetable,
+    onError: (err) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? (err as Error)?.message
+        ?? 'Failed to generate timetable';
+      toast.error(msg);
+    },
   });
 }
 

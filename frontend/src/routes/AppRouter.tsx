@@ -28,6 +28,9 @@ import { AuditLogs } from '@/pages/admin/AuditLogs';
 import { ManageUsers } from '@/pages/admin/ManageUsers';
 import { ManageTimetable } from '@/pages/admin/ManageTimetable';
 import { ManageRooms } from '@/pages/admin/ManageRooms';
+import { ManageGroups } from '@/pages/admin/ManageGroups';
+import { ManageGrades } from '@/pages/admin/ManageGrades';
+import { ManageExams } from '@/pages/admin/ManageExams';
 import { ManageCalendar } from '@/pages/admin/ManageCalendar';
 
 import { LecturerDashboard } from '@/pages/lecturer/LecturerDashboard';
@@ -38,6 +41,8 @@ import { AttendanceLog } from '@/pages/lecturer/AttendanceLog';
 import { AttendanceHistory } from '@/pages/lecturer/AttendanceHistory';
 import { GradeInput } from '@/pages/lecturer/GradeInput';
 import { GradeBook } from '@/pages/lecturer/GradeBook';
+import { ExamResults } from '@/pages/lecturer/ExamResults';
+import { ExamSchedule } from '@/pages/lecturer/ExamSchedule';
 import { LecturerProfile } from '@/pages/lecturer/LecturerProfile';
 import { ManageAssignments } from '@/pages/lecturer/ManageAssignments';
 import { AssignmentSubmissions } from '@/pages/lecturer/AssignmentSubmissions';
@@ -59,6 +64,7 @@ import { StudentTimetable } from '@/pages/student/StudentTimetable';
 import { MyStudies } from '@/pages/student/MyStudies';
 import { AssignmentDetail } from '@/pages/student/AssignmentDetail';
 import { FeeLedger } from '@/pages/student/FeeLedger';
+import { MyExams } from '@/pages/student/MyExams';
 
 function RootRedirect() {
   const { isAuthenticated, user, getDashboardPath } = useAuth();
@@ -124,6 +130,9 @@ export function AppRouter() {
           <Route path="audit-logs" element={<AuditLogs />} />
           <Route path="users" element={<ManageUsers />} />
           <Route path="timetable" element={<ManageTimetable />} />
+          <Route path="groups" element={<ManageGroups />} />
+          <Route path="grades" element={<ManageGrades />} />
+          <Route path="exams" element={<ManageExams />} />
           <Route path="rooms" element={<ManageRooms />} />
           <Route path="calendar" element={<ManageCalendar />} />
         </Route>
@@ -149,6 +158,8 @@ export function AppRouter() {
           <Route path="attendance/history" element={<AttendanceHistory />} />
           <Route path="grades" element={<GradeInput />} />
           <Route path="grades/book" element={<GradeBook />} />
+          <Route path="exams" element={<ExamResults />} />
+          <Route path="exams/schedule" element={<ExamSchedule />} />
           <Route path="profile" element={<LecturerProfile />} />
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
@@ -164,6 +175,7 @@ export function AppRouter() {
           <Route index element={<StudentDashboard />} />
           <Route path="attendance" element={<MyAttendance />} />
           <Route path="grades" element={<MyGrades />} />
+          <Route path="exams" element={<MyExams />} />
           <Route path="courses" element={<StudentCourseCatalog />} />
           <Route path="courses/:id" element={<StudentCourseDetail />} />
           <Route path="studies" element={<MyStudies />} />

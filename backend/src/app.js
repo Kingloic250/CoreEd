@@ -24,6 +24,11 @@ const reportRoutes = require('./routes/reports');
 const announcementRoutes = require('./routes/announcements');
 const roomRoutes = require('./routes/rooms');
 const timetableRoutes = require('./routes/timetable');
+const groupRoutes = require('./routes/groups');
+const enrollRoutes = require('./routes/enroll');
+const gradeRoutes = require('./routes/grades');
+const claimRoutes = require('./routes/claims');
+const examRoutes = require('./routes/exams');
 const { authenticate } = require('./middleware/auth');
 const { createRateLimiter } = require('./middleware/rateLimit');
 
@@ -66,6 +71,11 @@ app.use('/api/v1/reports', authenticate, reportRoutes);
 app.use('/api/v1/announcements', authenticate, announcementRoutes);
 app.use('/api/v1/rooms', authenticate, roomRoutes);
 app.use('/api/v1/timetable', authenticate, timetableRoutes);
+app.use('/api/v1/groups', authenticate, groupRoutes);
+app.use('/api/v1/enroll', authenticate, enrollRoutes);
+app.use('/api/v1/grades', authenticate, gradeRoutes);
+app.use('/api/v1/claims', authenticate, claimRoutes);
+app.use('/api/v1/exams', authenticate, examRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

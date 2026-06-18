@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -10,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
 import { useGetActiveSemester } from '@/hooks/useSemesters';
+import { useGetGroups } from '@/hooks/useGroups';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -26,6 +28,15 @@ export function LecturerDashboard() {
   );
 
   const myCourses = (courses as Record<string, unknown>[]) ?? [];
+  const { data: allGroups } = useGetGroups();
+  const groupsByCourse = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const g of (allGroups ?? []) as { courseId: string; enrolledStudentIds: string[] }[]) {
+      if (!map[g.courseId]) map[g.courseId] = 0;
+      map[g.courseId] += (g.enrolledStudentIds ?? []).length;
+    }
+    return map;
+  }, [allGroups]);
   const todayCourses = myCourses.filter((c) =>
     (c.schedule as Record<string, string>[])?.some((s) => s.day === today)
   );
@@ -70,7 +81,7 @@ export function LecturerDashboard() {
                         <p className="font-semibold text-foreground">{String(c.name)}</p>
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1"><MapPin className="size-3" />{String(c.room)}</span>
-                          <span className="flex items-center gap-1"><Users className="size-3" />{(c.studentIds as string[])?.length} students</span>
+                          <span className="flex items-center gap-1"><Users className="size-3" />{groupsByCourse[String(c.id)] ?? 0} students</span>
                           {todaySlot && <span className="flex items-center gap-1"><Clock className="size-3" />{todaySlot.startTime}–{todaySlot.endTime}</span>}
                         </div>
                       </div>
@@ -110,7 +121,7 @@ export function LecturerDashboard() {
                     <CardTitle className="text-sm">{String(c.name)}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-xs text-muted-foreground space-y-1">
-                    <p className="flex items-center gap-1"><Users className="size-3" /> {(c.studentIds as string[])?.length ?? 0} students</p>
+                    <p className="flex items-center gap-1"><Users className="size-3" /> {groupsByCourse[String(c.id)] ?? 0} students</p>
                     <p className="flex items-center gap-1"><MapPin className="size-3" /> Room {String(c.room)}</p>
                     <p className="flex items-center gap-1"><BookOpen className="size-3" /> {String(c.year)}</p>
                   </CardContent>

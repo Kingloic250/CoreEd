@@ -65,12 +65,12 @@ export function CourseForm({ defaultValues, lecturers, faculties, rooms, onSubmi
 
       <div className="space-y-1.5">
         <Label htmlFor="cf-room" aria-label="Room">Room (optional)</Label>
-        <Select onValueChange={(v) => setValue('roomId', v)} defaultValue={defaultValues?.roomId}>
+          <Select onValueChange={(v) => setValue('roomId', v === 'none' ? '' : v)} defaultValue={defaultValues?.roomId || 'none'}>
           <SelectTrigger id="cf-room" className="w-full" aria-label="Select room">
             <SelectValue placeholder="No room selected" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">No room</SelectItem>
+            <SelectItem value="none">No room</SelectItem>
             {rooms.map((r) => (
               <SelectItem key={r.id} value={r.id}>{r.name}{r.code ? ` (${r.code})` : ''}</SelectItem>
             ))}

@@ -109,6 +109,57 @@ const calendarEventSchema = z.object({
   targetRoles: z.array(z.string()).optional(),
 });
 
+const groupCreateSchema = z.object({
+  name: z.string().min(1, 'Group name is required'),
+  courseId: z.string().min(1, 'Course is required'),
+  semesterId: z.string().optional(),
+  lecturerId: z.string().optional(),
+  roomId: z.string().optional(),
+  capacity: z.number().int().min(1).default(30),
+  schedule: z.array(z.object({
+    day: z.number().min(0).max(6),
+    startTime: z.string(),
+    endTime: z.string(),
+    roomId: z.string().optional(),
+  })).optional().default([]),
+});
+
+const gradeCreateSchema = z.object({
+  studentId: z.string().min(1, 'Student is required'),
+  courseId: z.string().min(1, 'Course is required'),
+  groupId: z.string().optional(),
+  semester: z.string().optional(),
+  score: z.number().min(0).default(0),
+  maxScore: z.number().min(1).default(100),
+  grade: z.string().optional(),
+  comments: z.string().optional(),
+  componentScores: z.record(z.number()).optional(),
+});
+
+const gradeReviewSchema = z.object({
+  rejectionNote: z.string().optional(),
+});
+
+const examCreateSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  courseId: z.string().min(1, 'Course is required'),
+  groupId: z.string().optional(),
+  lecturerId: z.string().optional(),
+  roomId: z.string().nullable().optional(),
+  date: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  maxScore: z.number().min(1).default(100),
+  type: z.enum(['midterm', 'final', 'quiz', 'other']).default('exam'),
+  gradingComponent: z.string().nullable().optional(),
+});
+
+const examResultSchema = z.object({
+  studentId: z.string().min(1, 'Student is required'),
+  score: z.number().min(0, 'Score must be 0 or more'),
+  comments: z.string().optional(),
+});
+
 module.exports = {
   loginSchema,
   studentCreateSchema,
@@ -125,4 +176,9 @@ module.exports = {
   userUpdateSchema,
   userResetPasswordSchema,
   calendarEventSchema,
+  groupCreateSchema,
+  gradeCreateSchema,
+  gradeReviewSchema,
+  examCreateSchema,
+  examResultSchema,
 };

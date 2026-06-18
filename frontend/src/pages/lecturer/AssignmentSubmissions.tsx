@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGetAssignmentById, useGradeSubmission } from '@/hooks/useAssignments';
 import { useGetStudents } from '@/hooks/useStudents';
-import { useGetCourses } from '@/hooks/useCourses';
+import { useGetGroups } from '@/hooks/useGroups';
 import { formatDate, getInitials } from '@/utils/formatters';
 
 export function AssignmentSubmissions() {
@@ -26,10 +26,17 @@ export function AssignmentSubmissions() {
 
   const a = assignment as Record<string, unknown> | undefined;
   const studentsList = (students as Record<string, unknown>[]) ?? [];
-  const coursesList = (courses as Record<string, unknown>[]) ?? [];
   const submissions = (a?.submissions as Record<string, unknown>[]) ?? [];
-  const course = coursesList.find((c) => c.id === a?.courseId);
-  const enrolledIds = (course?.studentIds as string[]) ?? [];
+  const courseId = a?.courseId as string | undefined;
+  const { data: courseGroups } = useGetGroups(courseId ? { courseId } : undefined);
+  const enrolledIds = useMemo(() => {
+    if (!courseGroups) return [];
+    const set = new Set<string>();
+    for (const g of courseGroups as { enrolledStudentIds: string[] }[]) {
+      for (const sid of (g.enrolledStudentIds ?? [])) set.add(sid);
+    }
+    return [...set];
+  }, [courseGroups]);
 
   const [grades, setGrades] = useState<Record<string, { score: string; feedback: string }>>({});
   const [regrading, setRegrading] = useState<Record<string, boolean>>({});

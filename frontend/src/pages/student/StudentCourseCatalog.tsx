@@ -2,24 +2,27 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, X, Loader2, GraduationCap, User, Building2, ChevronRight,
-  CheckCircle2, AlertCircle, RotateCcw,
+  CheckCircle2, AlertCircle, RotateCcw, Users,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useGetGrades } from '@/hooks/useGrades';
 import { useGetLecturers } from '@/hooks/useLecturers';
 import { useGetDepartments } from '@/hooks/useDepartments';
-import { useSelfEnroll, useSelfUnenroll } from '@/hooks/useCourses';
+import { useGetGroups } from '@/hooks/useGroups';
+import { useEnrollStudent, useUnenrollStudent, useMyEnrollments } from '@/hooks/useEnroll';
 import { getGradeColor } from '@/utils/formatters';
 
 type Course = Record<string, unknown>;
-type Lecturer = Record<string, unknown>;
-type Department = { id: string; name: string };
+type Student = Record<string, unknown>;
 
 const TABS = [
   { key: 'available', label: 'Available', icon: BookOpen },
@@ -28,13 +31,6 @@ const TABS = [
   { key: 'failed', label: 'Failed', icon: AlertCircle },
 ] as const;
 
-function isLoadingMutation(
-  id: string,
-  ...mutations: { isPending: boolean; variables?: { courseId: string } }[]
-) {
-  return mutations.some((m) => m.isPending && m.variables?.courseId === id);
-}
-
 export function StudentCourseCatalog() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -42,17 +38,31 @@ export function StudentCourseCatalog() {
   const { data: grades } = useGetGrades({ studentId: user?.id });
   const { data: lecturers } = useGetLecturers();
   const { data: departments } = useGetDepartments();
-  const enrollMutation = useSelfEnroll();
-  const unenrollMutation = useSelfUnenroll();
+  const { data: myEnrollments, refetch: refetchEnrollments } = useMyEnrollments(user?.id);
+  const enrollMutation = useEnrollStudent();
+  const unenrollMutation = useUnenrollStudent();
 
   const coursesList = (courses as Course[]) ?? [];
   const allGrades = (grades as Record<string, unknown>[]) ?? [];
-  const lecturersList = (lecturers as Lecturer[]) ?? [];
-  const departmentsList = ((departments ?? []) as Department[]);
+  const lecturersList = (lecturers as Record<string, unknown>[]) ?? [];
+  const departmentsList = ((departments ?? []) as { id: string; name: string }[]);
+  const enrolledGroupIds = (myEnrollments?.groups ?? []).map((g: Record<string, unknown>) => g.courseId as string);
+  const legacyCourseIds = (myEnrollments?.courses ?? []).map((c: Record<string, unknown>) => c.id as string);
+  const enrolledCourseIds = [...new Set([...enrolledGroupIds, ...legacyCourseIds])];
 
   const studentId = user?.id;
-
   const [tab, setTab] = useState('available');
+
+  // Group selection dialog
+  const [enrollDialog, setEnrollDialog] = useState<{ courseId: string } | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const { data: groupsData } = useGetGroups(
+    enrollDialog ? { courseId: enrollDialog.courseId } : undefined
+  );
+  const groups = (groupsData ?? []) as {
+    id: string; name: string; capacity: number; enrolledCount: number;
+    courseId: string; room: { name: string } | null;
+  }[];
 
   const getLecturerName = (id: string) => {
     const l = lecturersList.find((l) => l.id === id);
@@ -71,7 +81,7 @@ export function StudentCourseCatalog() {
     const failed: Course[] = [];
 
     coursesList.forEach((course) => {
-      const isEnrolledIn = ((course.studentIds as string[]) ?? []).includes(studentId);
+      const isEnrolledIn = enrolledCourseIds.includes(course.id as string);
       if (!isEnrolledIn) {
         available.push(course);
         return;
@@ -94,13 +104,37 @@ export function StudentCourseCatalog() {
     });
 
     return { available, enrolled, completed, failed };
-  }, [coursesList, allGrades, studentId]);
+  }, [coursesList, allGrades, enrolledCourseIds]);
 
   const getLatestGrade = (courseId: string) => {
     const courseGrades = allGrades
       .filter((g) => String(g.courseId) === courseId)
       .sort((a, b) => String(b.semester ?? '').localeCompare(String(a.semester ?? '')));
     return courseGrades[0] ?? null;
+  };
+
+  const handleEnroll = () => {
+    if (!enrollDialog || !selectedGroupId || !studentId) return;
+    enrollMutation.mutate(
+      { courseId: enrollDialog.courseId, groupId: selectedGroupId, studentId },
+      {
+        onSuccess: () => {
+          setEnrollDialog(null);
+          setSelectedGroupId('');
+          refetchEnrollments();
+        },
+      }
+    );
+  };
+
+  const handleUnenroll = (courseId: string) => {
+    if (!studentId) return;
+    unenrollMutation.mutate(
+      { courseId, studentId },
+      {
+        onSuccess: () => refetchEnrollments(),
+      }
+    );
   };
 
   const tabCourses = categorized[tab as keyof typeof categorized];
@@ -156,7 +190,7 @@ export function StudentCourseCatalog() {
                     <t.icon className="size-10 text-muted-foreground/30" />
                     <p className="text-sm">
                       {t.key === 'available' && 'No available courses to enroll in.'}
-                      {t.key === 'enrolled' && 'You are not currently enrolled in any courses. Browse the Available tab to find courses.'}
+                      {t.key === 'enrolled' && 'You are not currently enrolled in any courses.'}
                       {t.key === 'completed' && 'No completed courses yet.'}
                       {t.key === 'failed' && 'No failed courses. Keep up the good work!'}
                     </p>
@@ -168,11 +202,7 @@ export function StudentCourseCatalog() {
                 {tabCourses.map((course) => {
                   const grade = getLatestGrade(String(course.id));
                   const gradeLetter = grade ? String(grade.grade) : null;
-                  const pending = isLoadingMutation(
-                    String(course.id),
-                    enrollMutation,
-                    unenrollMutation
-                  );
+                  const pending = enrollMutation.isPending || unenrollMutation.isPending;
 
                   return (
                     <Card key={String(course.id)} className="flex flex-col">
@@ -185,7 +215,6 @@ export function StudentCourseCatalog() {
                             {String(course.name)}
                           </CardTitle>
 
-                          {/* Tab-specific badges */}
                           {t.key === 'enrolled' && (
                             <Badge variant="outline" className="shrink-0 bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800">
                               In Progress
@@ -197,9 +226,7 @@ export function StudentCourseCatalog() {
                             </Badge>
                           )}
                           {t.key === 'failed' && (
-                            <Badge variant="destructive" className="shrink-0">
-                              F
-                            </Badge>
+                            <Badge variant="destructive" className="shrink-0">F</Badge>
                           )}
                         </div>
                         <CardDescription className="flex flex-col gap-1 mt-1">
@@ -218,7 +245,7 @@ export function StudentCourseCatalog() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="pb-3 text-xs text-muted-foreground">
-                        {String(course.room)} · {(course.studentIds as string[])?.length ?? 0} students
+                        {String(course.room)} · {String(course.credits)} credits
                         {grade && (
                           <span className="ml-1">
                             · Score: {Number(grade.score)}/{Number(grade.maxScore)}
@@ -235,16 +262,13 @@ export function StudentCourseCatalog() {
                           Details <ChevronRight className="size-3" />
                         </Button>
 
-                        {/* Tab-specific actions */}
                         {t.key === 'available' && (
                           <Button
                             size="sm"
                             className="ml-auto gap-1.5"
-                            onClick={() => enrollMutation.mutate({ courseId: String(course.id), studentId })}
-                            disabled={pending}
+                            onClick={() => setEnrollDialog({ courseId: String(course.id) })}
                           >
-                            {pending ? <Loader2 className="size-3.5 animate-spin" /> : <BookOpen className="size-3.5" />}
-                            {pending ? 'Enrolling...' : 'Enroll'}
+                            <BookOpen className="size-3.5" /> Enroll
                           </Button>
                         )}
                         {t.key === 'enrolled' && (
@@ -252,7 +276,7 @@ export function StudentCourseCatalog() {
                             variant="outline"
                             size="sm"
                             className="ml-auto gap-1.5"
-                            onClick={() => unenrollMutation.mutate({ courseId: String(course.id), studentId })}
+                            onClick={() => handleUnenroll(String(course.id))}
                             disabled={pending}
                           >
                             {pending ? <Loader2 className="size-3.5 animate-spin" /> : <X className="size-3.5" />}
@@ -263,11 +287,9 @@ export function StudentCourseCatalog() {
                           <Button
                             size="sm"
                             className="ml-auto gap-1.5"
-                            onClick={() => enrollMutation.mutate({ courseId: String(course.id), studentId })}
-                            disabled={pending}
+                            onClick={() => setEnrollDialog({ courseId: String(course.id) })}
                           >
-                            {pending ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
-                            {pending ? 'Retaking...' : 'Retake'}
+                            <RotateCcw className="size-3.5" /> Retake
                           </Button>
                         )}
                       </CardFooter>
@@ -279,6 +301,63 @@ export function StudentCourseCatalog() {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Group Selection Dialog */}
+      <Dialog open={!!enrollDialog} onOpenChange={(v) => { if (!v) { setEnrollDialog(null); setSelectedGroupId(''); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Group</DialogTitle>
+            <DialogDescription>Choose a group to enroll in this course.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {groups.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No groups available for this course.</p>
+            ) : (
+              <div className="space-y-2">
+                {groups.map((g) => {
+                  const full = g.enrolledCount >= g.capacity;
+                  return (
+                    <label
+                      key={g.id}
+                      className={`flex items-center gap-3 p-3 border rounded-md cursor-pointer transition-colors ${
+                        selectedGroupId === g.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                      } ${full ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="group"
+                        value={g.id}
+                        checked={selectedGroupId === g.id}
+                        onChange={() => setSelectedGroupId(g.id)}
+                        disabled={full}
+                        className="size-4"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{g.name}</span>
+                          <Users className="size-3 text-muted-foreground shrink-0" />
+                          <span className="text-xs text-muted-foreground">
+                            {g.enrolledCount}/{g.capacity}
+                          </span>
+                        </div>
+                        {g.room && <p className="text-xs text-muted-foreground">{g.room.name}</p>}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => { setEnrollDialog(null); setSelectedGroupId(''); }}>
+              Cancel
+            </Button>
+            <Button onClick={handleEnroll} disabled={!selectedGroupId || enrollMutation.isPending}>
+              {enrollMutation.isPending ? 'Enrolling...' : 'Enroll'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

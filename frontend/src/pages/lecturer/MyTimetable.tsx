@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
 import { Clock, MapPin } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { PageHeader } from '@/components/common/PageHeader';
-import { useGetCourses } from '@/hooks/useCourses';
+import { useGetGroups } from '@/hooks/useGroups';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
-import { useGetActiveSemester } from '@/hooks/useSemesters';
+import { useGetRooms } from '@/hooks/useRooms';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const;
 const HOURS = Array.from({ length: 12 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
@@ -29,58 +27,49 @@ function getCourseColor(courseId: string) {
 
 export function MyTimetable() {
   const { data: currentLecturer } = useGetCurrentLecturer();
-  const { activeSemester } = useGetActiveSemester();
-  const lecturerId = currentLecturer ? (currentLecturer as Record<string, unknown>).id : undefined;
-  const semesterId = activeSemester ? (activeSemester as Record<string, unknown>).id as string : undefined;
+  const { data: rooms } = useGetRooms();
 
-  const { data: courses, isLoading } = useGetCourses(
-    lecturerId && semesterId ? { lecturerId, semesterId } : undefined
-  );
+  const lecturerId = currentLecturer ? (currentLecturer as Record<string, unknown>).id as string : undefined;
+  const { data: groupsData, isLoading: groupsLoading } = useGetGroups(lecturerId ? { lecturerId } : undefined);
+  const roomsList = (rooms ?? []) as { id: string; name: string; code: string | null }[];
 
-  const entries = useMemo(() => {
-    const courseList = (courses as Record<string, unknown>[]) ?? [];
-    const result: { courseId: string; courseName: string; color: string; day: string; startTime: string; endTime: string; room: string }[] = [];
-    courseList.forEach((c) => {
-      const schedule = (c.schedule as Record<string, string>[]) ?? [];
-      schedule.forEach((s) => {
-        result.push({
-          courseId: String(c.id),
-          courseName: String(c.name),
-          color: getCourseColor(String(c.id)),
-          day: s.day,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          room: String(c.room ?? ''),
-        });
-      });
-    });
-    return result;
-  }, [courses]);
+  const groups = (groupsData ?? []) as {
+    id: string; name: string; courseId: string; roomId: string | null;
+    schedule: { day: number; startTime: string; endTime: string }[];
+    course: { id: string; name: string; credits: number };
+    room: { id: string; name: string } | null;
+  }[];
+
+  const roomMap = useMemo(() => Object.fromEntries(roomsList.map((r) => [r.id, r])), [roomsList]);
 
   const entryMap = useMemo(() => {
-    const map = new Map<string, typeof entries>();
-    for (const e of entries) {
-      const key = `${e.day}|${e.startTime}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(e);
+    const map = new Map<string, typeof groups>();
+    for (const g of groups) {
+      for (const slot of (g.schedule ?? [])) {
+        const key = `${slot.day}|${slot.startTime}`;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(g);
+      }
     }
     return map;
-  }, [entries]);
+  }, [groups]);
 
   const today = DAYS[new Date().getDay() === 0 ? 0 : new Date().getDay() - 1];
 
   return (
     <div className="space-y-4">
-      <PageHeader title="My Timetable" description="Your weekly course schedule" />
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">My Timetable</h1>
+        <p className="text-sm text-muted-foreground">Your weekly course schedule</p>
+      </div>
 
-      {isLoading ? (
+      {groupsLoading ? (
         <div className="text-center py-20 text-muted-foreground">Loading timetable...</div>
-      ) : entries.length === 0 ? (
+      ) : groups.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">No courses scheduled this semester.</div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
           <div className="min-w-[800px]">
-            {/* Header row */}
             <div className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border bg-muted/30">
               <div className="p-2 text-xs font-medium text-muted-foreground border-r border-border">Time</div>
               {DAYS.map((day) => (
@@ -95,7 +84,6 @@ export function MyTimetable() {
               ))}
             </div>
 
-            {/* Time slot rows */}
             {HOURS.map((hour) => (
               <div key={hour} className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border last:border-b-0">
                 <div className="flex items-start justify-center p-1 text-[10px] text-muted-foreground border-r border-border pt-1.5">
@@ -113,21 +101,24 @@ export function MyTimetable() {
                         isToday ? 'bg-primary/[0.02]' : ''
                       }`}
                     >
-                      {slotEntries.map((entry) => (
-                        <div
-                          key={`${entry.courseId}-${entry.startTime}`}
-                          className={`rounded border px-1.5 py-0.5 text-[11px] leading-tight mb-0.5 ${entry.color}`}
-                        >
-                          <div className="font-medium truncate flex items-center gap-1">
-                            <Clock className="size-3 shrink-0" />
-                            {entry.courseName}
+                      {slotEntries.map((g) => {
+                        const room = g.roomId ? roomMap[g.roomId] : null;
+                        return (
+                          <div
+                            key={`${g.id}-${slotKey}`}
+                            className={`rounded border px-1.5 py-0.5 text-[11px] leading-tight mb-0.5 ${getCourseColor(g.courseId)}`}
+                          >
+                            <div className="font-medium truncate flex items-center gap-1">
+                              <Clock className="size-3 shrink-0" />
+                              {g.course.name} ({g.name})
+                            </div>
+                            <div className="truncate opacity-75 flex items-center gap-1">
+                              <MapPin className="size-2.5 shrink-0" />
+                              {room?.name ?? g.room?.name ?? 'No room'}
+                            </div>
                           </div>
-                          <div className="truncate opacity-75 flex items-center gap-1">
-                            <MapPin className="size-2.5 shrink-0" />
-                            {entry.room}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   );
                 })}

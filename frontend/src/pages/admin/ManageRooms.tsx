@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PageHeader } from '@/components/common/PageHeader';
+import { usePagination } from '@/hooks/usePagination';
 import { useGetRooms, useCreateRoom, useUpdateRoom, useDeleteRoom } from '@/hooks/useRooms';
 
 export function ManageRooms() {
@@ -15,6 +16,7 @@ export function ManageRooms() {
   const updateMutation = useUpdateRoom();
   const deleteMutation = useDeleteRoom();
   const roomsList = (rooms ?? []);
+  const { pageData: pagedRooms, PaginationBar } = usePagination(roomsList);
 
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<{ id?: string; name: string; code: string; capacity: number; building: string; description: string }>({
@@ -86,7 +88,7 @@ export function ManageRooms() {
                 <p>No rooms yet. Click "Add Room" to create one.</p>
               </TableCell></TableRow>
             ) : (
-              roomsList.map((room) => (
+              pagedRooms.map((room) => (
                 <TableRow key={room.id}>
                   <TableCell className="font-medium">{room.name}</TableCell>
                   <TableCell className="text-muted-foreground">{room.code ?? '—'}</TableCell>
@@ -108,6 +110,7 @@ export function ManageRooms() {
           </TableBody>
         </Table>
       </div>
+      <PaginationBar />
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md">

@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Users, GraduationCap, BookOpen,
   BarChart3, ClipboardList, FileText, Bell, School,
   ClipboardCheck, Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
-  Library, ScrollText, Shield, CalendarRange, Wallet, Mail, AlertCircle, Building2
+  Library, ScrollText, Shield, CalendarRange, Wallet, Mail, AlertCircle, Building2,
+  ClipboardPen
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -24,7 +25,10 @@ const adminNav = [
   { title: 'Departments', url: '/admin/departments', icon: Users },
   { title: 'Semesters', url: '/admin/semesters', icon: CalendarDays },
   { title: 'Timetable', url: '/admin/timetable', icon: CalendarRange },
+  { title: 'Groups', url: '/admin/groups', icon: Users },
   { title: 'Enrollment', url: '/admin/enrollment', icon: UserPlus },
+  { title: 'Grades', url: '/admin/grades', icon: ClipboardCheck },
+  { title: 'Exams', url: '/admin/exams', icon: ClipboardPen },
   { title: 'Requests', url: '/admin/requests', icon: UserCheck },
   { title: 'Audit Logs', url: '/admin/audit-logs', icon: ScrollText },
   { title: 'Users', url: '/admin/users', icon: Shield },
@@ -46,6 +50,8 @@ const lecturerNav = [
   { title: 'Attendance History', url: '/lecturer/attendance/history', icon: ClipboardCheck },
   { title: 'Enter Grades', url: '/lecturer/grades', icon: Trophy },
   { title: 'Grade Book', url: '/lecturer/grades/book', icon: ScrollText },
+  { title: 'Exam Results', url: '/lecturer/exams', icon: ClipboardPen },
+  { title: 'Exam Schedule', url: '/lecturer/exams/schedule', icon: Calendar },
   { title: 'Notifications', url: '/lecturer/notifications', icon: Bell },
 ];
 
@@ -53,6 +59,7 @@ const studentNav = [
   { title: 'Dashboard', url: '/student', icon: LayoutDashboard },
   { title: 'My Attendance', url: '/student/attendance', icon: Calendar },
   { title: 'My Grades', url: '/student/grades', icon: Trophy },
+  { title: 'My Exams', url: '/student/exams', icon: ClipboardPen },
   { title: 'Course Catalog', url: '/student/courses', icon: Library },
   { title: 'My Studies', url: '/student/studies', icon: FileText },
   { title: 'Fee Ledger', url: '/student/fees', icon: Wallet },

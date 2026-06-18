@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Save } from 'lucide-react';
@@ -17,6 +17,7 @@ import { useMarkAttendance } from '@/hooks/useAttendance';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetCurrentLecturer } from '@/hooks/useLecturers';
 import { useGetActiveSemester } from '@/hooks/useSemesters';
+import { useGetGroups } from '@/hooks/useGroups';
 import { ATTENDANCE_STATUSES } from '@/utils/constants';
 import { attendanceStatusBadge as attendanceStatusBadgeMap } from '@/utils/formatters';
 
@@ -43,7 +44,15 @@ export function AttendanceLog() {
   const allStudents = (students as Record<string, unknown>[]) ?? [];
 
   const selectedCourseData = courseList.find((c) => String(c.id) === selectedCourse);
-  const courseStudentIds = (selectedCourseData?.studentIds as string[]) ?? [];
+  const { data: courseGroups } = useGetGroups(selectedCourse ? { courseId: selectedCourse } : undefined);
+  const courseStudentIds = useMemo(() => {
+    if (!courseGroups) return [];
+    const set = new Set<string>();
+    for (const g of courseGroups as { enrolledStudentIds: string[] }[]) {
+      for (const sid of (g.enrolledStudentIds ?? [])) set.add(sid);
+    }
+    return [...set];
+  }, [courseGroups]);
   const courseStudents = allStudents.filter((s) => courseStudentIds.includes(String(s.id)));
 
   const handleStatusChange = (studentId: string, status: AttendanceStatus) => {

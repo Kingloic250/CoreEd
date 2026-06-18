@@ -9,11 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DataTable } from '@/components/common/DataTable';
 import { PageHeader } from '@/components/common/PageHeader';
+import { usePagination } from '@/hooks/usePagination';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useGetStudents } from '@/hooks/useStudents';
 import { useGetLecturers } from '@/hooks/useLecturers';
 import { useGetDepartments } from '@/hooks/useDepartments';
-import { useEnrollStudents } from '@/hooks/useCourses';
+import { useGetGroups } from '@/hooks/useGroups';
+import { useEnrollStudent, useUnenrollStudent } from '@/hooks/useEnroll';
 import { toast } from 'sonner';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -23,29 +25,39 @@ type Student = Record<string, unknown>;
 export function ManageEnrollment() {
   const [courseId, setCourseId] = useState('');
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState('');
   const [enrollOpen, setEnrollOpen] = useState(false);
 
   const { data: coursesData, isLoading: coursesLoading } = useGetCourses();
   const { data: studentsData } = useGetStudents();
   const { data: lecturers } = useGetLecturers();
   const { data: departments } = useGetDepartments();
-  const enrollMutation = useEnrollStudents();
+  const { data: groupsData } = useGetGroups(courseId ? { courseId } : undefined);
+  const enrollMutation = useEnrollStudent();
+  const unenrollMutation = useUnenrollStudent();
 
   const courses = (coursesData as Course[]) ?? [];
   const students = (studentsData as Student[]) ?? [];
   const lecturersList = (lecturers as Record<string, string>[]) ?? [];
   const departmentsList = ((departments ?? []) as { id: string; name: string }[]);
+  const groups = (groupsData ?? []) as {
+    id: string; name: string; capacity: number; enrolledCount: number;
+    courseId: string; room: { name: string } | null;
+    enrolledStudentIds: string[];
+  }[];
 
   const selectedCourse = courses.find((c) => c.id === courseId);
 
   const enrolledStudentIds = useMemo(() => {
-    if (!selectedCourse) return [];
-    return (selectedCourse.studentIds as string[]) ?? [];
-  }, [selectedCourse]);
+    if (!selectedGroupId) return [];
+    const g = groups.find((g) => g.id === selectedGroupId);
+    return g?.enrolledStudentIds ?? [];
+  }, [selectedGroupId, groups]);
 
   const enrolledStudents = useMemo(() => {
     return students.filter((s) => enrolledStudentIds.includes(String(s.id)));
   }, [students, enrolledStudentIds]);
+  const { pageData: pagedEnrolled, PaginationBar: PaginationEnrolled } = usePagination(enrolledStudents);
 
   const availableStudents = useMemo(() => {
     return students.filter((s) => !enrolledStudentIds.includes(String(s.id)));
@@ -62,23 +74,29 @@ export function ManageEnrollment() {
   };
 
   const handleUnenroll = (studentId: string) => {
-    if (!selectedCourse) return;
-    const updated = enrolledStudentIds.filter((id) => id !== studentId);
-    enrollMutation.mutate(
-      { id: selectedCourse.id as string, studentIds: updated },
-      { onSuccess: () => setEnrollOpen(false) }
-    );
+    if (!selectedCourse || !selectedGroupId) return;
+    // Remove from the specific group
+    const g = groups.find((g) => g.id === selectedGroupId);
+    if (!g) return;
+    const updated = g.enrolledStudentIds.filter((id) => id !== studentId);
+    // Use the enroll endpoint with the full group
+    unenrollMutation.mutate({ courseId, studentId });
   };
 
   const handleAddStudents = () => {
-    if (!selectedCourse || selectedStudentIds.length === 0) return;
-    const updated = [...enrolledStudentIds, ...selectedStudentIds];
-    enrollMutation.mutate(
-      { id: selectedCourse.id as string, studentIds: updated },
-      {
-        onSuccess: () => { setSelectedStudentIds([]); setEnrollOpen(false); },
-      }
-    );
+    if (!selectedCourse || !selectedGroupId || selectedStudentIds.length === 0) return;
+    // Enroll each student to the group
+    Promise.all(
+      selectedStudentIds.map((sid) =>
+        enrollMutation.mutateAsync({ courseId, groupId: selectedGroupId, studentId: sid })
+      )
+    ).then(() => {
+      setSelectedStudentIds([]);
+      setEnrollOpen(false);
+      toast.success(`${selectedStudentIds.length} student(s) enrolled`);
+    }).catch(() => {
+      toast.error('Failed to enroll some students');
+    });
   };
 
   const handleToggleStudent = (id: string) => {
@@ -102,19 +120,11 @@ export function ManageEnrollment() {
     { accessorKey: 'room', header: 'Room' },
     { accessorKey: 'credits', header: 'Credits' },
     { accessorKey: 'year', header: 'Year' },
-    {
-      accessorKey: 'studentIds',
-      header: 'Enrolled',
-      cell: ({ row }) => {
-        const count = (row.original.studentIds as string[])?.length ?? 0;
-        return <Badge variant="secondary">{count} student{count !== 1 ? 's' : ''}</Badge>;
-      },
-    },
   ];
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Enrollment Overview" description="Manage student course enrollment" />
+      <PageHeader title="Enrollment Overview" description="Manage student course enrollment by groups" />
 
       <Tabs defaultValue="enrolled" className="space-y-4">
         <TabsList>
@@ -129,12 +139,12 @@ export function ManageEnrollment() {
         <TabsContent value="enrolled" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Select Course</CardTitle>
+              <CardTitle className="text-base">Select Course & Group</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="max-w-xs">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
                 <Label htmlFor="enroll-course">Course</Label>
-                <Select value={courseId} onValueChange={setCourseId}>
+                <Select value={courseId} onValueChange={(v) => { setCourseId(v); setSelectedGroupId(''); }}>
                   <SelectTrigger id="enroll-course" aria-label="Select course">
                     <SelectValue placeholder="Choose a course..." />
                   </SelectTrigger>
@@ -147,10 +157,25 @@ export function ManageEnrollment() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label htmlFor="enroll-group">Group</Label>
+                <Select value={selectedGroupId} onValueChange={setSelectedGroupId} disabled={!courseId}>
+                  <SelectTrigger id="enroll-group" aria-label="Select group">
+                    <SelectValue placeholder="Choose a group..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.name} ({g.enrolledCount}/{g.capacity})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
 
-          {selectedCourse ? (
+          {selectedCourse && selectedGroupId ? (
             <>
               <Card>
                 <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -173,7 +198,7 @@ export function ManageEnrollment() {
                 {enrollOpen && (
                   <CardContent className="border-b pb-4">
                     <div className="space-y-3">
-                      <Label>Select students to add</Label>
+                      <Label>Select students to add to this group</Label>
                       <div className="max-h-48 overflow-y-auto border rounded-md divide-y">
                         {availableStudents.length === 0 ? (
                           <p className="p-3 text-sm text-muted-foreground text-center">
@@ -235,14 +260,14 @@ export function ManageEnrollment() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {enrolledStudents.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground py-10">
-                              No students enrolled in this course
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          enrolledStudents.map((s) => (
+                          {enrolledStudents.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center text-muted-foreground py-10">
+                                No students enrolled in this group
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            pagedEnrolled.map((s) => (
                             <TableRow key={String(s.id)}>
                               <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">
                                 {String(s.studentNumber ?? '—')}
@@ -258,7 +283,7 @@ export function ManageEnrollment() {
                                   size="sm"
                                   className="text-destructive hover:text-destructive gap-1"
                                   onClick={() => handleUnenroll(String(s.id))}
-                                  disabled={enrollMutation.isPending}
+                                  disabled={unenrollMutation.isPending}
                                 >
                                   <X className="size-3.5" /> Remove
                                 </Button>
@@ -271,12 +296,13 @@ export function ManageEnrollment() {
                   </div>
                 </CardContent>
               </Card>
+              <PaginationEnrolled />
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Users className="size-12 mb-4 opacity-30" />
-              <p className="text-lg font-medium">Select a course to view enrolled students</p>
-              <p className="text-sm">Choose a course from the dropdown above to manage enrollment.</p>
+              <p className="text-lg font-medium">Select a course and group to view enrolled students</p>
+              <p className="text-sm">Choose from the dropdowns above to manage enrollment.</p>
             </div>
           )}
         </TabsContent>

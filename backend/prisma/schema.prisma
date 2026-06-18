@@ -63,6 +63,7 @@ model Student {
   submissions         AssignmentSubmission[]
   claims              Claim[]
   invoices            Invoice[]
+  examResults         ExamResult[]
   faculty             Faculty?   @relation(fields: [facultyId], references: [id])
   @@map("students")
 }
@@ -81,6 +82,9 @@ model Lecturer {
   invitationAcceptedAt  DateTime? @map("invitationAcceptedAt")
 
   courses Course[]
+  groups   Group[]
+  grades   Grade[]
+  exams    Exam[]
   @@map("lecturers")
 }
 
@@ -116,6 +120,7 @@ model Semester {
   endDate   String? @map("endDate")
   isActive  Int     @default(0) @map("isActive")
 
+  groups Group[]
   @@map("semesters")
 }
 
@@ -127,27 +132,34 @@ model Room {
   building    String?
   description String?
 
-  courses          Course[]
-  timetableEntries TimetableEntry[]
+  courses Course[]
+  groups  Group[]
+  exams   Exam[]
 
   @@map("rooms")
 }
 
-model TimetableEntry {
-  id        String   @id
-  courseId   String   @map("courseId")
-  day       Int
-  startTime String   @map("startTime")
-  endTime   String   @map("endTime")
-  roomId    String?  @map("roomId")
+model Group {
+  id                  String  @id
+  name                String
+  courseId            String  @map("courseId")
+  semesterId          String? @map("semesterId")
+  lecturerId          String? @map("lecturerId")
+  roomId              String? @map("roomId")
+  capacity            Int     @default(30)
+  schedule            Json    @default("[]")
+  enrolledStudentIds  Json    @default("[]") @map("enrolledStudentIds")
 
-  course Course @relation(fields: [courseId], references: [id])
-  room   Room?  @relation(fields: [roomId], references: [id])
+  course   Course    @relation(fields: [courseId], references: [id])
+  lecturer Lecturer? @relation(fields: [lecturerId], references: [id])
+  room     Room?     @relation(fields: [roomId], references: [id])
+  semester Semester? @relation(fields: [semesterId], references: [id])
+  grades   Grade[]
+  exams    Exam[]
 
   @@index([courseId])
-  @@index([roomId])
-  @@index([day])
-  @@map("timetable_entries")
+  @@index([lecturerId])
+  @@map("groups")
 }
 
 model Course {
@@ -160,17 +172,17 @@ model Course {
   semesterId        String? @map("semesterId")
   credits           Int     @default(3)
   roomId            String? @map("roomId")
-  studentIds        Json    @default("[]") @map("studentIds")
   gradingComponents Json    @default("[]") @map("gradingComponents")
 
   lecturer   Lecturer?    @relation(fields: [lecturerId], references: [id])
   faculty    Faculty?     @relation(fields: [facultyId], references: [id])
   room       Room?        @relation(fields: [roomId], references: [id])
+  groups     Group[]
   attendance Attendance[]
   grades     Grade[]
   assignments Assignment[]
   materials   CourseMaterial[]
-  timetableEntries TimetableEntry[]
+  exams      Exam[]
   @@map("courses")
 }
 
@@ -191,21 +203,35 @@ model Attendance {
 }
 
 model Grade {
-  id              String  @id
-  studentId       String? @map("studentId")
-  courseId        String? @map("courseId")
+  id              String    @id
+  studentId       String?   @map("studentId")
+  courseId        String?   @map("courseId")
+  groupId         String?   @map("groupId")
+  lecturerId      String?   @map("lecturerId")
   semester        String?
-  score           Float   @default(0)
-  maxScore        Float   @default(100) @map("maxScore")
+  score           Float     @default(0)
+  maxScore        Float     @default(100) @map("maxScore")
   grade           String?
   comments        String?
-  componentScores Json    @default("{}") @map("componentScores")
+  componentScores Json      @default("{}") @map("componentScores")
+  status          String    @default("draft")
+  submittedAt     DateTime? @map("submittedAt")
+  approvedAt      DateTime? @map("approvedAt")
+  approvedById    String?   @map("approvedById")
+  rejectedAt      DateTime? @map("rejectedAt")
+  rejectedById    String?   @map("rejectedById")
+  rejectionNote   String?   @map("rejectionNote")
 
-  course  Course?  @relation(fields: [courseId], references: [id])
-  student Student? @relation(fields: [studentId], references: [id])
+  course   Course?   @relation(fields: [courseId], references: [id])
+  student  Student?  @relation(fields: [studentId], references: [id])
+  group    Group?    @relation(fields: [groupId], references: [id])
+  lecturer Lecturer? @relation(fields: [lecturerId], references: [id])
 
   @@index([studentId], name: "idx_grades_student")
   @@index([courseId], name: "idx_grades_course")
+  @@index([groupId], name: "idx_grades_group")
+  @@index([lecturerId], name: "idx_grades_lecturer")
+  @@index([status], name: "idx_grades_status")
   @@map("grades")
 }
 
@@ -372,6 +398,7 @@ model Claim {
   id            String      @id
   gradeId       String?     @map("gradeId")
   studentId     String?     @map("studentId")
+  courseId      String?     @map("courseId")
   subject       String?
   semester      String?
   claimedGrade  String?     @map("claimedGrade")
@@ -384,6 +411,7 @@ model Claim {
 
   student Student? @relation(fields: [studentId], references: [id])
   @@index([studentId], name: "idx_claims_student")
+  @@index([courseId], name: "idx_claims_course")
   @@index([status], name: "idx_claims_status")
   @@map("grade_appeals")
 }
@@ -433,6 +461,56 @@ model Payment {
 
   @@index([invoiceId], name: "idx_payments_invoice")
   @@map("payments")
+}
+
+model Exam {
+  id               String   @id
+  title            String
+  courseId         String   @map("courseId")
+  groupId          String?  @map("groupId")
+  lecturerId       String?  @map("lecturerId")
+  roomId           String?  @map("roomId")
+  date             String?
+  startTime        String?  @map("startTime")
+  endTime          String?  @map("endTime")
+  maxScore         Float    @default(100) @map("maxScore")
+  type             String   @default("exam")
+  status           String   @default("scheduled")
+  gradingComponent String?  @map("gradingComponent")
+  createdAt        DateTime @default(now()) @map("createdAt")
+
+  course   Course    @relation(fields: [courseId], references: [id])
+  group    Group?    @relation(fields: [groupId], references: [id])
+  lecturer Lecturer? @relation(fields: [lecturerId], references: [id])
+  room     Room?     @relation(fields: [roomId], references: [id])
+  results  ExamResult[]
+
+  @@index([courseId], name: "idx_exams_course")
+  @@index([groupId], name: "idx_exams_group")
+  @@index([lecturerId], name: "idx_exams_lecturer")
+  @@index([status], name: "idx_exams_status")
+  @@map("exams")
+}
+
+model ExamResult {
+  id            String    @id
+  examId        String    @map("examId")
+  studentId     String    @map("studentId")
+  score         Float     @default(0)
+  status        String    @default("draft")
+  gradedById    String?   @map("gradedById")
+  gradedAt      DateTime? @map("gradedAt")
+  approvedAt    DateTime? @map("approvedAt")
+  rejectedAt    DateTime? @map("rejectedAt")
+  rejectionNote String?   @map("rejectionNote")
+  comments      String?
+
+  exam    Exam    @relation(fields: [examId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([examId], name: "idx_exam_results_exam")
+  @@index([studentId], name: "idx_exam_results_student")
+  @@map("exam_results")
 }
 
 model Message {
