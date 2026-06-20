@@ -313,7 +313,7 @@ export function MyStudies() {
                     </CardContent>
                     <div className="px-4 pb-3">
                       <Button variant="outline" size="sm" className="gap-1 w-full" asChild>
-                        <a href="#" onClick={(e) => e.preventDefault()}>
+                        <a href={(m as Record<string, unknown>).fileUrl as string ?? '#'} target="_blank" rel="noopener noreferrer">
                           <Download className="size-3" /> Download {m.fileName}
                         </a>
                       </Button>

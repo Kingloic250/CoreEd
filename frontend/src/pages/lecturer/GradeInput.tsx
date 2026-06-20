@@ -45,7 +45,7 @@ function calcWeightedScore(components: { name: string; maxScore: number; weight:
 export function GradeInput() {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('all');
   const [selectedSemester, setSelectedSemester] = useState('');
   const [componentScores, setComponentScores] = useState<Record<string, ComponentScoreMap>>({});
   const [saving, setSaving] = useState(false);
@@ -89,7 +89,7 @@ export function GradeInput() {
   );
   const { data: courseDetail } = useGetCourse(selectedCourse || undefined);
   const { data: gradesData } = useGetGrades(
-    selectedCourse ? { courseId: selectedCourse, semester: selectedSemester || undefined, groupId: selectedGroup || undefined } : {}
+    selectedCourse ? { courseId: selectedCourse, semester: selectedSemester || undefined, groupId: selectedGroup && selectedGroup !== 'all' ? selectedGroup : undefined } : {}
   );
   const { data: students, isLoading: studentsLoading } = useGetStudents({});
   const createGrade = useCreateGrade();
@@ -198,7 +198,7 @@ export function GradeInput() {
           return createGrade.mutateAsync({
             studentId: sid,
             courseId: selectedCourse,
-            groupId: selectedGroup || undefined,
+            groupId: selectedGroup && selectedGroup !== 'all' ? selectedGroup : undefined,
             semester: selectedSemester,
             score: weightedScore,
             maxScore: 100,
@@ -220,7 +220,7 @@ export function GradeInput() {
     if (!selectedCourse) return;
     submitGradesMutation.mutate({
       courseId: selectedCourse,
-      groupId: selectedGroup || undefined,
+      groupId: selectedGroup && selectedGroup !== 'all' ? selectedGroup : undefined,
       semester: selectedSemester || undefined,
     });
   };
@@ -269,7 +269,7 @@ export function GradeInput() {
                 <Select value={selectedGroup} onValueChange={setSelectedGroup} disabled={!selectedCourse}>
                   <SelectTrigger aria-label="Select group"><SelectValue placeholder="All groups" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All groups</SelectItem>
+                    <SelectItem value="all">All groups</SelectItem>
                     {groupsList.map((g) => (<SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>))}
                   </SelectContent>
                 </Select>

@@ -30,3 +30,6 @@ export const getCreditUsage = (studentId?: string) =>
 
 export const getMyWaitlist = (studentId: string) =>
   axiosInstance.get(`${BASE}/waitlist/${studentId}`) as unknown as Promise<Record<string, unknown>[]>;
+
+export const unenrollStudent = (courseId: string, studentId: string) =>
+  axiosInstance.delete(`${BASE}/${courseId}`, { data: { studentId } }) as unknown as Promise<Record<string, unknown>>;

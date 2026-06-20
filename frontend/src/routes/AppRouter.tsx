@@ -57,6 +57,7 @@ import { MyAttendance } from '@/pages/student/MyAttendance';
 import { MyGrades } from '@/pages/student/MyGrades';
 import { Transcript } from '@/pages/student/Transcript';
 import { Announcements } from '@/pages/student/Announcements';
+import { GradeClaims } from '@/pages/student/GradeClaims';
 import { StudentCourseCatalog } from '@/pages/student/StudentCourseCatalog';
 import { StudentCourseDetail } from '@/pages/student/StudentCourseDetail';
 import { StudentProfile } from '@/pages/student/StudentProfile';
@@ -65,6 +66,8 @@ import { MyStudies } from '@/pages/student/MyStudies';
 import { AssignmentDetail } from '@/pages/student/AssignmentDetail';
 import { FeeLedger } from '@/pages/student/FeeLedger';
 import { MyExams } from '@/pages/student/MyExams';
+import { CourseMaterials } from '@/pages/student/CourseMaterials';
+import { MyEnrollments } from '@/pages/student/MyEnrollments';
 import { AssignmentDropbox } from '@/pages/student/AssignmentDropbox';
 
 function RootRedirect() {
@@ -176,11 +179,14 @@ export function AppRouter() {
           <Route index element={<StudentDashboard />} />
           <Route path="attendance" element={<MyAttendance />} />
           <Route path="grades" element={<MyGrades />} />
+          <Route path="grades/claims" element={<GradeClaims />} />
+          <Route path="enrollments" element={<MyEnrollments />} />
           <Route path="exams" element={<MyExams />} />
           <Route path="courses" element={<StudentCourseCatalog />} />
           <Route path="courses/:id" element={<StudentCourseDetail />} />
           <Route path="assignments" element={<AssignmentDropbox />} />
           <Route path="assignments/:id" element={<AssignmentDetail />} />
+          <Route path="materials" element={<CourseMaterials />} />
           <Route path="studies" element={<MyStudies />} />
           <Route path="studies/assignments/:id" element={<AssignmentDetail />} />
           <Route path="fees" element={<FeeLedger />} />

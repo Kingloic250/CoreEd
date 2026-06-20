@@ -101,8 +101,11 @@ const studentNav: NavGroup[] = [
     title: 'Academic', icon: BookOpen,
     items: [
       { title: 'My Grades', url: '/student/grades', icon: Trophy },
+      { title: 'Grade Claims', url: '/student/grades/claims', icon: AlertCircle },
+      { title: 'My Enrollments', url: '/student/enrollments', icon: UserCheck },
       { title: 'My Exams', url: '/student/exams', icon: ClipboardPen },
       { title: 'Assignments', url: '/student/assignments', icon: ClipboardList },
+      { title: 'Course Materials', url: '/student/materials', icon: BookOpen },
       { title: 'Course Catalog', url: '/student/courses', icon: Library },
       { title: 'My Studies', url: '/student/studies', icon: FileText },
       { title: 'Transcript', url: '/student/transcript', icon: ScrollText },

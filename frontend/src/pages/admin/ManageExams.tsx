@@ -100,9 +100,9 @@ export function ManageExams() {
     const payload = {
       title: form.title,
       courseId: form.courseId,
-      groupId: form.groupId || undefined,
+      groupId: form.groupId && form.groupId !== 'all' ? form.groupId : undefined,
       lecturerId: form.lecturerId || undefined,
-      roomId: form.roomId || null,
+      roomId: form.roomId && form.roomId !== 'none' ? form.roomId : null,
       date: form.date || undefined,
       startTime: form.startTime || undefined,
       endTime: form.endTime || undefined,
@@ -263,7 +263,7 @@ export function ManageExams() {
               <Select value={form.groupId} onValueChange={(v) => setForm((f) => ({ ...f, groupId: v }))} disabled={!form.courseId}>
                 <SelectTrigger><SelectValue placeholder="All groups" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All groups</SelectItem>
+                  <SelectItem value="all">All groups</SelectItem>
                   {groupsList.map((g) => (<SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>))}
                 </SelectContent>
               </Select>
@@ -282,7 +282,7 @@ export function ManageExams() {
               <Select value={form.roomId} onValueChange={(v) => setForm((f) => ({ ...f, roomId: v }))}>
                 <SelectTrigger><SelectValue placeholder="Select room" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No room</SelectItem>
+                  <SelectItem value="none">No room</SelectItem>
                   {roomList.map((r) => (<SelectItem key={r.id} value={r.id}>{r.name}{r.code ? ` (${r.code})` : ''}</SelectItem>))}
                 </SelectContent>
               </Select>
