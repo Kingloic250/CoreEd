@@ -60,12 +60,20 @@ export function ManageSemesters() {
 
   const handleSubmit = async () => {
     if (!form.name || !form.year || !form.startDate || !form.endDate) return;
-    if (editing?.id) {
-      await updateMutation.mutateAsync({ id: String(editing.id), payload: form });
-    } else {
-      await createMutation.mutateAsync(form);
+    const payload = {
+      ...form,
+      maxCreditsPerStudent: form.maxCreditsPerStudent ? Number(form.maxCreditsPerStudent) : 21,
+    };
+    try {
+      if (editing?.id) {
+        await updateMutation.mutateAsync({ id: String(editing.id), payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+      setOpen(false);
+    } catch {
+      // Error toast handled by hooks
     }
-    setOpen(false);
   };
 
   const activeSemester = semesters.find((s) => s.isActive);

@@ -44,7 +44,8 @@ router.post('/', authenticate, validate(semesterCreateSchema), async (req, res) 
     res.status(201).json(semester);
   } catch (err) {
     console.error('Create semester error:', err);
-    res.status(500).json({ message: 'Internal server error.' });
+    if (err.errors) return res.status(400).json({ message: 'Validation error', errors: err.errors });
+    res.status(500).json({ message: err?.message || 'Internal server error.' });
   }
 });
 
@@ -60,7 +61,7 @@ router.put('/:id', authenticate, async (req, res) => {
     res.json(semester);
   } catch (err) {
     console.error('Update semester error:', err);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({ message: err?.message || 'Internal server error.' });
   }
 });
 

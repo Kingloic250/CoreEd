@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, getDay,
   isSameDay, subMonths, addMonths,
@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGetCalendarEvents } from '@/hooks/useCalendar';
 import { formatDate } from '@/utils/formatters';
+import { markAllCalendarEventsRead } from '@/utils/notificationRead';
 
 type CalendarEvent = {
   id: string;
@@ -53,6 +54,10 @@ export function AcademicCalendar({ role }: AcademicCalendarProps) {
   const { data: events, isLoading } = useGetCalendarEvents();
 
   const allEvents = (events as CalendarEvent[]) ?? [];
+
+  useEffect(() => {
+    if (allEvents.length > 0) markAllCalendarEventsRead(allEvents.map((e) => String(e.id)));
+  }, [allEvents.length]);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);

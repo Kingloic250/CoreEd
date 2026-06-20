@@ -12,7 +12,8 @@ const CACHE_PATTERN = 'cache:/api/v1/announcements*';
 router.get('/', authenticate, cache(60), async (req, res) => {
   try {
     const { role } = req.query;
-    const where = role
+    // Admins see all announcements; others are filtered by role
+    const where = role && req.user.role !== 'admin'
       ? { targetRoles: { array_contains: role } }
       : {};
     const announcements = await prisma.announcement.findMany({
@@ -44,6 +45,30 @@ router.post('/', authenticate, async (req, res) => {
   } catch (err) {
     console.error('Create announcement error:', err);
     res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+router.put('/:id', authenticate, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+  try {
+    const { title, body, targetRoles, priority } = req.body;
+
+    const announcement = await prisma.announcement.update({
+      where: { id: req.params.id },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(body !== undefined && { body }),
+        ...(targetRoles !== undefined && { targetRoles }),
+        ...(priority !== undefined && { priority }),
+      },
+    });
+
+    await clearCache(CACHE_PATTERN);
+    await logAudit({ action: 'update_announcement', performedBy: req.user.email, performedById: req.user.id, targetType: 'announcement', targetId: announcement.id, details: `Updated announcement: ${announcement.title}` });
+    res.json(announcement);
+  } catch (err) {
+    console.error('Update announcement error:', err);
+    res.status(500).json({ message: err?.message || 'Internal server error.' });
   }
 });
 

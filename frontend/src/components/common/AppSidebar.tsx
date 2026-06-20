@@ -13,7 +13,7 @@ import {
   SidebarMenuItem, SidebarSeparator, useSidebar,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetMessages } from '@/hooks/useMessages';
@@ -102,6 +102,7 @@ const studentNav: NavGroup[] = [
     items: [
       { title: 'My Grades', url: '/student/grades', icon: Trophy },
       { title: 'My Exams', url: '/student/exams', icon: ClipboardPen },
+      { title: 'Assignments', url: '/student/assignments', icon: ClipboardList },
       { title: 'Course Catalog', url: '/student/courses', icon: Library },
       { title: 'My Studies', url: '/student/studies', icon: FileText },
       { title: 'Transcript', url: '/student/transcript', icon: ScrollText },
@@ -248,6 +249,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
       <SidebarFooter className="pt-2">
         <div className="flex items-center gap-3 px-2 py-2">
           <Avatar className="size-8 shrink-0">
+            <AvatarImage src={user?.avatar ?? undefined} alt={user?.name} />
             <AvatarFallback className="text-xs bg-primary text-primary-foreground">
               {getInitials(user?.name ?? 'U')}
             </AvatarFallback>

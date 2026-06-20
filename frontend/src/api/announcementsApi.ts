@@ -8,3 +8,6 @@ export const getAnnouncements = (params?: { role?: string }) =>
 
 export const createAnnouncement = (payload: unknown) =>
   axiosInstance.post(BASE, payload) as unknown as Promise<unknown>;
+
+export const updateAnnouncement = (id: string, payload: unknown) =>
+  axiosInstance.put(`${BASE}/${id}`, payload) as unknown as Promise<unknown>;

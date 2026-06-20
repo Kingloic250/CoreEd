@@ -24,11 +24,6 @@ export interface SubmitRequestPayload {
   message?: string;
 }
 
-export interface ApprovePayload {
-  schoolEmail: string;
-  password: string;
-}
-
 export const accountRequestApi = {
   getAll: async (): Promise<AccountRequest[]> => {
     return axiosInstance.get(API_PATHS.ACCOUNT_REQUESTS);
@@ -38,8 +33,8 @@ export const accountRequestApi = {
     return axiosInstance.post(API_PATHS.ACCOUNT_REQUESTS, payload);
   },
 
-  approve: async (id: string, payload: ApprovePayload): Promise<AccountRequest> => {
-    return axiosInstance.put(`${API_PATHS.ACCOUNT_REQUESTS}/${id}/approve`, payload);
+  approve: async (id: string): Promise<unknown> => {
+    return axiosInstance.put(`${API_PATHS.ACCOUNT_REQUESTS}/${id}/approve`);
   },
 
   reject: async (id: string): Promise<AccountRequest> => {

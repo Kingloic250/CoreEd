@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Bell, ChevronDown, ChevronUp, Info, AlertTriangle, Megaphone, Plus, Send, Users, GraduationCap } from 'lucide-react';
+import { Bell, ChevronDown, ChevronUp, Info, AlertTriangle, Megaphone, Plus, Send, Users, GraduationCap, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
-import { useGetAnnouncements, useCreateAnnouncement } from '@/hooks/useAnnouncements';
+import { useGetAnnouncements, useCreateAnnouncement, useUpdateAnnouncement } from '@/hooks/useAnnouncements';
+import { markAllAnnouncementsRead } from '@/utils/notificationRead';
 
 const priorityConfig: Record<string, { icon: typeof Megaphone; label: string; color: string }> = {
   high: { icon: AlertTriangle, label: 'High', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
@@ -30,11 +31,17 @@ export function NotificationsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'high' | 'normal'>('all');
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', body: '', targetRoles: ['student', 'lecturer'], priority: 'normal' });
+  const [form, setForm] = useState({ title: '', body: '', targetRoles: ['admin', 'student', 'lecturer'], priority: 'normal' });
 
   const { data: announcements, isLoading } = useGetAnnouncements(user?.role);
   const createMutation = useCreateAnnouncement();
+  const updateMutation = useUpdateAnnouncement();
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Record<string, unknown> | null>(null);
   const list = (announcements as Record<string, unknown>[]) ?? [];
+
+  useEffect(() => {
+    if (list.length > 0) markAllAnnouncementsRead(list.map((a) => String(a.id)));
+  }, [list.length]);
 
   const filtered = list.filter((a) => {
     const matchSearch =
@@ -57,17 +64,45 @@ export function NotificationsPage() {
     }));
   };
 
-  const handleCreate = async () => {
-    if (!form.title || !form.body || form.targetRoles.length === 0) return;
-    await createMutation.mutateAsync({
-      title: form.title,
-      body: form.body,
-      targetRoles: form.targetRoles,
-      priority: form.priority,
-      createdBy: user?.id,
+  const openCreate = () => {
+    setEditingAnnouncement(null);
+    setForm({ title: '', body: '', targetRoles: ['admin', 'student', 'lecturer'], priority: 'normal' });
+    setCreateOpen(true);
+  };
+
+  const openEdit = (announcement: Record<string, unknown>) => {
+    setEditingAnnouncement(announcement);
+    setForm({
+      title: String(announcement.title ?? ''),
+      body: String(announcement.body ?? announcement.message ?? ''),
+      targetRoles: (announcement.targetRoles as string[]) ?? ['student', 'lecturer'],
+      priority: String(announcement.priority ?? 'normal'),
     });
+    setCreateOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!form.title || !form.body || form.targetRoles.length === 0) return;
+    if (editingAnnouncement) {
+      await updateMutation.mutateAsync({
+        id: String(editingAnnouncement.id),
+        title: form.title,
+        body: form.body,
+        targetRoles: form.targetRoles,
+        priority: form.priority,
+      });
+    } else {
+      await createMutation.mutateAsync({
+        title: form.title,
+        body: form.body,
+        targetRoles: form.targetRoles,
+        priority: form.priority,
+        createdBy: user?.id,
+      });
+    }
     setCreateOpen(false);
-    setForm({ title: '', body: '', targetRoles: ['student', 'lecturer'], priority: 'normal' });
+    setEditingAnnouncement(null);
+    setForm({ title: '', body: '', targetRoles: ['admin', 'student', 'lecturer'], priority: 'normal' });
   };
 
   return (
@@ -77,7 +112,7 @@ export function NotificationsPage() {
         description="Stay updated with university announcements and alerts"
         actionLabel={user?.role === 'admin' ? 'Create' : undefined}
         actionIcon={Plus}
-        onAction={user?.role === 'admin' ? () => setCreateOpen(true) : undefined}
+        onAction={user?.role === 'admin' ? openCreate : undefined}
       />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
@@ -149,6 +184,18 @@ export function NotificationsPage() {
                             {targetLabels[t] ?? t}
                           </Badge>
                         ))}
+                        {user?.role === 'admin' && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(n);
+                            }}
+                            className="ml-auto p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                          >
+                            <Pencil className="size-3.5" />
+                          </button>
+                        )}
                       </div>
                       <div className="mt-1">
                         <p className={`text-sm text-muted-foreground ${!isExpanded && truncated ? 'line-clamp-2' : ''}`}>
@@ -183,10 +230,10 @@ export function NotificationsPage() {
         </div>
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog open={createOpen} onOpenChange={(open) => { if (!open) { setEditingAnnouncement(null); setCreateOpen(false); } }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Create Announcement</DialogTitle>
+            <DialogTitle>{editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -211,7 +258,7 @@ export function NotificationsPage() {
             <div className="space-y-2">
               <Label>Target audience</Label>
               <div className="flex gap-2">
-                {['student', 'lecturer'].map((role) => (
+                {['admin', 'student', 'lecturer'].map((role) => (
                   <Button
                     key={role}
                     type="button"
@@ -220,8 +267,8 @@ export function NotificationsPage() {
                     onClick={() => toggleTarget(role)}
                     className="gap-1"
                   >
-                    {role === 'student' ? <GraduationCap className="size-3" /> : <Users className="size-3" />}
-                    {role === 'student' ? 'Students' : 'Lecturers'}
+                    {role === 'student' ? <GraduationCap className="size-3" /> : role === 'lecturer' ? <Users className="size-3" /> : <Bell className="size-3" />}
+                    {role === 'student' ? 'Students' : role === 'lecturer' ? 'Lecturers' : 'Admin'}
                   </Button>
                 ))}
               </div>
@@ -247,13 +294,13 @@ export function NotificationsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setEditingAnnouncement(null); setCreateOpen(false); }}>Cancel</Button>
             <Button
-              onClick={handleCreate}
-              disabled={!form.title || !form.body || form.targetRoles.length === 0 || createMutation.isPending}
+              onClick={handleSubmit}
+              disabled={!form.title || !form.body || form.targetRoles.length === 0 || createMutation.isPending || updateMutation.isPending}
             >
-              {createMutation.isPending ? 'Posting...' : (
-                <><Send className="size-3 mr-1" /> Post</>
+              {createMutation.isPending || updateMutation.isPending ? 'Saving...' : (
+                <><Send className="size-3 mr-1" /> {editingAnnouncement ? 'Update' : 'Post'}</>
               )}
             </Button>
           </DialogFooter>

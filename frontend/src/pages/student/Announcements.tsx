@@ -1,5 +1,5 @@
 // Student: filterable, expandable announcement cards
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGetAnnouncements } from '@/hooks/useAnnouncements';
+import { markAllAnnouncementsRead } from '@/utils/notificationRead';
 
 export function Announcements() {
   const [search, setSearch] = useState('');
@@ -17,6 +18,10 @@ export function Announcements() {
 
   const { data: announcements, isLoading } = useGetAnnouncements();
   const list = (announcements as Record<string, unknown>[]) ?? [];
+
+  useEffect(() => {
+    if (list.length > 0) markAllAnnouncementsRead(list.map((a) => String(a.id)));
+  }, [list.length]);
 
   const filtered = list.filter((a) => {
     const matchSearch =

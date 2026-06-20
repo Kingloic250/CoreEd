@@ -18,6 +18,9 @@ export function useCreateSemester() {
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.SEMESTERS] });
       toast.success('Semester created successfully');
     },
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      toast.error(err?.response?.data?.message ?? 'Failed to create semester');
+    },
   });
 }
 
@@ -29,6 +32,9 @@ export function useUpdateSemester() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.SEMESTERS] });
       toast.success('Semester updated successfully');
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      toast.error(err?.response?.data?.message ?? 'Failed to update semester');
     },
   });
 }

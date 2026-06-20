@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const prisma = require('../db');
 const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
-const { accountRequestSchema, approveRequestSchema } = require('../validation');
+const { accountRequestSchema } = require('../validation');
 const { logAudit } = require('../helpers');
 
 const router = Router();
@@ -53,12 +53,9 @@ router.post('/', validate(accountRequestSchema), async (req, res) => {
 });
 
 // PUT /:id/approve — approve a request
-router.put('/:id/approve', authenticate, validate(approveRequestSchema), async (req, res) => {
+router.put('/:id/approve', authenticate, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    const { schoolEmail, password } = req.body;
-    if (!schoolEmail || !password) return res.status(400).json({ message: 'School email and password are required.' });
-
     const request = await prisma.accountRequest.findUnique({ where: { id: req.params.id } });
     if (!request || request.status !== 'pending') return res.status(400).json({ message: 'Request not found or already processed.' });
 
@@ -66,7 +63,8 @@ router.put('/:id/approve', authenticate, validate(approveRequestSchema), async (
       return res.status(400).json({ message: 'This request was flagged — student ID not found in the system. Reject it instead.' });
     }
 
-    const hash = await bcrypt.hash(password, 10);
+    const tempPassword = crypto.randomBytes(8).toString('hex');
+    const hash = await bcrypt.hash(tempPassword, 10);
     const userId = crypto.randomUUID();
 
     await prisma.$transaction([
@@ -74,20 +72,20 @@ router.put('/:id/approve', authenticate, validate(approveRequestSchema), async (
         data: {
           id: userId,
           name: request.name,
-          email: schoolEmail,
+          email: request.email,
           password: hash,
           role: 'student',
-          emailVerified: false,
+          emailVerified: true,
         },
       }),
       prisma.accountRequest.update({
         where: { id: request.id },
-        data: { status: 'approved', schoolEmail, password: hash, approvedAt: new Date() },
+        data: { status: 'approved', schoolEmail: request.email, approvedAt: new Date() },
       }),
     ]);
 
-    await logAudit({ action: 'approve_request', performedBy: req.user.email, performedById: req.user.id, targetType: 'account_request', targetId: request.id, details: `Approved request for ${request.name} (${schoolEmail})` });
-    res.json({ message: 'Account approved.' });
+    await logAudit({ action: 'approve_request', performedBy: req.user.email, performedById: req.user.id, targetType: 'account_request', targetId: request.id, details: `Approved request for ${request.name} (${request.email})` });
+    res.json({ message: 'Account approved.', tempPassword });
   } catch (err) {
     console.error('Approve error:', err);
     res.status(500).json({ message: 'Internal server error.' });

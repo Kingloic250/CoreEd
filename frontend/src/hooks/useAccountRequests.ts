@@ -13,8 +13,7 @@ export function useAccountRequests() {
 export function useApproveRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, schoolEmail, password }: { id: string; schoolEmail: string; password: string }) =>
-      accountRequestApi.approve(id, { schoolEmail, password }),
+    mutationFn: (id: string) => accountRequestApi.approve(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNT_REQUESTS] });
       toast.success('Request approved successfully');

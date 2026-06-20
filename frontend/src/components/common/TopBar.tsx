@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, User, Settings, LogOut, Moon, Sun, Monitor, ArrowRight, Info, AlertTriangle, Megaphone } from 'lucide-react';
+import { Bell, User, Settings, LogOut, Moon, Sun, Monitor, ArrowRight, Info, AlertTriangle, Megaphone, GraduationCap, Timer, CloudSun, Calendar } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import {
@@ -19,7 +19,9 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/components/theme-provider';
 import { useGetAnnouncements } from '@/hooks/useAnnouncements';
+import { useGetCalendarEvents } from '@/hooks/useCalendar';
 import { getInitials, formatDate } from '@/utils/formatters';
+import { getUnreadAnnouncements, getUnreadCalendarEvents, markAnnouncementRead, markCalendarEventRead, markAllAnnouncementsRead } from '@/utils/notificationRead';
 
 const priorityIcon: Record<string, typeof Megaphone> = {
   high: AlertTriangle,
@@ -40,7 +42,39 @@ export function TopBar() {
 
   const { data: announcements } = useGetAnnouncements(user?.role);
   const list = (announcements as Record<string, unknown>[]) ?? [];
-  const recent = list.slice(0, 5);
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const nextWeekISO = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const { data: calendarEvents } = useGetCalendarEvents({ startDate: todayISO, endDate: nextWeekISO });
+  const calList = (calendarEvents as Record<string, unknown>[]) ?? [];
+
+  const unreadAnnouncements = getUnreadAnnouncements(list);
+  const unreadCalendarEvents = getUnreadCalendarEvents(calList);
+  const unreadCount = unreadAnnouncements.length + unreadCalendarEvents.length;
+
+  const unreadAnnIds = new Set(unreadAnnouncements.map((a) => String(a.id)));
+  const unreadCalIds = new Set(unreadCalendarEvents.map((e) => String(e.id)));
+
+  const mergedNotifications = [...list, ...calList].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(String(a.createdAt)).getTime() : a.date ? new Date(String(a.date)).getTime() : 0;
+    const dateB = b.createdAt ? new Date(String(b.createdAt)).getTime() : b.date ? new Date(String(b.date)).getTime() : 0;
+    return dateB - dateA;
+  });
+  const recent = mergedNotifications.slice(0, 5);
+
+  const calIconMap: Record<string, typeof Bell> = {
+    exam: GraduationCap,
+    deadline: Timer,
+    holiday: CloudSun,
+    event: Calendar,
+  };
+
+  const calColorMap: Record<string, string> = {
+    exam: 'text-red-500',
+    deadline: 'text-amber-500',
+    holiday: 'text-emerald-500',
+    event: 'text-blue-500',
+  };
 
   const notifPath = user?.role === 'admin'
     ? '/admin/notifications'
@@ -62,9 +96,9 @@ export function TopBar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
               <Bell className="size-4" />
-              {recent.length > 0 && (
+              {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
-                  {recent.length}
+                  {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </Button>
@@ -72,29 +106,60 @@ export function TopBar() {
           <DropdownMenuContent className="w-[90vw] sm:w-80" align="end" sideOffset={8}>
             <DropdownMenuLabel className="font-normal flex items-center justify-between">
               <span className="text-sm font-medium">Notifications</span>
-              {recent.length > 0 && (
-                <Badge variant="secondary" className="text-[10px]">{recent.length} new</Badge>
+              {unreadCount > 0 && (
+                <Badge variant="secondary" className="text-[10px]">{unreadCount} new</Badge>
               )}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {recent.length === 0 ? (
+            {mergedNotifications.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">No notifications yet</div>
             ) : (
               <div className="max-h-[300px] overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                 {recent.map((n) => {
+                  const isCalEvent = ['exam', 'deadline', 'holiday', 'event'].includes(String(n.type));
+                  if (isCalEvent) {
+                    const Icon = calIconMap[String(n.type)] ?? Calendar;
+                    const isUnread = unreadCalIds.has(String(n.id));
+                    return (
+                      <DropdownMenuItem
+                        key={`cal-${String(n.id)}`}
+                        className="flex items-start gap-3 py-3 px-4 cursor-pointer"
+                        onClick={() => {
+                          markCalendarEventRead(String(n.id));
+                          setNotifOpen(false);
+                          navigate(`/${user?.role}/calendar`);
+                        }}
+                      >
+                        <div className="relative">
+                          <Icon className={`size-4 mt-0.5 shrink-0 ${calColorMap[String(n.type)] ?? ''}`} />
+                          {isUnread && <span className="absolute -top-0.5 -right-1 size-1.5 rounded-full bg-primary" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm font-medium truncate ${isUnread ? 'text-foreground' : 'text-muted-foreground'}`}>{String(n.title)}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{String(n.description ?? '')}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{String(n.date)}{n.time ? ` · ${n.time}` : ''}</p>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  }
                   const Icon = priorityIcon[String(n.priority)] ?? Megaphone;
+                  const isUnread = unreadAnnIds.has(String(n.id));
                   return (
                     <DropdownMenuItem
                       key={String(n.id)}
                       className="flex items-start gap-3 py-3 px-4 cursor-pointer"
                       onClick={() => {
+                        markAnnouncementRead(String(n.id));
                         setNotifOpen(false);
                         navigate(notifPath);
                       }}
                     >
-                      <Icon className={`size-4 mt-0.5 shrink-0 ${priorityColor[String(n.priority)] ?? ''}`} />
+                      <div className="relative">
+                        <Icon className={`size-4 mt-0.5 shrink-0 ${priorityColor[String(n.priority)] ?? ''}`} />
+                        {isUnread && <span className="absolute -top-0.5 -right-1 size-1.5 rounded-full bg-primary" />}
+                      </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground truncate">{String(n.title)}</p>
+                        <p className={`text-sm font-medium truncate ${isUnread ? 'text-foreground' : 'text-muted-foreground'}`}>{String(n.title)}</p>
                         <p className="text-xs text-muted-foreground line-clamp-1">{String(n.body ?? n.message ?? '')}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(String(n.createdAt))}</p>
                       </div>
@@ -107,6 +172,7 @@ export function TopBar() {
             <DropdownMenuItem
               className="flex items-center justify-center gap-1 text-sm font-medium text-primary cursor-pointer"
               onClick={() => {
+                markAllAnnouncementsRead(list.map((a) => String(a.id)));
                 setNotifOpen(false);
                 navigate(notifPath);
               }}
@@ -120,6 +186,7 @@ export function TopBar() {
           <DropdownMenuTrigger asChild>
             <button className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <Avatar className="size-8 cursor-pointer">
+                <AvatarImage src={user?.avatar ?? undefined} alt={user?.name} />
                 <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                   {getInitials(user?.name ?? 'U')}
                 </AvatarFallback>

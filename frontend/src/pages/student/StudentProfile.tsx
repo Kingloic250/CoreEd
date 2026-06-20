@@ -6,10 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { AvatarUpload } from '@/components/common/AvatarUpload';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetCurrentStudent } from '@/hooks/useStudents';
-import { getInitials } from '@/utils/formatters';
 import { profileApi } from '@/api/profileApi';
 
 export function StudentProfile() {
@@ -64,11 +63,9 @@ export function StudentProfile() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <CardContent className="flex flex-col items-center py-8">
-            <Avatar className="size-24 mb-4">
-              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                {getInitials(`${(studentProfile?.firstName as string) ?? ''} ${(studentProfile?.lastName as string) ?? ''}`)}
-              </AvatarFallback>
-            </Avatar>
+            <div className="mb-4">
+              <AvatarUpload name={user?.name ?? 'U'} avatarUrl={user?.avatar ?? null} />
+            </div>
             <h2 className="text-lg font-semibold text-foreground">
               {studentProfile?.firstName as string} {studentProfile?.lastName as string}
             </h2>

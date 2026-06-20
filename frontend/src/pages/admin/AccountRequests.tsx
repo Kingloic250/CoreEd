@@ -1,14 +1,13 @@
-import { useState } from 'react';
-import { Check, X, Mail, Key, Clock, CheckCircle, XCircle, AlertTriangle, CreditCard } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Check, X, Clock, CheckCircle, XCircle, AlertTriangle, CreditCard, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { DataTable } from '@/components/common/DataTable';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAccountRequests, useApproveRequest, useRejectRequest } from '@/hooks/useAccountRequests';
 import { formatDate } from '@/utils/formatters';
+import { toast } from 'sonner';
 import type { AccountRequest } from '@/api/accountRequestApi';
 
 export function AccountRequests() {
@@ -16,18 +15,19 @@ export function AccountRequests() {
   const approveMutation = useApproveRequest();
   const rejectMutation = useRejectRequest();
   const [approving, setApproving] = useState<AccountRequest | null>(null);
-  const [schoolEmail, setSchoolEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [approvedResult, setApprovedResult] = useState<string | null>(null);
 
   const requests = (data as AccountRequest[]) ?? [];
 
-  const handleApprove = () => {
-    if (!approving || !schoolEmail || !password) return;
-    approveMutation.mutate(
-      { id: approving.id, schoolEmail, password },
-      { onSuccess: () => setApproving(null) }
-    );
-  };
+  const handleApprove = useCallback(() => {
+    if (!approving) return;
+    approveMutation.mutate(approving.id, {
+      onSuccess: (res: unknown) => {
+        const r = res as Record<string, unknown>;
+        setApprovedResult(String(r.tempPassword ?? ''));
+      },
+    });
+  }, [approving, approveMutation]);
 
   const columns = [
     {
@@ -148,12 +148,12 @@ export function AccountRequests() {
         searchPlaceholder="Search by name or email..."
       />
 
-      <Dialog open={!!approving} onOpenChange={(open) => !open && setApproving(null)}>
+      <Dialog open={!!approving} onOpenChange={(open) => { if (!open) { setApproving(null); setApprovedResult(null); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Approve Account Request</DialogTitle>
             <DialogDescription>
-              Assign a school email and password for <strong>{approving?.name}</strong>.
+              Create an account for <strong>{approving?.name}</strong> using their email <strong>{approving?.email}</strong>.
             </DialogDescription>
           </DialogHeader>
 
@@ -164,43 +164,43 @@ export function AccountRequests() {
             </div>
           )}
 
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="schoolEmail">University Email</Label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="schoolEmail"
-                  className="pl-10"
-                  placeholder="e.g. student@greenfield.edu"
-                  value={schoolEmail}
-                  onChange={(e) => setSchoolEmail(e.target.value)}
-                />
+          {approvedResult ? (
+            <div className="space-y-3 py-2">
+              <div className="rounded-md bg-green-50 dark:bg-green-950/30 p-4 text-sm text-green-700 dark:text-green-400">
+                Account approved. Share this temporary password with the student:
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="approvePassword">Password</Label>
-              <div className="relative">
-                <Key className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="approvePassword"
-                  type="password"
-                  className="pl-10"
-                  placeholder="Set a temporary password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+              <div className="flex items-center gap-2 rounded-md border bg-muted p-3">
+                <code className="flex-1 text-sm font-mono font-bold">{approvedResult}</code>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(approvedResult);
+                    toast.success('Password copied');
+                  }}
+                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                >
+                  <Copy className="size-4" />
+                </button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                The student should sign in with their email and change this password.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="py-2 text-sm text-muted-foreground">
+              An account will be created with a randomly generated password. The student can use the forgot-password flow to set their own password.
+            </div>
+          )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setApproving(null)}>
-              Cancel
+            <Button variant="outline" onClick={() => { setApproving(null); setApprovedResult(null); }}>
+              {approvedResult ? 'Close' : 'Cancel'}
             </Button>
-            <Button onClick={handleApprove} disabled={!schoolEmail || !password || approving?.flagged || approveMutation.isPending}>
-              {approveMutation.isPending ? 'Approving...' : 'Approve & Create Account'}
-            </Button>
+            {!approvedResult && (
+              <Button onClick={handleApprove} disabled={approving?.flagged || approveMutation.isPending}>
+                {approveMutation.isPending ? 'Approving...' : 'Approve & Create Account'}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
