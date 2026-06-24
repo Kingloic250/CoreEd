@@ -29,6 +29,10 @@ const enrollRoutes = require('./routes/enroll');
 const gradeRoutes = require('./routes/grades');
 const claimRoutes = require('./routes/claims');
 const examRoutes = require('./routes/exams');
+const attendanceRoutes = require('./routes/attendance');
+const messagesRoutes = require('./routes/messages');
+const invoicesRoutes = require('./routes/invoices');
+const paymentsRoutes = require('./routes/payments');
 const { authenticate } = require('./middleware/auth');
 const { createRateLimiter } = require('./middleware/rateLimit');
 
@@ -76,6 +80,10 @@ app.use('/api/v1/enroll', authenticate, enrollRoutes);
 app.use('/api/v1/grades', authenticate, gradeRoutes);
 app.use('/api/v1/claims', authenticate, claimRoutes);
 app.use('/api/v1/exams', authenticate, examRoutes);
+app.use('/api/v1/attendance', authenticate, attendanceRoutes);
+app.use('/api/v1/messages', authenticate, messagesRoutes);
+app.use('/api/v1/invoices', authenticate, invoicesRoutes);
+app.use('/api/v1/payments', authenticate, paymentsRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

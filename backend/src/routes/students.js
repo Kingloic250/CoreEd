@@ -27,6 +27,34 @@ async function generateUniqueStudentNumber() {
   throw new Error('Could not generate unique student number');
 }
 
+router.get('/profile', authenticate, async (req, res) => {
+  try {
+    const student = await prisma.student.findUnique({
+      where: { id: req.user.id },
+      include: { faculty: true },
+    });
+    if (!student) return res.status(404).json({ message: 'Student not found.' });
+    res.json(student);
+  } catch (err) {
+    console.error('Get current student error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+router.get('/:id', authenticate, async (req, res) => {
+  try {
+    const student = await prisma.student.findUnique({
+      where: { id: req.params.id },
+      include: { faculty: true },
+    });
+    if (!student) return res.status(404).json({ message: 'Student not found.' });
+    res.json(student);
+  } catch (err) {
+    console.error('Get student error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
 router.get('/', authenticate, cache(60), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   const { search } = req.query;
@@ -51,10 +79,7 @@ router.get('/', authenticate, cache(60), async (req, res) => {
 router.post('/', authenticate, validate(studentCreateSchema), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    const { firstName, lastName, email, dateOfBirth, gender, year, facultyId } = req.body;
-    if (!firstName || !lastName || !email || !year || !facultyId) {
-      return res.status(400).json({ message: 'firstName, lastName, email, year, and facultyId are required.' });
-    }
+    const { firstName, lastName, email, dateOfBirth, gender, year, facultyId, maxCredits } = req.body;
     const existing = await prisma.student.findUnique({ where: { email } });
     if (existing) return res.status(409).json({ message: 'A student with this email already exists.' });
 
@@ -72,14 +97,15 @@ router.post('/', authenticate, validate(studentCreateSchema), async (req, res) =
         firstName,
         lastName,
         email,
-        dateOfBirth: dateOfBirth ?? null,
-        gender: gender ?? null,
+        dateOfBirth,
+        gender,
         year,
         department: faculty.department.name,
         facultyId,
         enrollmentDate: new Date().toISOString().split('T')[0],
         status: 'active',
         studentNumber,
+        maxCredits: maxCredits ?? null,
       },
     });
     await clearCache(CACHE_PATTERN);
@@ -101,6 +127,8 @@ router.put('/:id', authenticate, validate(studentUpdateSchema), async (req, res)
         include: { department: true },
       });
       if (faculty) data.department = faculty.department.name;
+    } else if (data.facultyId === null || data.facultyId === '') {
+      data.department = null;
     }
     const student = await prisma.student.update({
       where: { id: req.params.id },
@@ -110,6 +138,7 @@ router.put('/:id', authenticate, validate(studentUpdateSchema), async (req, res)
     await logAudit({ action: 'update_student', performedBy: req.user.email, performedById: req.user.id, targetType: 'student', targetId: req.params.id, details: `Updated student ${req.params.id}` });
     res.json(student);
   } catch (err) {
+    console.error('Update student error:', err);
     res.status(500).json({ message: 'Internal server error.' });
   }
 });

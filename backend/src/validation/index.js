@@ -9,10 +9,11 @@ const studentCreateSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  dateOfBirth: z.string().optional(),
-  gender: z.enum(['male', 'female']).optional(),
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  gender: z.enum(['male', 'female'], { error: 'Gender is required' }),
   year: z.string().min(1, 'Year is required'),
   facultyId: z.string().min(1, 'Faculty is required'),
+  maxCredits: z.number().int().positive().optional(),
 });
 
 const studentUpdateSchema = z.object({
@@ -25,6 +26,7 @@ const studentUpdateSchema = z.object({
   facultyId: z.string().optional(),
   department: z.string().optional(),
   status: z.enum(['active', 'inactive', 'graduated', 'suspended']).optional(),
+  maxCredits: z.number().int().positive().optional(),
 });
 
 const lecturerCreateSchema = z.object({

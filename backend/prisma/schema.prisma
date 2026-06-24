@@ -75,6 +75,7 @@ model Student {
   examResults         ExamResult[]
   enrollments         Enrollment[]
   waitlistEntries     WaitlistEntry[]
+  payments            Payment[]
   faculty             Faculty?   @relation(fields: [facultyId], references: [id])
   @@map("students")
 }
@@ -521,15 +522,19 @@ model InvoiceItem {
 model Payment {
   id         String        @id
   invoiceId  String?       @map("invoiceId")
+  studentId  String?       @map("studentId")
   amount     Float
   method     PaymentMethod
   reference  String?
   paidAt     DateTime?     @map("paidAt")
+  createdAt  DateTime      @default(now()) @map("createdAt")
   receivedBy String?       @map("receivedBy")
 
   invoice Invoice? @relation(fields: [invoiceId], references: [id])
+  student Student? @relation(fields: [studentId], references: [id])
 
   @@index([invoiceId], name: "idx_payments_invoice")
+  @@index([studentId], name: "idx_payments_student")
   @@map("payments")
 }
 
