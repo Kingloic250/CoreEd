@@ -33,6 +33,7 @@ const attendanceRoutes = require('./routes/attendance');
 const messagesRoutes = require('./routes/messages');
 const invoicesRoutes = require('./routes/invoices');
 const paymentsRoutes = require('./routes/payments');
+const systemSettingsRoutes = require('./routes/systemSettings');
 const { authenticate } = require('./middleware/auth');
 const { createRateLimiter } = require('./middleware/rateLimit');
 
@@ -84,6 +85,7 @@ app.use('/api/v1/attendance', authenticate, attendanceRoutes);
 app.use('/api/v1/messages', authenticate, messagesRoutes);
 app.use('/api/v1/invoices', authenticate, invoicesRoutes);
 app.use('/api/v1/payments', authenticate, paymentsRoutes);
+app.use('/api/v1/system-settings', authenticate, systemSettingsRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

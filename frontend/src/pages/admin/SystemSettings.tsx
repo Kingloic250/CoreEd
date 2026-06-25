@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { PageHeader } from '@/components/common/PageHeader';
+import { useGetSettings, useUpdateSettings } from '@/hooks/useSystemSettings';
 
 const GRADE_LETTERS = ['A', 'B', 'C', 'D', 'F'] as const;
 const GRADE_COLORS: Record<string, string> = {
@@ -57,41 +58,53 @@ function SettingsSection({ title, description, children }: { title: string; desc
   );
 }
 
-export function SystemSettings() {
-  const [settings, setSettings] = useState({
-    schoolName: import.meta.env.VITE_APP_NAME ?? 'Greenfield Academy',
-    schoolTagline: 'University Management System',
-    academicYear: '2025/2026',
-    currentSemester: 'Semester 2',
-    grades: DEFAULT_GRADES,
-    selfRegistration: false,
-    requireVerification: true,
-    requireApproval: true,
-    defaultRole: 'student',
-    smtpHost: '',
-    smtpPort: '587',
-    smtpUser: '',
-    smtpPass: '',
-    smtpFromName: 'Greenfield Academy',
-    smtpFromEmail: '',
-    showSmtpPass: false,
-    minPasswordLength: 8,
-    requireSpecialChar: true,
-    sessionTimeout: 60,
-    maxLoginAttempts: 5,
-    lockoutDuration: 5,
-    emailNotifications: true,
-    eventNotifications: EVENT_TYPES.reduce((acc, e) => ({ ...acc, [e.id]: true }), {} as Record<string, boolean>),
-    features: FEATURES.reduce((acc, f) => ({ ...acc, [f.id]: true }), {} as Record<string, boolean>),
-    timezone: 'Africa/Kigali',
-    dateFormat: 'DD/MM/YYYY',
-  });
+const DEFAULTS = {
+  schoolName: import.meta.env.VITE_APP_NAME ?? 'Greenfield Academy',
+  schoolTagline: 'University Management System',
+  academicYear: '2025/2026',
+  currentSemester: 'Semester 2',
+  grades: DEFAULT_GRADES,
+  selfRegistration: false,
+  requireVerification: true,
+  requireApproval: true,
+  defaultRole: 'student',
+  smtpHost: '',
+  smtpPort: '587',
+  smtpUser: '',
+  smtpPass: '',
+  smtpFromName: 'Greenfield Academy',
+  smtpFromEmail: '',
+  showSmtpPass: false,
+  minPasswordLength: 8,
+  requireSpecialChar: true,
+  sessionTimeout: 60,
+  maxLoginAttempts: 5,
+  lockoutDuration: 5,
+  emailNotifications: true,
+  eventNotifications: EVENT_TYPES.reduce((acc, e) => ({ ...acc, [e.id]: true }), {} as Record<string, boolean>),
+  features: FEATURES.reduce((acc, f) => ({ ...acc, [f.id]: true }), {} as Record<string, boolean>),
+  timezone: 'Africa/Kigali',
+  dateFormat: 'DD/MM/YYYY',
+};
 
-  const set = <K extends keyof typeof settings>(key: K, value: (typeof settings)[K]) =>
+type Settings = typeof DEFAULTS;
+
+export function SystemSettings() {
+  const { data: saved, isLoading } = useGetSettings();
+  const { mutate: saveSettings } = useUpdateSettings();
+  const [settings, setSettings] = useState<Settings>(DEFAULTS);
+  const [loaded, setLoaded] = useState(false);
+
+  if (saved && !loaded) {
+    setSettings((prev) => ({ ...prev, ...(saved as Partial<Settings>) }));
+    setLoaded(true);
+  }
+
+  const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     setSettings((prev) => ({ ...prev, [key]: value }));
 
   const handleSave = () => {
-    toast.success('Settings saved successfully');
+    saveSettings(settings as unknown as Record<string, unknown>);
   };
 
   const handleClearCache = () => {
@@ -118,7 +131,7 @@ export function SystemSettings() {
           <TabsTrigger value="school" className="gap-1.5"><Building2 className="size-4" /> School</TabsTrigger>
           <TabsTrigger value="grading" className="gap-1.5"><GraduationCap className="size-4" /> Grading</TabsTrigger>
           <TabsTrigger value="registration" className="gap-1.5"><Shield className="size-4" /> Registration</TabsTrigger>
-          <TabsTrigger value="email" className="gap-1.5"><Mail className="size-4" /> Email</TabsTrigger>
+          {/* <TabsTrigger value="email" className="gap-1.5"><Mail className="size-4" /> Email</TabsTrigger> */}
           <TabsTrigger value="security" className="gap-1.5"><Settings2 className="size-4" /> Security</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-1.5"><Bell className="size-4" /> Notifications</TabsTrigger>
           <TabsTrigger value="features" className="gap-1.5"><ToggleLeft className="size-4" /> Features</TabsTrigger>
@@ -274,7 +287,7 @@ export function SystemSettings() {
           </SettingsSection>
         </TabsContent>
 
-        {/* Email Configuration */}
+        {/* Email Configuration — hidden for now
         <TabsContent value="email" className="space-y-6 max-w-2xl">
           <SettingsSection title="SMTP Configuration" description="Outgoing mail server settings">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -327,6 +340,7 @@ export function SystemSettings() {
             </Button>
           </SettingsSection>
         </TabsContent>
+        */}
 
         {/* Security */}
         <TabsContent value="security" className="space-y-6 max-w-2xl">
