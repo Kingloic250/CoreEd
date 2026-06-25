@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, GraduationCap, BookOpen,
+  LayoutDashboard, Users, GraduationCap, BookOpen, User,
   BarChart3, ClipboardList, FileText, Bell, School,
   ClipboardCheck, Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
   Library, ScrollText, Shield, CalendarRange, Wallet, Mail, AlertCircle, Building2,
@@ -132,6 +132,7 @@ const studentNav: NavGroup[] = [
       { title: 'Fee Ledger', url: '/student/fees', icon: Wallet },
     ],
   },
+  { items: [{ title: 'Profile', url: '/student/profile', icon: User }] },
 ];
 
 const navMap: Record<string, NavGroup[]> = {

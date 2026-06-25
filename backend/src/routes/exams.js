@@ -42,6 +42,36 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/v1/exams/mine — exams for student's enrolled groups
+router.get('/mine', authenticate, async (req, res) => {
+  try {
+    const student = await prisma.student.findUnique({ where: { id: req.user.id } });
+    if (!student) return res.status(404).json({ message: 'Student not found.' });
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { studentId: req.user.id, status: 'REGISTERED' },
+      include: { group: true },
+    });
+
+    const groupIds = [...new Set(enrollments.map((e) => e.groupId).filter(Boolean))];
+
+    const exams = await prisma.exam.findMany({
+      where: { groupId: { in: groupIds } },
+      include: {
+        course: { select: { id: true, name: true } },
+        group: { select: { id: true, name: true } },
+        room: { select: { id: true, name: true, code: true } },
+        _count: { select: { results: true } },
+      },
+      orderBy: { date: 'desc' },
+    });
+    res.json(exams);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch exams' });
+  }
+});
+
 // GET /api/v1/exams/:id — single exam with results
 router.get('/:id', authenticate, async (req, res) => {
   try {

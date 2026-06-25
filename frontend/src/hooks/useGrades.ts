@@ -27,6 +27,14 @@ export function useGetTranscript(studentId: string) {
   });
 }
 
+export function useGetStudentStanding(studentId: string) {
+  return useQuery({
+    queryKey: [QUERY_KEYS.GRADES, 'standing', studentId],
+    queryFn: () => gradesApi.getStudentStanding(studentId),
+    enabled: !!studentId,
+  });
+}
+
 export function useCreateGrade() {
   const qc = useQueryClient();
   return useMutation({

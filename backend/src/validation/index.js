@@ -9,7 +9,12 @@ const studentCreateSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  dateOfBirth: z.string().refine((val) => {
+    const date = new Date(val);
+    const now = new Date();
+    const age = now.getFullYear() - date.getFullYear();
+    return date < now && age >= 17 && age <= 60;
+  }, 'Date of birth must be valid (age 17\u201360)'),
   gender: z.enum(['male', 'female'], { error: 'Gender is required' }),
   year: z.string().min(1, 'Year is required'),
   facultyId: z.string().min(1, 'Faculty is required'),
@@ -25,7 +30,7 @@ const studentUpdateSchema = z.object({
   year: z.string().optional(),
   facultyId: z.string().optional(),
   department: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'graduated', 'suspended']).optional(),
+  status: z.enum(['active', 'inactive', 'graduated', 'expelled']).optional(),
   maxCredits: z.number().int().positive().optional(),
 });
 
@@ -154,7 +159,7 @@ const gradeCreateSchema = z.object({
   courseId: z.string().min(1, 'Course is required'),
   groupId: z.string().optional(),
   semester: z.string().optional(),
-  score: z.number().min(0).default(0),
+  score: z.number().min(0).max(100).default(0),
   maxScore: z.number().min(1).default(100),
   grade: z.string().optional(),
   comments: z.string().optional(),

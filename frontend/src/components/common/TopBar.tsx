@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, User, Settings, LogOut, Moon, Sun, Monitor, ArrowRight, Info, AlertTriangle, Megaphone, GraduationCap, Timer, CloudSun, Calendar } from 'lucide-react';
+import { Bell, User, Settings, LogOut, Moon, Sun, Monitor, ArrowRight, Info, AlertTriangle, Megaphone, GraduationCap, Timer, CloudSun, Calendar, Mail } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -20,8 +20,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/components/theme-provider';
 import { useGetAnnouncements } from '@/hooks/useAnnouncements';
 import { useGetCalendarEvents } from '@/hooks/useCalendar';
+import { useGetMessages } from '@/hooks/useMessages';
 import { getInitials, formatDate } from '@/utils/formatters';
-import { getUnreadAnnouncements, getUnreadCalendarEvents, markAnnouncementRead, markCalendarEventRead, markAllAnnouncementsRead } from '@/utils/notificationRead';
+import { getUnreadAnnouncements, getUnreadCalendarEvents, getUnreadMessages, markAnnouncementRead, markCalendarEventRead, markMessageRead, markAllAnnouncementsRead } from '@/utils/notificationRead';
 
 const priorityIcon: Record<string, typeof Megaphone> = {
   high: AlertTriangle,
@@ -48,14 +49,19 @@ export function TopBar() {
   const { data: calendarEvents } = useGetCalendarEvents({ startDate: todayISO, endDate: nextWeekISO });
   const calList = (calendarEvents as Record<string, unknown>[]) ?? [];
 
+  const { data: messages } = useGetMessages({ userId: user?.id, folder: 'inbox' });
+  const msgList = (messages as Record<string, unknown>[]) ?? [];
+
   const unreadAnnouncements = getUnreadAnnouncements(list);
   const unreadCalendarEvents = getUnreadCalendarEvents(calList);
-  const unreadCount = unreadAnnouncements.length + unreadCalendarEvents.length;
+  const unreadMessages = getUnreadMessages(msgList);
+  const unreadCount = unreadAnnouncements.length + unreadCalendarEvents.length + unreadMessages.length;
 
   const unreadAnnIds = new Set(unreadAnnouncements.map((a) => String(a.id)));
   const unreadCalIds = new Set(unreadCalendarEvents.map((e) => String(e.id)));
+  const unreadMsgIds = new Set(unreadMessages.map((m) => String(m.id)));
 
-  const mergedNotifications = [...list, ...calList].sort((a, b) => {
+  const mergedNotifications = [...list, ...calList, ...unreadMessages].sort((a, b) => {
     const dateA = a.createdAt ? new Date(String(a.createdAt)).getTime() : a.date ? new Date(String(a.date)).getTime() : 0;
     const dateB = b.createdAt ? new Date(String(b.createdAt)).getTime() : b.date ? new Date(String(b.date)).getTime() : 0;
     return dateB - dateA;
@@ -117,6 +123,31 @@ export function TopBar() {
               <div className="max-h-[300px] overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                 {recent.map((n) => {
                   const isCalEvent = ['exam', 'deadline', 'holiday', 'event'].includes(String(n.type));
+                  const isMsg = !isCalEvent && !('priority' in n) && ('subject' in n);
+                  if (isMsg) {
+                    const isUnread = unreadMsgIds.has(String(n.id));
+                    return (
+                      <DropdownMenuItem
+                        key={`msg-${String(n.id)}`}
+                        className="flex items-start gap-3 py-3 px-4 cursor-pointer"
+                        onClick={() => {
+                          markMessageRead(String(n.id));
+                          setNotifOpen(false);
+                          navigate(`/${user?.role}/messages`);
+                        }}
+                      >
+                        <div className="relative">
+                          <Mail className="size-4 mt-0.5 shrink-0 text-muted-foreground" />
+                          {isUnread && <span className="absolute -top-0.5 -right-1 size-1.5 rounded-full bg-primary" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm font-medium truncate ${isUnread ? 'text-foreground' : 'text-muted-foreground'}`}>{String(n.subject)}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">from {String(n.senderName)}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(String(n.createdAt))}</p>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  }
                   if (isCalEvent) {
                     const Icon = calIconMap[String(n.type)] ?? Calendar;
                     const isUnread = unreadCalIds.has(String(n.id));

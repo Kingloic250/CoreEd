@@ -1,5 +1,6 @@
 const ANN_READ_KEY = 'readAnnouncements';
 const CAL_READ_KEY = 'readCalendarEvents';
+const MSG_READ_KEY = 'readMessages';
 
 function getReadIds(key: string): Set<string> {
   const stored = localStorage.getItem(key);
@@ -42,4 +43,17 @@ export function getUnreadAnnouncements(list: Record<string, unknown>[]): Record<
 export function getUnreadCalendarEvents(list: Record<string, unknown>[]): Record<string, unknown>[] {
   const readIds = getReadIds(CAL_READ_KEY);
   return list.filter((e) => !readIds.has(String(e.id)));
+}
+
+export function markMessageRead(id: string): void {
+  addReadId(MSG_READ_KEY, id);
+}
+
+export function markAllMessagesRead(ids: string[]): void {
+  addReadIds(MSG_READ_KEY, ids);
+}
+
+export function getUnreadMessages(list: Record<string, unknown>[]): Record<string, unknown>[] {
+  const readIds = getReadIds(MSG_READ_KEY);
+  return list.filter((m) => !readIds.has(String(m.id)) && !m.read);
 }

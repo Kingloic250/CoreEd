@@ -42,6 +42,28 @@ router.put('/', authenticate, async (req, res) => {
   }
 });
 
+router.put('/student', authenticate, async (req, res) => {
+  try {
+    const { year, gender, dateOfBirth } = req.body;
+    const student = await prisma.student.findUnique({ where: { email: req.user.email } });
+    if (!student) return res.status(404).json({ message: 'Student not found.' });
+
+    const data = {};
+    if (year !== undefined) data.year = year;
+    if (gender !== undefined) data.gender = gender;
+    if (dateOfBirth !== undefined) data.dateOfBirth = dateOfBirth;
+
+    const updated = await prisma.student.update({
+      where: { email: req.user.email },
+      data,
+    });
+    res.json(updated);
+  } catch (err) {
+    console.error('Update student profile error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
 router.post('/avatar', authenticate, uploadAvatar.single('avatar'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file provided.' });

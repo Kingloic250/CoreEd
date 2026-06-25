@@ -4,6 +4,37 @@ const prisma = require('../db');
 const { generateId, logAudit } = require('../helpers');
 const { authenticate } = require('../middleware/auth');
 const { gradeCreateSchema, gradeReviewSchema } = require('../validation');
+const { generateTranscriptPdf } = require('../services/pdfGenerator');
+
+const GPA_POINTS = { A: 4.0, B: 3.0, C: 2.0, D: 1.0, F: 0.0 };
+
+function getLetterGrade(score, maxScore = 100) {
+  const pct = maxScore > 0 ? (score / maxScore) * 100 : 0;
+  if (pct >= 90) return 'A';
+  if (pct >= 75) return 'B';
+  if (pct >= 60) return 'C';
+  if (pct >= 50) return 'D';
+  return 'F';
+}
+
+function calcGpa(gradeRows) {
+  let totalPoints = 0;
+  let totalCredits = 0;
+  for (const g of gradeRows) {
+    const letter = g.grade || getLetterGrade(g.score, g.maxScore);
+    const points = GPA_POINTS[letter] ?? 0;
+    const credits = g.course?.credits ?? 3;
+    totalPoints += points * credits;
+    totalCredits += credits;
+  }
+  return { totalPoints, totalCredits, gpa: totalCredits > 0 ? +(totalPoints / totalCredits).toFixed(2) : 0 };
+}
+
+function determineStanding(cumulativeGpa) {
+  if (cumulativeGpa >= 2.0) return 'good standing';
+  if (cumulativeGpa >= 1.5) return 'probation';
+  return 'suspension';
+}
 
 function isAdmin(req) {
   return req.user && req.user.role === 'admin';
@@ -239,14 +270,70 @@ router.post('/approve-all', authenticate, async (req, res) => {
 router.get('/student/:studentId/transcript', authenticate, async (req, res) => {
   try {
     const grades = await prisma.grade.findMany({
-      where: { studentId: req.params.studentId },
+      where: { studentId: req.params.studentId, status: 'approved' },
       include: { course: { select: { name: true, credits: true } } },
       orderBy: { semester: 'asc' },
     });
-    res.json(grades);
+
+    const semesters = [...new Set(grades.map((g) => g.semester).filter(Boolean))];
+    const semesterGpas = {};
+    for (const sem of semesters) {
+      const semGrades = grades.filter((g) => g.semester === sem);
+      const { gpa } = calcGpa(semGrades);
+      semesterGpas[sem] = gpa;
+    }
+
+    const { gpa: cumulativeGpa, totalCredits, totalPoints } = calcGpa(grades);
+    const academicStanding = determineStanding(cumulativeGpa);
+
+    res.json({ grades, semesterGpas, cumulativeGpa, totalCredits, totalGradePoints: +totalPoints.toFixed(1), academicStanding });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to fetch transcript' });
+  }
+});
+
+// GET /api/v1/grades/student/:studentId/standing — GPA + academic standing only
+router.get('/student/:studentId/standing', authenticate, async (req, res) => {
+  try {
+    const grades = await prisma.grade.findMany({
+      where: { studentId: req.params.studentId, status: 'approved' },
+      include: { course: { select: { credits: true } } },
+    });
+
+    const semesters = [...new Set(grades.map((g) => g.semester).filter(Boolean))];
+    const semesterGpas = {};
+    for (const sem of semesters) {
+      const semGrades = grades.filter((g) => g.semester === sem);
+      const { gpa } = calcGpa(semGrades);
+      semesterGpas[sem] = gpa;
+    }
+
+    const { gpa: cumulativeGpa, totalCredits, totalPoints } = calcGpa(grades);
+    const academicStanding = determineStanding(cumulativeGpa);
+
+    res.json({ cumulativeGpa, semesterGpas, totalCredits, totalGradePoints: +totalPoints.toFixed(1), academicStanding });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch GPA data' });
+  }
+});
+
+// GET /api/v1/grades/student/:studentId/transcript/pdf — download transcript PDF
+router.get('/student/:studentId/transcript/pdf', authenticate, async (req, res) => {
+  try {
+    const pdfBuffer = await generateTranscriptPdf(req.params.studentId);
+    const filename = `transcript-${req.params.studentId}-${Date.now()}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error(err);
+    if (err.message === 'Student not found') {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    res.status(500).json({ message: 'Failed to generate transcript PDF' });
   }
 });
 

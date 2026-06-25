@@ -4,34 +4,18 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/common/PageHeader';
-import { useGetExams } from '@/hooks/useExams';
-import { useAuth } from '@/hooks/useAuth';
-import { useMyEnrollments } from '@/hooks/useEnroll';
+import { useGetMyExams } from '@/hooks/useExams';
 
 export function MyExams() {
-  const { user } = useAuth();
-  const { data: enrollments } = useMyEnrollments(user?.id);
+  const { data: exams, isLoading } = useGetMyExams();
 
-  const enrolledData = enrollments as { enrollments: { groupId: string }[] } | undefined;
-  const enrolledGroupIds = useMemo(() => {
-    const set = new Set<string>();
-    const list = enrolledData?.enrollments ?? [];
-    for (const e of list) set.add(e.groupId);
-    return set;
-  }, [enrolledData]);
-
-  const { data: exams, isLoading } = useGetExams();
-
-  const myExams = useMemo(() => {
-    const list = (exams ?? []) as {
-      id: string; title: string; date: string | null; startTime: string | null; endTime: string | null;
-      type: string; status: string; maxScore: number; groupId: string | null;
-      course: { name: string } | null;
-      group: { name: string } | null;
-      room: { name: string; code: string | null } | null;
-    }[];
-    return list.filter((e) => !e.groupId || enrolledGroupIds.has(e.groupId));
-  }, [exams, enrolledGroupIds]);
+  const myExams = (exams ?? []) as {
+    id: string; title: string; date: string | null; startTime: string | null; endTime: string | null;
+    type: string; status: string; maxScore: number; groupId: string | null;
+    course: { name: string } | null;
+    group: { name: string } | null;
+    room: { name: string; code: string | null } | null;
+  }[];
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof myExams>();

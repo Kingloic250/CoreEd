@@ -24,4 +24,18 @@ export const approveAllGrades = (payload: { courseId: string; groupId?: string }
   axiosInstance.post(`${BASE}/approve-all`, payload) as unknown as Promise<{ message: string; count: number }>;
 
 export const getTranscript = (studentId: string) =>
-  axiosInstance.get(`${BASE}/student/${studentId}/transcript`) as unknown as Promise<unknown[]>;
+  axiosInstance.get(`${BASE}/student/${studentId}/transcript`) as unknown as Promise<{
+    grades: unknown[]; semesterGpas: Record<string, number>; cumulativeGpa: number;
+    totalCredits: number; totalGradePoints: number; academicStanding: string;
+  }>;
+
+export const getStudentStanding = (studentId: string) =>
+  axiosInstance.get(`${BASE}/student/${studentId}/standing`) as unknown as Promise<{
+    cumulativeGpa: number; semesterGpas: Record<string, number>;
+    totalCredits: number; totalGradePoints: number; academicStanding: string;
+  }>;
+
+export const downloadTranscriptPdf = (studentId: string) =>
+  axiosInstance.get(`${BASE}/student/${studentId}/transcript/pdf`, {
+    responseType: 'blob',
+  }) as unknown as Promise<Blob>;

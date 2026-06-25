@@ -10,6 +10,13 @@ export function useGetExams(params?: { courseId?: string; groupId?: string; lect
   });
 }
 
+export function useGetMyExams() {
+  return useQuery({
+    queryKey: [QUERY_KEYS.EXAMS, 'mine'],
+    queryFn: examsApi.getMyExams,
+  });
+}
+
 export function useGetExam(id: string | undefined) {
   return useQuery({
     queryKey: [QUERY_KEYS.EXAMS, id],

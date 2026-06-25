@@ -30,7 +30,7 @@ async function generateUniqueStudentNumber() {
 router.get('/profile', authenticate, async (req, res) => {
   try {
     const student = await prisma.student.findUnique({
-      where: { id: req.user.id },
+      where: { email: req.user.email },
       include: { faculty: true },
     });
     if (!student) return res.status(404).json({ message: 'Student not found.' });

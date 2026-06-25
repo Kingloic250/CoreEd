@@ -20,6 +20,7 @@ export const studentSchema = z.object({
   gender: z.enum(['male', 'female'] as const, { error: 'Gender is required' }),
   year: z.string().min(1, 'Year is required'),
   facultyId: z.string().min(1, 'Faculty is required'),
+  maxCredits: z.number().int().positive().optional(),
 });
 
 export const lecturerSchema = z.object({
@@ -52,7 +53,7 @@ export const gradeSchema = z.object({
 
 export const attendanceEntrySchema = z.object({
   studentId: z.string(),
-  status: z.enum(['present', 'absent', 'late', 'excused']),
+  status: z.enum(['present', 'absent']),
   notes: z.string().max(100, 'Notes cannot exceed 100 characters').optional(),
 });
 

@@ -5,6 +5,9 @@ const BASE = '/api/v1/exams';
 export const getExams = (params?: { courseId?: string; groupId?: string; lecturerId?: string; status?: string; type?: string }) =>
   axiosInstance.get(BASE, { params }) as unknown as Promise<unknown[]>;
 
+export const getMyExams = () =>
+  axiosInstance.get(`${BASE}/mine`) as unknown as Promise<unknown[]>;
+
 export const getExam = (id: string) =>
   axiosInstance.get(`${BASE}/${id}`) as unknown as Promise<unknown>;
 

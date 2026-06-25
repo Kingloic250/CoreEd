@@ -1,39 +1,62 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { format } from 'date-fns';
-import { Printer } from 'lucide-react';
+import { Download, GraduationCap, Award, AlertTriangle, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/common/PageHeader';
-import { useGetGrades } from '@/hooks/useGrades';
+import { useGetTranscript } from '@/hooks/useGrades';
 import { useGetAttendance } from '@/hooks/useAttendance';
 import { useAuth } from '@/hooks/useAuth';
 import { getGradeColor } from '@/utils/formatters';
 import { SEMESTERS } from '@/utils/constants';
+import { downloadTranscriptPdf } from '@/api/gradesApi';
+
+const STANDING_CONFIG = {
+  'good standing': { icon: GraduationCap, className: 'text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30' },
+  probation: { icon: AlertTriangle, className: 'text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/30' },
+  suspension: { icon: Award, className: 'text-destructive border-destructive/50 bg-destructive/5' },
+};
 
 export function Transcript() {
   const { user } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
-  const { data: grades, isLoading: gradesLoading } = useGetGrades({ studentId: user?.id });
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const { data: transcript, isLoading: gradesLoading } = useGetTranscript(user?.id ?? '');
   const { data: attendance, isLoading: attendanceLoading } = useGetAttendance({ studentId: user?.id });
 
-  const allGrades = (grades as Record<string, unknown>[]) ?? [];
+  const allGrades = (transcript?.grades ?? []) as Record<string, unknown>[];
   const attendanceList = (attendance as Record<string, unknown>[]) ?? [];
 
   const presentCount = attendanceList.filter((a) => a.status === 'present').length;
   const attendancePct = attendanceList.length > 0 ? Math.round((presentCount / attendanceList.length) * 100) : 0;
-  const overallAvg = allGrades.length > 0
-    ? Math.round(allGrades.reduce((s, g) => s + Number(g.score), 0) / allGrades.length)
-    : 0;
 
   const gradesBySemester = SEMESTERS.reduce<Record<string, Record<string, unknown>[]>>((acc, sem) => {
     acc[sem] = allGrades.filter((g) => g.semester === sem);
     return acc;
   }, {});
 
-  const handlePrint = () => window.print();
+  const standingCfg = STANDING_CONFIG[transcript?.academicStanding ?? 'good standing'] ?? STANDING_CONFIG['good standing'];
+  const StandingIcon = standingCfg.icon;
+  const handleDownloadPdf = async () => {
+    if (!user?.id) return;
+    setPdfLoading(true);
+    try {
+      const blob = await downloadTranscriptPdf(user.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transcript-${user.id}-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch { /* noop */ } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const isLoading = gradesLoading || attendanceLoading;
 
@@ -42,8 +65,9 @@ export function Transcript() {
       <PageHeader title="Transcript" description="Official academic record" />
 
       <div className="flex justify-end mb-4 print:hidden">
-        <Button onClick={handlePrint} variant="outline">
-          <Printer className="size-4" /> Print Transcript
+        <Button onClick={handleDownloadPdf} variant="outline" disabled={pdfLoading}>
+          {pdfLoading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+          {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
         </Button>
       </div>
 
@@ -91,6 +115,17 @@ export function Transcript() {
                       {attendancePct}%
                     </span>
                   </div>
+                  <div>
+                    <span className="text-muted-foreground">Cumulative GPA: </span>
+                    <span className="font-semibold">{transcript?.cumulativeGpa.toFixed(2) ?? 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Academic Standing: </span>
+                    <Badge variant="outline" className={`text-xs gap-1 ${standingCfg.className}`}>
+                      <StandingIcon className="size-3" />
+                      {transcript?.academicStanding ?? 'good standing'}
+                    </Badge>
+                  </div>
                 </div>
 
                 <Separator className="mb-6" />
@@ -98,12 +133,14 @@ export function Transcript() {
                 {SEMESTERS.map((sem) => {
                   const semGrades = gradesBySemester[sem] ?? [];
                   if (semGrades.length === 0) return null;
-                  const semAvg = Math.round(semGrades.reduce((s, g) => s + Number(g.score), 0) / semGrades.length);
+                  const semGpa = transcript?.semesterGpas?.[sem] ?? 0;
                   return (
                     <div key={sem} className="mb-6">
                       <div className="flex items-center justify-between mb-3">
                         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{sem}</h2>
-                        <span className="text-xs text-muted-foreground">Average: <strong className="text-foreground">{semAvg}%</strong></span>
+                        <span className="text-xs text-muted-foreground">
+                          GPA: <strong className="text-foreground">{semGpa.toFixed(2)}</strong>
+                        </span>
                       </div>
                       <div className="rounded-lg border overflow-hidden">
                         <table className="w-full text-sm">
@@ -142,9 +179,28 @@ export function Transcript() {
 
                 <Separator className="my-6" />
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold">Overall Average</span>
-                  <span className="text-lg font-bold">{overallAvg}%</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Cumulative GPA</span>
+                    <p className="text-lg font-bold">{transcript?.cumulativeGpa.toFixed(2) ?? 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Total Credits</span>
+                    <p className="text-lg font-bold">{transcript?.totalCredits ?? 0}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Grade Points</span>
+                    <p className="text-lg font-bold">{transcript?.totalGradePoints ?? '0.0'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Standing</span>
+                    <p className={`text-lg font-bold ${
+                      transcript?.academicStanding === 'good standing' ? 'text-emerald-600' :
+                      transcript?.academicStanding === 'probation' ? 'text-amber-600' : 'text-destructive'
+                    }`}>
+                      {transcript?.academicStanding ?? 'good standing'}
+                    </p>
+                  </div>
                 </div>
 
                 <p className="text-xs text-muted-foreground mt-8 text-center">

@@ -151,9 +151,10 @@ model Room {
   building    String?
   description String?
 
-  courses Course[]
-  groups  Group[]
-  exams   Exam[]
+  courses          Course[]
+  groups           Group[]
+  exams            Exam[]
+  timetableEntries TimetableEntry[]
 
   @@map("rooms")
 }
@@ -254,6 +255,7 @@ model Course {
   exams      Exam[]
   enrollments         Enrollment[]
   waitlistEntries     WaitlistEntry[]
+  timetableEntries    TimetableEntry[]
   @@map("courses")
 }
 
@@ -586,6 +588,22 @@ model ExamResult {
   @@index([examId], name: "idx_exam_results_exam")
   @@index([studentId], name: "idx_exam_results_student")
   @@map("exam_results")
+}
+
+model TimetableEntry {
+  id        String  @id
+  courseId   String  @map("courseId")
+  day       Int
+  startTime String  @map("startTime")
+  endTime   String  @map("endTime")
+  roomId    String? @map("roomId")
+
+  course Course @relation(fields: [courseId], references: [id])
+  room   Room?  @relation(fields: [roomId], references: [id])
+
+  @@index([courseId], name: "idx_timetable_course")
+  @@index([roomId], name: "idx_timetable_room")
+  @@map("timetable_entries")
 }
 
 model Message {

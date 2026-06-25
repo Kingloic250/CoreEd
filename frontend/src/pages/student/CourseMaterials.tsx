@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageHeader } from '@/components/common/PageHeader';
 import { useGetMaterials } from '@/hooks/useMaterials';
 import { useGetCourses } from '@/hooks/useCourses';
-import { useGetAssignments } from '@/hooks/useAssignments';
+import { useMyEnrollments } from '@/hooks/useEnroll';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/utils/formatters';
 
@@ -19,7 +19,6 @@ type Material = {
   courseId: string;
   courseName: string;
   fileName: string;
-  fileUrl: string;
   description: string;
   uploadedBy: string;
   uploadedAt: string;
@@ -54,24 +53,20 @@ export function CourseMaterials() {
   const { user } = useAuth();
   const { data: materials, isLoading } = useGetMaterials();
   const { data: courses } = useGetCourses();
-  const { data: assignments } = useGetAssignments({ studentId: user?.id });
+  const { data: enrollData } = useMyEnrollments(user?.id);
 
   const materialsList = (materials as Material[]) ?? [];
   const coursesList = (courses as Record<string, unknown>[]) ?? [];
-  const assignmentList = (assignments as Record<string, unknown>[]) ?? [];
+  const enrollmentCourses = (enrollData as { courses: Record<string, unknown>[] } | undefined)?.courses ?? [];
 
   const [typeFilter, setTypeFilter] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
 
   const enrolledCourseIds = useMemo(() => {
     const ids = new Set<string>();
-    assignmentList.forEach((a) => {
-      const subs = (a as Record<string, unknown>).submissions as Record<string, unknown>[] | undefined;
-      const sub = (subs ?? []).find((s) => s.studentId === user?.id);
-      if (sub) ids.add(String(a.courseId));
-    });
+    enrollmentCourses.forEach((c) => ids.add(String(c.id)));
     return ids;
-  }, [assignmentList, user?.id]);
+  }, [enrollmentCourses]);
 
   const enrolledCourses = coursesList.filter((c) => enrolledCourseIds.has(String(c.id)));
 
@@ -157,8 +152,8 @@ export function CourseMaterials() {
                 </CardContent>
                 <div className="px-4 pb-3">
                   <Button variant="outline" size="sm" className="gap-1 w-full" asChild>
-                    <a href={m.fileUrl} target="_blank" rel="noopener noreferrer">
-                      <Download className="size-3" /> Download {m.fileName}
+                    <a href={m.fileName} target="_blank" rel="noopener noreferrer">
+                      <Download className="size-3" /> Download
                     </a>
                   </Button>
                 </div>

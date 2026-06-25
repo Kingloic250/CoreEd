@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/common/PageHeader';
-import { useGetGrades } from '@/hooks/useGrades';
+import { useGetGrades, useGetStudentStanding } from '@/hooks/useGrades';
 import { useGetCourses } from '@/hooks/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { useGetClaims, useCreateClaim } from '@/hooks/useClaims';
@@ -19,10 +19,6 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip,
   BarChart, XAxis, YAxis, CartesianGrid, Bar, Cell,
 } from 'recharts';
-
-const GPA_POINTS: Record<string, number> = {
-  A: 4.0, B: 3.0, C: 2.0, D: 1.0, F: 0.0,
-};
 
 const DIST_COLORS: Record<string, string> = {
   A: '#10b981', B: '#3b82f6', C: '#eab308', D: '#f97316', F: '#ef4444',
@@ -34,6 +30,7 @@ export function MyGrades() {
   const [expandedGrade, setExpandedGrade] = useState<string | null>(null);
   const { data: grades, isLoading } = useGetGrades({ studentId: user?.id });
   const { data: courses } = useGetCourses();
+  const { data: standing } = useGetStudentStanding(user?.id ?? '');
 
   const allGrades = (grades as Record<string, unknown>[]) ?? [];
   const coursesList = (courses as Record<string, unknown>[]) ?? [];
@@ -67,21 +64,7 @@ export function MyGrades() {
     score: Number(g.score),
   }));
 
-  const cumulativeGpa = useMemo(() => {
-    if (allGrades.length === 0) return 0;
-    let totalPoints = 0;
-    let totalCredits = 0;
-    allGrades.forEach((g) => {
-      const letter = String(g.grade ?? 'F');
-      const points = GPA_POINTS[letter] ?? 0;
-      const courseId = String(g.courseId ?? '');
-      const course = coursesList.find((c) => c.id === courseId);
-      const credits = Number(course?.credits ?? 3);
-      totalPoints += points * credits;
-      totalCredits += credits;
-    });
-    return totalCredits > 0 ? totalPoints / totalCredits : 0;
-  }, [allGrades, coursesList]);
+  const cumulativeGpa = standing?.cumulativeGpa ?? 0;
 
   const totalUniqueCourses = useMemo(
     () => new Set(allGrades.map((g) => String(g.courseId))).size,
@@ -143,6 +126,15 @@ export function MyGrades() {
                 <div>
                   <p className="text-xl font-bold">{cumulativeGpa.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">Cumulative GPA</p>
+                  {standing && (
+                    <Badge variant="outline" className={`mt-1 text-xs ${
+                      standing.academicStanding === 'good standing' ? 'text-emerald-600 border-emerald-300' :
+                      standing.academicStanding === 'probation' ? 'text-amber-600 border-amber-300' :
+                      'text-destructive border-destructive/50'
+                    }`}>
+                      {standing.academicStanding}
+                    </Badge>
+                  )}
                 </div>
               </div>
             )}
@@ -204,7 +196,7 @@ export function MyGrades() {
                 <div className="flex items-center gap-4 text-sm">
                   <span className="text-muted-foreground">{semGrades.length} subjects</span>
                   <span className="text-muted-foreground">Average: <span className="font-semibold text-foreground">{avgScore}%</span></span>
-                  <span className="text-muted-foreground">GPA: <span className="font-semibold text-foreground">{cumulativeGpa.toFixed(2)}</span></span>
+                  <span className="text-muted-foreground">GPA: <span className="font-semibold text-foreground">{(standing?.semesterGpas?.[activeSemester] ?? cumulativeGpa).toFixed(2)}</span></span>
                 </div>
 
                 {/* Letter Distribution */}
