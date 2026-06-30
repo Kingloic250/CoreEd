@@ -46,27 +46,34 @@ router.get('/:id', authenticate, async (req, res) => {
 router.post('/', authenticate, validate(courseCreateSchema), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
   try {
-    const { name, year, facultyId, lecturerId, credits, roomId, maxStudents } = req.body;
-    if (!name || !year || !facultyId || !lecturerId) {
-      return res.status(400).json({ message: 'name, year, facultyId, and lecturerId are required.' });
+    const { name, code, year, facultyId, lecturerId, credits, roomId, maxStudents } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: 'Course name is required.' });
     }
 
-    const faculty = await prisma.faculty.findUnique({
-      where: { id: facultyId },
-      include: { department: true },
-    });
-    if (!faculty) return res.status(400).json({ message: 'Faculty not found.' });
+    let department = null;
+    if (facultyId) {
+      const faculty = await prisma.faculty.findUnique({
+        where: { id: facultyId },
+        include: { department: true },
+      });
+      if (!faculty) return res.status(400).json({ message: 'Faculty not found.' });
+      department = faculty.department.name;
+    }
 
     const id = crypto.randomUUID();
     const course = await prisma.course.create({
       data: {
-        id, name, year,
-        department: faculty.department.name,
-        facultyId,
-        lecturerId,
+        id, name,
+        code: code ?? null,
+        year: year ?? null,
+        department,
+        facultyId: facultyId ?? null,
+        lecturerId: lecturerId ?? null,
         credits: credits ?? 3,
         roomId: roomId ?? null,
         maxStudents: maxStudents ?? null,
+        gradingComponents: [],
       },
     });
     await clearCache(CACHE_PATTERN);

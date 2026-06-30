@@ -32,6 +32,8 @@ import { ManageGroups } from '@/pages/admin/ManageGroups';
 import { ManageGrades } from '@/pages/admin/ManageGrades';
 import { ManageExams } from '@/pages/admin/ManageExams';
 import { ManageCalendar } from '@/pages/admin/ManageCalendar';
+import { ManagePrograms } from '@/pages/admin/ManagePrograms';
+import { ManageCurriculum } from '@/pages/admin/ManageCurriculum';
 
 import { LecturerDashboard } from '@/pages/lecturer/LecturerDashboard';
 import { MyCourses } from '@/pages/lecturer/MyCourses';
@@ -68,6 +70,7 @@ import { FeeLedger } from '@/pages/student/FeeLedger';
 import { MyExams } from '@/pages/student/MyExams';
 import { CourseMaterials } from '@/pages/student/CourseMaterials';
 import { MyEnrollments } from '@/pages/student/MyEnrollments';
+import { MyProgram } from '@/pages/student/MyProgram';
 import { AssignmentDropbox } from '@/pages/student/AssignmentDropbox';
 
 function RootRedirect() {
@@ -138,6 +141,8 @@ export function AppRouter() {
           <Route path="grades" element={<ManageGrades />} />
           <Route path="exams" element={<ManageExams />} />
           <Route path="rooms" element={<ManageRooms />} />
+          <Route path="programs" element={<ManagePrograms />} />
+          <Route path="curriculum" element={<ManageCurriculum />} />
           <Route path="calendar" element={<ManageCalendar />} />
         </Route>
 
@@ -184,6 +189,7 @@ export function AppRouter() {
           <Route path="exams" element={<MyExams />} />
           <Route path="courses" element={<StudentCourseCatalog />} />
           <Route path="courses/:id" element={<StudentCourseDetail />} />
+          <Route path="program" element={<MyProgram />} />
           <Route path="assignments" element={<AssignmentDropbox />} />
           <Route path="assignments/:id" element={<AssignmentDetail />} />
           <Route path="materials" element={<CourseMaterials />} />

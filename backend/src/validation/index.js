@@ -45,25 +45,26 @@ const lecturerCreateSchema = z.object({
 
 const departmentCreateSchema = z.object({
   name: z.string().min(1, 'Department name is required'),
-  code: z.string().optional(),
-  headLecturerId: z.string().optional(),
-  description: z.string().optional(),
+  code: z.string().optional().nullable(),
+  headLecturerId: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
 });
 
 const facultyCreateSchema = z.object({
   name: z.string().min(1, 'Faculty name is required'),
-  code: z.string().optional(),
+  code: z.string().optional().nullable(),
   departmentId: z.string().min(1, 'Department is required'),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
 });
 
 const courseCreateSchema = z.object({
   name: z.string().min(2, 'Course name must be at least 2 characters'),
-  year: z.string().min(1, 'Year is required'),
-  facultyId: z.string().min(1, 'Faculty is required'),
-  lecturerId: z.string().min(1, 'Lecturer is required'),
+  code: z.string().optional().nullable(),
+  year: z.string().optional().nullable(),
+  facultyId: z.string().optional().nullable(),
+  lecturerId: z.string().optional().nullable(),
   credits: z.number().int().min(1).max(20).optional(),
-  roomId: z.string().optional(),
+  roomId: z.string().optional().nullable(),
   maxStudents: z.coerce.number().int().min(1).optional(),
 });
 
@@ -190,6 +191,43 @@ const examResultSchema = z.object({
   comments: z.string().optional(),
 });
 
+const programCreateSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  code: z.string().optional(),
+  facultyId: z.string().min(1, 'Faculty is required'),
+  degreeType: z.string().min(1, 'Degree type is required'),
+  durationYears: z.number().int().min(1).default(4),
+  totalCreditsRequired: z.number().int().min(1).default(120),
+  description: z.string().optional(),
+});
+
+const curriculumCreateSchema = z.object({
+  programId: z.string().min(1, 'Program is required'),
+  name: z.string().min(1, 'Name is required'),
+  version: z.string().min(1, 'Version is required'),
+  effectiveFrom: z.string().optional(),
+  effectiveTo: z.string().optional(),
+  isActive: z.boolean().default(false),
+  totalCredits: z.number().int().default(0),
+});
+
+const programCourseSchema = z.object({
+  curriculumId: z.string().min(1, 'Curriculum is required'),
+  courseId: z.string().min(1, 'Course is required'),
+  year: z.number().int().min(1),
+  semester: z.number().int().min(1).max(2),
+  isCore: z.boolean().default(true),
+  minCredits: z.number().int().optional(),
+  maxCredits: z.number().int().optional(),
+});
+
+const programEnrollSchema = z.object({
+  studentId: z.string().min(1, 'Student is required'),
+  programId: z.string().min(1, 'Program is required'),
+  curriculumId: z.string().optional(),
+  status: z.enum(['active', 'completed', 'withdrawn', 'graduated']).default('active'),
+});
+
 module.exports = {
   loginSchema,
   studentCreateSchema,
@@ -214,4 +252,8 @@ module.exports = {
   gradeReviewSchema,
   examCreateSchema,
   examResultSchema,
+  programCreateSchema,
+  curriculumCreateSchema,
+  programCourseSchema,
+  programEnrollSchema,
 };

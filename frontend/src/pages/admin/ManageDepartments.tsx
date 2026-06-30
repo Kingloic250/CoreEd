@@ -90,8 +90,10 @@ function DepartmentsTab() {
   const handleSubmit = async () => {
     if (!form.name || !form.code) return;
     const payload = {
-      ...form,
-      headLecturerId: form.headLecturerId === 'none' ? null : form.headLecturerId,
+      name: form.name,
+      code: form.code || null,
+      headLecturerId: form.headLecturerId === 'none' ? null : form.headLecturerId || null,
+      description: form.description || null,
     };
     if (editing?.id) {
       await updateMutation.mutateAsync({ id: String(editing.id), payload });

@@ -5,7 +5,7 @@ import {
   BarChart3, ClipboardList, FileText, Bell, School,
   ClipboardCheck, Calendar, Trophy, UserCheck, CalendarDays, UserPlus,
   Library, ScrollText, Shield, CalendarRange, Wallet, Mail, AlertCircle, Building2,
-  ClipboardPen, ChevronDown, Settings,
+  ClipboardPen, ChevronDown, Settings, Layers, NotebookPen,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -36,6 +36,8 @@ const adminNav: NavGroup[] = [
     title: 'Academic', icon: BookOpen,
     items: [
       { title: 'Courses', url: '/admin/courses', icon: BookOpen },
+      { title: 'Programs', url: '/admin/programs', icon: GraduationCap },
+      { title: 'Curriculum', url: '/admin/curriculum', icon: Layers },
       { title: 'Timetable', url: '/admin/timetable', icon: CalendarRange },
       { title: 'Groups', url: '/admin/groups', icon: UserPlus },
       { title: 'Enrollment', url: '/admin/enrollment', icon: UserCheck },
@@ -102,6 +104,7 @@ const studentNav: NavGroup[] = [
     items: [
       { title: 'My Grades', url: '/student/grades', icon: Trophy },
       { title: 'Grade Claims', url: '/student/grades/claims', icon: AlertCircle },
+      { title: 'My Program', url: '/student/program', icon: GraduationCap },
       { title: 'My Enrollments', url: '/student/enrollments', icon: UserCheck },
       { title: 'My Exams', url: '/student/exams', icon: ClipboardPen },
       { title: 'Assignments', url: '/student/assignments', icon: ClipboardList },

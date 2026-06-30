@@ -98,6 +98,7 @@ export const QUERY_KEYS = {
   ENROLL: 'enroll',
   EXAMS: 'exams',
   SYSTEM_SETTINGS: 'system-settings',
+  PROGRAMS: 'programs',
 } as const;
 
 export const GRADE_SCALE = [

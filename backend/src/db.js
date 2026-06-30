@@ -20,6 +20,8 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 // Warm up database connection (cold start helper for Neon free-tier)
-prisma.$connect().catch(() => {});
+prisma.$connect().catch((err) => {
+  console.warn('[DB] Initial connection failed, will retry on first query:', err?.message);
+});
 
 module.exports = prisma;
